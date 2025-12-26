@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllable Splitter - Pemisah Suku Kata</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="12" fill="url(#gradient)"/>
+                        <path d="M12 20H18M22 20H28M12 14H16M24 14H28M12 26H16M24 26H28" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" style="stop-color:#667eea"/>
+                                <stop offset="100%" style="stop-color:#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Syllable Splitter</h1>
+                    <p class="subtitle">Pisahkan kata menjadi suku kata dengan mudah</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="input-section">
+                <label for="inputText">Masukkan Teks</label>
+                <textarea 
+                    id="inputText" 
+                    placeholder="Contoh: pembelajaran, Indonesia, komputer..."
+                    rows="4"
+                ></textarea>
+                <button id="splitBtn" class="btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Pisahkan Suku Kata
+                </button>
+            </div>
+
+            <div id="resultSection" class="result-section" style="display: none;">
+                <div class="result-header">
+                    <h3>Hasil Pemisahan</h3>
+                    <button id="copyBtn" class="btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.33333 10H2.66667C2.31304 10 1.97391 9.85952 1.72386 9.60947C1.47381 9.35943 1.33333 9.02029 1.33333 8.66667V2.66667C1.33333 2.31304 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31304 1.33333 2.66667 1.33333H8.66667C9.02029 1.33333 9.35943 1.47381 9.60947 1.72386C9.85952 1.97391 10 2.31304 10 2.66667V3.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Salin
+                    </button>
+                </div>
+                <div id="resultContent" class="result-content"></div>
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3>Contoh Cepat</h3>
+            <div class="example-chips">
+                <button class="chip" data-text="pembelajaran">pembelajaran</button>
+                <button class="chip" data-text="Indonesia">Indonesia</button>
+                <button class="chip" data-text="komputer">komputer</button>
+                <button class="chip" data-text="perpustakaan">perpustakaan</button>
+                <button class="chip" data-text="kebersamaan">kebersamaan</button>
+                <button class="chip" data-text="menyenangkan">menyenangkan</button>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M10 14V10M10 6H10.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Cara Kerja
+            </h3>
+            <p>Aplikasi ini menggunakan algoritma pemisahan suku kata bahasa Indonesia berdasarkan pola konsonan dan vokal. Masukkan kata atau kalimat, lalu klik tombol untuk melihat hasilnya!</p>
+        </div>
+
+        <footer>
+            <p>Based on <a href="https://github.com/fahadh4ilyas/syllable_splitter" target="_blank">syllable_splitter</a> by fahadh4ilyas</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
