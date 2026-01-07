@@ -65,6 +65,25 @@
                             </div>
                         </label>
                         <label class="method-option">
+                            <input type="radio" name="method" value="sylbi">
+                            <span class="method-radio"></span>
+                            <div class="method-info">
+                                <div class="method-name-wrapper">
+                                    <span class="method-name">SylBI</span>
+                                    <a href="https://github.com/fahadh4ilyas/syllable_splitter" target="_blank"
+                                        class="info-icon" title="Lihat repository SylBI">
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
+                                            <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </a>
+                                </div>
+                                <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
+                            </div>
+                        </label>
+                        <label class="method-option">
                             <input type="radio" name="method" value="kbbi">
                             <span class="method-radio"></span>
                             <div class="method-info">
@@ -80,7 +99,7 @@
                                         </svg>
                                     </a>
                                 </div>
-                                <span class="method-desc">Hybrid morfologi + syllable</span>
+                                <span class="method-desc">Kamus resmi (perlu internet)</span>
                             </div>
                         </label>
                     </div>
@@ -365,7 +384,13 @@
                 } else {
                     // Update method badge
                     const methodBadge = document.getElementById('methodBadge');
-                    methodBadge.textContent = data.method === 'kbbi' ? 'KBBI' : 'PUEBI';
+                    if (data.method === 'kbbi') {
+                        methodBadge.textContent = 'KBBI';
+                    } else if (data.method === 'sylbi') {
+                        methodBadge.textContent = 'SylBI';
+                    } else {
+                        methodBadge.textContent = 'PUEBI';
+                    }
                     methodBadge.className = `method-badge ${data.method}`;
 
                     let html = '';

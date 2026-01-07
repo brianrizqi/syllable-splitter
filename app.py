@@ -3,12 +3,14 @@ import re
 from PUEBIOfficialSplitter import PUEBIOfficialSplitter
 from HybridSyllableSplitter import HybridSyllableSplitter
 from SpellChecker import IndonesianSpellChecker
+from KBBIScraper import KBBIScraper
 
 app = Flask(__name__)
 
-# Initialize both splitters
+# Initialize three splitters
 splitter_puebi = PUEBIOfficialSplitter()  # Official PUEBI rules
-splitter_kbbi = HybridSyllableSplitter()  # Hybrid morphological splitter for KBBI
+splitter_sylbi = HybridSyllableSplitter()  # Hybrid morphological splitter for SylBI
+kbbi_scraper = KBBIScraper()  # KBBI scraper for online dictionary
 spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
 
 @app.route('/')
@@ -24,22 +26,39 @@ def split_text():
     if not text:
         return jsonify({'error': 'No text provided'}), 400
     
-    # Select appropriate splitter based on method
-    if method == 'kbbi':
-        splitter = splitter_kbbi
-    else:
-        splitter = splitter_puebi
-    
     # Split by whitespace and punctuation
     words = re.findall(r'\b[\w]+\b', text)
     
     results = []
-    for word in words:
-        syllables = splitter.split_syllables(word)
-        results.append({
-            'word': word,
-            'syllables': syllables
-        })
+    
+    # Handle different methods
+    if method == 'kbbi':
+        # Use KBBI scraper (requires internet connection)
+        for word in words:
+            # Query KBBI online dictionary
+            syllables = kbbi_scraper.get_syllables(word)
+            
+            # If KBBI lookup fails, fallback to PUEBI method
+            if syllables is None:
+                syllables = splitter_puebi.split_syllables(word)
+            
+            results.append({
+                'word': word,
+                'syllables': syllables
+            })
+    else:
+        # Use local splitters (PUEBI or SylBI)
+        if method == 'sylbi':
+            splitter = splitter_sylbi
+        else:
+            splitter = splitter_puebi
+        
+        for word in words:
+            syllables = splitter.split_syllables(word)
+            results.append({
+                'word': word,
+                'syllables': syllables
+            })
     
     return jsonify({
         'results': results,
