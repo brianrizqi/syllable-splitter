@@ -4,204 +4,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Syllable Splitter - Pemisah Suku Kata</title>
+    <title>Syllable Splitter - Pemisah Suku Kata Bahasa Indonesia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo-icon">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="40" height="40" rx="12" fill="url(#gradient)" />
-                        <path d="M12 20H18M22 20H28M12 14H16M24 14H28M12 26H16M24 26H28" stroke="white"
-                            stroke-width="2.5" stroke-linecap="round" />
-                        <defs>
-                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
-                                <stop offset="0%" style="stop-color:#667eea" />
-                                <stop offset="100%" style="stop-color:#764ba2" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-                <div>
-                    <h1>Syllable Splitter</h1>
-                    <p class="subtitle">Pisahkan kata menjadi suku kata dengan mudah</p>
-                    <p class="tech-badge">🐍 Powered by Python + Flask</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="input-section">
-                <label for="inputText">Masukkan Teks</label>
-                <textarea id="inputText" placeholder="Contoh: pembelajaran, Indonesia, komputer..." rows="4"></textarea>
-
-                <!-- Method Selector -->
-                <div class="method-selector">
-                    <label class="method-label">Pilih Metode Pemisahan:</label>
-                    <div class="method-options">
-                        <label class="method-option">
-                            <input type="radio" name="method" value="puebi" checked>
-                            <span class="method-radio"></span>
-                            <div class="method-info">
-                                <div class="method-name-wrapper">
-                                    <span class="method-name">PUEBI</span>
-                                    <a href="https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf" target="_blank"
-                                        class="info-icon" title="Lihat Pedoman Umum Ejaan Bahasa Indonesia (PDF)">
-                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
-                                            <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                                <span class="method-desc">Aturan resmi PUEBI</span>
-                            </div>
-                        </label>
-                        <label class="method-option">
-                            <input type="radio" name="method" value="sylbi">
-                            <span class="method-radio"></span>
-                            <div class="method-info">
-                                <div class="method-name-wrapper">
-                                    <span class="method-name">SylBI</span>
-                                    <a href="https://github.com/fahadh4ilyas/syllable_splitter" target="_blank"
-                                        class="info-icon" title="Lihat repository SylBI">
-                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
-                                            <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                                <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
-                            </div>
-                        </label>
-                        <label class="method-option">
-                            <input type="radio" name="method" value="kbbi">
-                            <span class="method-radio"></span>
-                            <div class="method-info">
-                                <div class="method-name-wrapper">
-                                    <span class="method-name">KBBI</span>
-                                    <a href="https://kbbi.kemdikbud.go.id/" target="_blank" class="info-icon"
-                                        title="Buka Kamus Besar Bahasa Indonesia">
-                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
-                                            <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                                <span class="method-desc">Kamus resmi (perlu internet)</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Spell Checker Option -->
-                <div class="spell-check-option" style="margin-top: 16px;">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="spellCheckEnabled" checked>
-                        <span class="checkbox-custom"></span>
-                        <span class="checkbox-text">
-                            <span class="checkbox-title">Cek Ejaan Sebelum Memproses</span>
-                            <span class="checkbox-desc">Deteksi typo dan berikan saran perbaikan</span>
-                        </span>
-                    </label>
-                </div>
-
-                <button id="splitBtn" class="btn-primary">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    Pisahkan Suku Kata
-                </button>
-            </div>
-
-            <!-- Typo Warning Section -->
-            <div id="typoSection" class="typo-section" style="display: none;">
-                <div class="typo-header">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
-                            stroke="currentColor" stroke-width="1.5" />
-                        <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="1.5"
-                            stroke-linecap="round" />
-                    </svg>
-                    <h3>Kemungkinan Typo Terdeteksi</h3>
-                </div>
-                <div id="typoContent" class="typo-content"></div>
-                <div class="typo-actions">
-                    <button id="proceedAnywayBtn" class="btn-secondary">Lanjutkan Tetap</button>
-                    <button id="fixTypoBtn" class="btn-primary">Perbaiki Dulu</button>
-                </div>
-            </div>
-
-            <div id="loadingSection" class="loading-section" style="display: none;">
-                <div class="spinner"></div>
-                <p>Memproses...</p>
-            </div>
-
-            <div id="resultSection" class="result-section" style="display: none;">
-                <div class="result-header">
-                    <div>
-                        <h3>Hasil Pemisahan</h3>
-                        <span id="methodBadge" class="method-badge"></span>
-                    </div>
-                    <button id="copyBtn" class="btn-secondary">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z"
-                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                            <path
-                                d="M3.33333 10H2.66667C2.31304 10 1.97391 9.85952 1.72386 9.60947C1.47381 9.35943 1.33333 9.02029 1.33333 8.66667V2.66667C1.33333 2.31304 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31304 1.33333 2.66667 1.33333H8.66667C9.02029 1.33333 9.35943 1.47381 9.60947 1.72386C9.85952 1.97391 10 2.31304 10 2.66667V3.33333"
-                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        Salin
-                    </button>
-                </div>
-                <div id="resultContent" class="result-content"></div>
-            </div>
-        </div>
-
-        <div class="examples">
-            <h3>Contoh Cepat</h3>
-            <div class="example-chips">
-                <button class="chip" data-text="pembelajaran">pembelajaran</button>
-                <button class="chip" data-text="Indonesia">Indonesia</button>
-                <button class="chip" data-text="komputer">komputer</button>
-                <button class="chip" data-text="perpustakaan">perpustakaan</button>
-                <button class="chip" data-text="kebersamaan">kebersamaan</button>
-                <button class="chip" data-text="menyenangkan">menyenangkan</button>
-            </div>
-        </div>
-
-        <div class="info-card">
-            <h3>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
-                        stroke="currentColor" stroke-width="1.5" />
-                    <path d="M10 14V10M10 6H10.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="10" fill="url(#navGradient)" />
+                    <path d="M12 20H18M22 20H28M12 14H16M24 14H28M12 26H16M24 26H28" stroke="white" stroke-width="2.5"
+                        stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="navGradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" style="stop-color:#2563eb" />
+                            <stop offset="100%" style="stop-color:#06b6d4" />
+                        </linearGradient>
+                    </defs>
                 </svg>
-                Cara Kerja
-            </h3>
-            <p>Aplikasi ini menggunakan algoritma pemisahan suku kata bahasa Indonesia berdasarkan pola konsonan dan
-                vokal. Backend diproses dengan Python Flask untuk akurasi maksimal!</p>
+                <span>Syllable Splitter</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home" class="nav-link active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Home
+                </a>
+                <a href="#about" class="nav-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Tentang
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Header -->
+        <header class="hero-header">
+            <div class="hero-icon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="64" rx="20" fill="url(#heroGradient)" />
+                    <path d="M19 32H29M35 32H45M19 22H26M38 22H45M19 42H26M38 42H45" stroke="white" stroke-width="3.5"
+                        stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="heroGradient" x1="0" y1="0" x2="64" y2="64">
+                            <stop offset="0%" style="stop-color:#2563eb" />
+                            <stop offset="100%" style="stop-color:#06b6d4" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>Syllable Splitter</h1>
+            <p class="hero-subtitle">Pisahkan kata menjadi suku kata dengan mudah dan akurat</p>
+            <div class="hero-badges">
+                <span class="badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 16l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z" />
+                    </svg>
+                    Akurat
+                </span>
+                <span class="badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Cepat
+                </span>
+                <span class="badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                    Powered by Python
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column: Main Input -->
+            <div class="main-column">
+                <div class="card main-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Masukkan Teks
+                        </h2>
+                    </div>
+
+                    <div class="input-section">
+                        <textarea id="inputText"
+                            placeholder="Ketik atau paste teks di sini... Contoh: pembelajaran, Indonesia, komputer"
+                            rows="5"></textarea>
+
+                        <!-- Method Selector -->
+                        <div class="method-selector">
+                            <label class="method-label">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path
+                                        d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24">
+                                    </path>
+                                </svg>
+                                Pilih Metode Pemisahan
+                            </label>
+                            <div class="method-options">
+                                <label class="method-option">
+                                    <input type="radio" name="method" value="puebi" checked>
+                                    <span class="method-radio"></span>
+                                    <div class="method-info">
+                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                        <div class="method-name-wrapper">
+                                            <span class="method-name">PUEBI</span>
+                                            <a href="https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf"
+                                                target="_blank" class="info-icon" title="Lihat Pedoman PUEBI">
+                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                    <circle cx="7" cy="7" r="6" stroke="currentColor"
+                                                        stroke-width="1.5" />
+                                                    <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
+                                                        stroke-linecap="round" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                        <span class="method-desc">Aturan resmi PUEBI</span>
+                                    </div>
+                                </label>
+                                <label class="method-option">
+                                    <input type="radio" name="method" value="sylbi">
+                                    <span class="method-radio"></span>
+                                    <div class="method-info">
+                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <div class="method-name-wrapper">
+                                            <span class="method-name">SylBI</span>
+                                        </div>
+                                        <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
+                                    </div>
+                                </label>
+                                <label class="method-option">
+                                    <input type="radio" name="method" value="kbbi">
+                                    <span class="method-radio"></span>
+                                    <div class="method-info">
+                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z">
+                                            </path>
+                                        </svg>
+                                        <div class="method-name-wrapper">
+                                            <span class="method-name">KBBI</span>
+                                            <a href="https://kbbi.kemdikbud.go.id/" target="_blank" class="info-icon"
+                                                title="Buka KBBI">
+                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                    <circle cx="7" cy="7" r="6" stroke="currentColor"
+                                                        stroke-width="1.5" />
+                                                    <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
+                                                        stroke-linecap="round" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                        <span class="method-desc">Kamus resmi (perlu internet)</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Spell Check Option -->
+                        <div class="spell-check-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="spellCheckEnabled" checked>
+                                <svg class="checkbox-custom" width="20" height="20" viewBox="0 0 20 20">
+                                    <rect class="checkbox-box" x="0.5" y="0.5" width="19" height="19" rx="4"
+                                        fill="white" stroke="#d1d5db" stroke-width="2" />
+                                    <path class="checkbox-check" d="M5 10 L8.5 13.5 L15 6.5" stroke="white"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <span class="checkbox-text">
+                                    <span class="checkbox-title">Cek Ejaan Sebelum Memproses</span>
+                                    <span class="checkbox-desc">Deteksi typo dan berikan saran perbaikan</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <button id="splitBtn" class="btn-primary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="13 17 18 12 13 7"></polyline>
+                                <polyline points="6 17 11 12 6 7"></polyline>
+                            </svg>
+                            Pisahkan Suku Kata
+                        </button>
+                    </div>
+
+                    <!-- Typo Warning Section -->
+                    <div id="typoSection" class="typo-section" style="display: none;">
+                        <div class="typo-header">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path
+                                    d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
+                                    stroke="currentColor" stroke-width="1.5" />
+                                <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <h3>Kemungkinan Typo Terdeteksi</h3>
+                        </div>
+                        <div id="typoContent" class="typo-content"></div>
+                        <div class="typo-actions">
+                            <button id="proceedAnywayBtn" class="btn-secondary">Lanjutkan Tetap</button>
+                            <button id="fixTypoBtn" class="btn-primary">Perbaiki Dulu</button>
+                        </div>
+                    </div>
+
+                    <!-- Loading Section -->
+                    <div id="loadingSection" class="loading-section" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Memproses teks Anda...</p>
+                    </div>
+
+                    <!-- Result Section -->
+                    <div id="resultSection" class="result-section" style="display: none;">
+                        <div class="result-header">
+                            <div>
+                                <h3>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Hasil Pemisahan
+                                </h3>
+                                <span id="methodBadge" class="method-badge"></span>
+                            </div>
+                            <button id="copyBtn" class="btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path
+                                        d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path
+                                        d="M3.33333 10H2.66667C2.31304 10 1.97391 9.85952 1.72386 9.60947C1.47381 9.35943 1.33333 9.02029 1.33333 8.66667V2.66667C1.33333 2.31304 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31304 1.33333 2.66667 1.33333H8.66667C9.02029 1.33333 9.35943 1.47381 9.60947 1.72386C9.85952 1.97391 10 2.31304 10 2.66667V3.33333"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                Salin Semua
+                            </button>
+                        </div>
+                        <div id="resultContent" class="result-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Info & Examples -->
+            <div class="side-column">
+                <!-- Quick Examples -->
+                <div class="card examples-card">
+                    <div class="card-header">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Contoh Cepat
+                        </h3>
+                    </div>
+                    <div class="example-chips">
+                        <button class="chip" data-text="pembelajaran">pembelajaran</button>
+                        <button class="chip" data-text="Indonesia">Indonesia</button>
+                        <button class="chip" data-text="komputer">komputer</button>
+                        <button class="chip" data-text="perpustakaan">perpustakaan</button>
+                        <button class="chip" data-text="kebersamaan">kebersamaan</button>
+                        <button class="chip" data-text="menyenangkan">menyenangkan</button>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="card info-card">
+                    <div class="card-header">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            Cara Kerja
+                        </h3>
+                    </div>
+                    <p>Aplikasi ini menggunakan algoritma pemisahan suku kata bahasa Indonesia berdasarkan pola konsonan
+                        dan vokal. Backend diproses dengan Python Flask untuk akurasi maksimal!</p>
+
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>3 metode pemisahan berbeda</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Deteksi typo otomatis</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Proses batch multiple kata</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keyboard Shortcuts -->
+                <div class="card shortcuts-card">
+                    <div class="card-header">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10">
+                                </path>
+                            </svg>
+                            Keyboard Shortcuts
+                        </h3>
+                    </div>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <kbd>Enter</kbd>
+                            <span>Pisahkan suku kata</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Ctrl</kbd> + <kbd>C</kbd>
+                            <span>Salin hasil</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Footer -->
         <footer>
-            <p>Based on <a href="https://github.com/fahadh4ilyas/syllable_splitter"
-                    target="_blank">syllable_splitter</a> by fahadh4ilyas</p>
+            <p class="footer-tech">Built with Python, Flask & Modern Web Technologies</p>
         </footer>
     </div>
 
@@ -228,7 +400,6 @@
                 return;
             }
 
-            // Check if spell check is enabled
             if (spellCheckEnabled.checked) {
                 await checkSpelling(text);
             } else {
@@ -246,7 +417,6 @@
 
         // Spell checking function
         async function checkSpelling(text) {
-            // Show loading
             loadingSection.style.display = 'block';
             typoSection.style.display = 'none';
             resultSection.style.display = 'none';
@@ -268,7 +438,6 @@
                 loadingSection.style.display = 'none';
 
                 if (data.has_typos) {
-                    // Show typo warnings
                     typoSection.style.display = 'block';
 
                     let html = '';
@@ -288,14 +457,12 @@
 
                     typoContent.innerHTML = html;
                 } else {
-                    // No typos, proceed with processing
                     await processText(text);
                 }
 
             } catch (error) {
                 console.error('Error:', error);
                 loadingSection.style.display = 'none';
-                // If spell check fails, just proceed with processing
                 await processText(text);
             }
         }
@@ -333,7 +500,7 @@
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = copyBtn.innerHTML;
                 copyBtn.innerHTML = `
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     Tersalin!
@@ -350,10 +517,8 @@
 
         // Process text function
         async function processText(text) {
-            // Get selected method
             const selectedMethod = document.querySelector('input[name="method"]:checked').value;
 
-            // Show loading
             loadingSection.style.display = 'block';
             resultSection.style.display = 'none';
 
@@ -375,14 +540,12 @@
 
                 const data = await response.json();
 
-                // Hide loading, show results
                 loadingSection.style.display = 'none';
                 resultSection.style.display = 'block';
 
                 if (data.error) {
                     resultContent.innerHTML = `<p style="color: var(--text-muted);">${data.error}</p>`;
                 } else {
-                    // Update method badge
                     const methodBadge = document.getElementById('methodBadge');
                     if (data.method === 'kbbi') {
                         methodBadge.textContent = 'KBBI';
@@ -418,6 +581,17 @@
                 alert('Terjadi kesalahan saat memproses teks. Pastikan server Flask berjalan!');
             }
         }
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (link.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        });
 
         // Add smooth animations on load
         window.addEventListener('load', () => {

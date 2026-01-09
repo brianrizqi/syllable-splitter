@@ -49,22 +49,35 @@ class HybridSyllableSplitter:
         
         result = []
         
-        # Step 3: Handle prefix with infix decomposition
+        # Step 3: Handle prefix - ALWAYS decompose to check for infix
         if prefix:
             # Decompose prefix to check for infix
             base_prefix, infix = self.morphology.decompose_prefix(prefix)
             
+            # If no infix found in prefix, check if root starts with a potential infix
+            # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
+            # The "m" should be extracted as an infix
+            if not infix and prefix in ['pe', 'be', 'me', 'te', 'se'] and root:
+                # Check if root starts with a potential infix
+                potential_infixes = ['ng', 'ny', 'm', 'n', 'l', 'r']
+                for potential_infix in potential_infixes:
+                    if root.startswith(potential_infix):
+                        # Extract the infix from the root
+                        infix = potential_infix
+                        root = root[len(potential_infix):]  # Remove infix from root
+                        base_prefix = prefix
+                        break
+            
+            print(f"DEBUG: word='{word}', prefix='{prefix}', base='{base_prefix}', infix='{infix}', root='{root}'")
+            
             if infix:
                 # We have a prefix with infix (e.g., "pem" = "pe" + "m")
+                # Split them into separate syllables
                 result.append(base_prefix)
                 result.append(infix)
             else:
-                # No infix, treat prefix normally
-                if len(prefix) <= 3:
-                    result.append(prefix)
-                else:
-                    prefix_syllables = self.kbbi_splitter.split_syllables(prefix)
-                    result.extend(prefix_syllables)
+                # No infix, just add the prefix as-is
+                result.append(prefix)
         
         # Step 4: Root - apply syllable rules
         if root:
@@ -72,36 +85,10 @@ class HybridSyllableSplitter:
             if root in self.exceptions:
                 result.extend(self.exceptions[root])
             else:
-                # Check if root starts with a nasal consonant that's actually part of prefix
-                # (e.g., "mbelajar" → "m" + "belajar" when prefix is "pe")
-                # Only extract TRUE nasal consonants (m, n, ng, ny), not liquids (l, r)
-                extracted_infix = ''
-                remaining_root = root
-                
-                if prefix in ['pe', 'be', 'me']:
-                    # Check for leading nasal consonants (not liquids!)
-                    nasal_consonants = ['ng', 'ny', 'm', 'n']
-                    for nasal in nasal_consonants:
-                        if root.startswith(nasal) and len(root) > len(nasal):
-                            extracted_infix = nasal
-                            remaining_root = root[len(nasal):]
-                            break
-                
-                if extracted_infix:
-                    # Add the extracted infix as a separate syllable
-                    result.append(extracted_infix)
-                    # Now split the remaining root
-                    if remaining_root:
-                        # Check if remaining root is in exceptions
-                        if remaining_root in self.exceptions:
-                            result.extend(self.exceptions[remaining_root])
-                        else:
-                            remaining_syllables = self.kbbi_splitter.split_syllables(remaining_root)
-                            result.extend(remaining_syllables)
-                else:
-                    # No extracted infix, split root normally
-                    root_syllables = self.kbbi_splitter.split_syllables(root)
-                    result.extend(root_syllables)
+                # Split root normally using KBBI syllable rules
+                root_syllables = self.kbbi_splitter.split_syllables(root)
+                result.extend(root_syllables)
+
         
         # Step 5: Suffix - usually keep as one syllable
         if suffix:

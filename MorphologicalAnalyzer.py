@@ -61,10 +61,12 @@ class MorphologicalAnalyzer:
         """
         Decompose a prefix into base prefix and infix.
         
-        Indonesian prefixes like "pe", "be", "me" can have infixes inserted:
-        - "pem", "pel", "per" → base "pe" + infix "m", "l", "r"
-        - "bem", "bel", "ber" → base "be" + infix "m", "l", "r"
-        - "mem", "mel", "mer" → base "me" + infix "m", "l", "r"
+        Indonesian prefixes can have infixes (peluluhan) inserted:
+        - "per", "pen", "pem", "pel", "peng", "peny" → base "pe" + infix "r", "n", "m", "l", "ng", "ny"
+        - "ber", "bel", "bem" → base "be" + infix "r", "l", "m"
+        - "mer", "men", "mem", "mel", "meng", "meny" → base "me" + infix "r", "n", "m", "l", "ng", "ny"
+        - "ter", "tel", "tem", "teng", "teny" → base "te" + infix "r", "l", "m", "ng", "ny"
+        - "ser", "sel", "sem" → base "se" + infix "r", "l", "m"
         
         Args:
             prefix: The prefix string to decompose
@@ -76,9 +78,10 @@ class MorphologicalAnalyzer:
             return ('', '')
         
         # Define base prefixes that can have infixes
-        base_prefixes = ['pe', 'be', 'me']
-        # Common infixes inserted after base prefixes
-        infixes = ['m', 'l', 'r', 'n', 'ng', 'ny']
+        # Note: 'di' is not included because it doesn't have infix variations
+        base_prefixes = ['pe', 'be', 'me', 'te', 'se']
+        # Common infixes inserted after base prefixes (ordered by length for proper matching)
+        infixes = ['ng', 'ny', 'm', 'l', 'r', 'n']
         
         # Check if prefix is a variation with infix
         for base in base_prefixes:
