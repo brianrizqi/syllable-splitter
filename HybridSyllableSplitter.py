@@ -54,19 +54,56 @@ class HybridSyllableSplitter:
             # Decompose prefix to check for infix
             base_prefix, infix = self.morphology.decompose_prefix(prefix)
             
+            # CRITICAL FIX: Check if the infix should actually be kept with the root
+            # This happens when root starts with a vowel (peluluhan case)
+            # Example: "memisah" → prefix="mem" decomposes to base="me" + infix="m"
+            #          but root="isah" starts with vowel, so "m" should stay with root → "mi-sah"
+            if infix and root and len(root) > 0:
+                vowels = 'aiueo'
+                # If root starts with a vowel, the infix is from peluluhan
+                # Put it back with the root, don't separate it
+                if root[0] in vowels:
+                    root = infix + root  # Combine infix back with root
+                    infix = ''  # Clear the infix
+            
             # If no infix found in prefix, check if root starts with a potential infix
             # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
-            # The "m" should be extracted as an infix
+            # The "m" should be extracted as an infix ONLY if it forms a consonant cluster
             if not infix and prefix in ['pe', 'be', 'me', 'te', 'se'] and root:
-                # Check if root starts with a potential infix
-                potential_infixes = ['ng', 'ny', 'm', 'n', 'l', 'r']
-                for potential_infix in potential_infixes:
-                    if root.startswith(potential_infix):
-                        # Extract the infix from the root
-                        infix = potential_infix
-                        root = root[len(potential_infix):]  # Remove infix from root
+                # Check if root starts with a consonant cluster that needs splitting
+                # Only extract infixes when they form clusters (e.g., "mb", "ng", "ny")
+                # NOT single consonants from peluluhan (e.g., "m" in "memisah" from "pisah")
+                
+                # Check for consonant clusters first (these should be split)
+                consonant_clusters = ['mb', 'ng', 'ny']
+                cluster_found = False
+                
+                for cluster in consonant_clusters:
+                    if root.startswith(cluster):
+                        # Extract the first consonant as infix
+                        infix = cluster[0] if cluster != 'ng' and cluster != 'ny' else cluster
+                        root = root[len(infix):]  # Remove infix from root
                         base_prefix = prefix
+                        cluster_found = True
                         break
+                
+                # If no cluster found, check if it's a single consonant followed by a vowel
+                # In this case, it's likely peluluhan, so DON'T extract it as infix
+                if not cluster_found and len(root) >= 2:
+                    first_char = root[0]
+                    second_char = root[1]
+                    vowels = 'aiueo'
+                    
+                    # Only extract as infix if first char is consonant AND second char is also consonant
+                    # This means it's a consonant cluster that needs splitting
+                    if first_char not in vowels and second_char not in vowels:
+                        # It's a consonant cluster, extract first consonant as infix
+                        potential_infixes = ['m', 'n', 'l', 'r']
+                        if first_char in potential_infixes:
+                            infix = first_char
+                            root = root[1:]  # Remove infix from root
+                            base_prefix = prefix
+                    # If second char is a vowel, it's peluluhan - keep consonant with root
             
             print(f"DEBUG: word='{word}', prefix='{prefix}', base='{base_prefix}', infix='{infix}', root='{root}'")
             
@@ -76,8 +113,8 @@ class HybridSyllableSplitter:
                 result.append(base_prefix)
                 result.append(infix)
             else:
-                # No infix, just add the prefix as-is
-                result.append(prefix)
+                # No infix, just add the base prefix
+                result.append(base_prefix)
         
         # Step 4: Root - apply syllable rules
         if root:
