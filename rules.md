@@ -9,7 +9,7 @@
 Aplikasi ini adalah **website** yang bisa memisahkan kata bahasa Indonesia menjadi suku-suku kata.
 
 **Contoh:**
-- `pembelajaran` → `pe-m-bel-a-jar-an`
+- `pembelajaran` → `pe-m-be-l-a-jar-an`
 - `Indonesia` → `In-do-ne-si-a`
 
 ---
@@ -133,7 +133,7 @@ Metode ini lebih pintar karena bisa memisahkan **imbuhan** (awalan dan akhiran).
 | Metode | Hasil | Penjelasan |
 |--------|-------|------------|
 | PUEBI  | `pem-be-la-ja-ran` | Pisah suku kata biasa |
-| KBBI   | `pe-m-bel-a-jar-an` | `pe` (awalan) + `m` (sisipan) + `bel-a-jar` (kata dasar) + `an` (akhiran) |
+| KBBI   | `pe-m-be-l-a-jar-an` | `pe` (awalan 1) + `m` (sisipan 1) + `be` (awalan 2) + `l` (sisipan 2) + `a-jar` (kata dasar) + `an` (akhiran) |
 
 ---
 
@@ -161,6 +161,54 @@ Huruf yang "nyempil" di tengah awalan.
 **Contoh:**
 - `pem` → `pe` + `m` (sisipan)
 - `pel` → `pe` + `l` (sisipan)
+- `bel` → `be` + `l` (sisipan)
+
+#### 4. Awalan Bertingkat (Nested Prefix)
+Kata bisa punya lebih dari satu awalan dengan sisipan masing-masing.
+
+**Contoh:**
+- `pembelajaran` → `pe` + `m` + `be` + `l` + `ajar` + `an`
+  - Awalan pertama: `pe` dengan sisipan `m`
+  - Awalan kedua: `be` dengan sisipan `l`
+  - Kata dasar: `ajar`
+  - Akhiran: `an`
+
+#### 5. Peluluhan (Nasal Assimilation)
+Ketika awalan nasal (`me-`, `pe-`, dll) bertemu dengan kata dasar yang dimulai dengan konsonan tertentu, konsonan tersebut **hilang** (luluh) dan digantikan oleh sisipan nasal.
+
+**Aturan Peluluhan:**
+
+| Sisipan | Konsonan Asli | Contoh |
+|---------|---------------|--------|
+| `m` | `p` | `memisah` = `me` + `m` + **p**isah → `me-m-pi-sah` |
+| `n` | `t` | `menari` = `me` + `n` + **t**ari → `me-n-ta-ri` |
+| `ng` | `k` | `mengetik` = `me` + `ng` + **k**etik → `me-ng-ke-tik` |
+| `ny` | `s` | `menyapu` = `me` + `ny` + **s**apu → `me-ny-sa-pu` |
+
+**Cara Kerja:**
+1. Aplikasi menggunakan **lemmatizer** dari `nlp-id` untuk mendeteksi kata dasar
+2. Jika kata dasar dimulai dengan konsonan yang luluh (p, t, k, s), konsonan tersebut **dikembalikan**
+3. Hasil: awalan + sisipan + **konsonan asli** + sisa kata dasar
+
+**Contoh Detail:**
+
+**memisah** (kata dasar: **pisah**):
+- Awalan: `me`
+- Sisipan: `m`
+- Kata dasar: `pisah` (huruf `p` dikembalikan)
+- Hasil: `me-m-pi-sah` ✅
+
+**memakai** (kata dasar: **pakai**):
+- Awalan: `me`
+- Sisipan: `m` (diambil dari awal detected root)
+- Kata dasar: `pakai` (huruf `p` dikembalikan)
+- Hasil: `me-m-pa-kai-i` ✅
+
+**mengetik** (kata dasar: **ketik**):
+- Awalan: `me`
+- Sisipan: `ng`
+- Kata dasar: `ketik` (huruf `k` dikembalikan)
+- Hasil: `me-ng-ke-tik` ✅
 
 ---
 
@@ -206,7 +254,7 @@ Aplikasi akan kasih saran kata yang mungkin benar:
   "results": [
     {
       "word": "pembelajaran",
-      "syllables": ["pe", "m", "bel", "a", "jar", "an"]
+      "syllables": ["pe", "m", "be", "l", "a", "jar", "an"]
     },
     {
       "word": "Indonesia",
@@ -322,11 +370,18 @@ banyak         → ba-nyak
 
 ### Test KBBI
 ```
-pembelajaran   → pe-m-bel-a-jar-an
+pembelajaran   → pe-m-be-l-a-jar-an
 Indonesia      → In-do-ne-si-a
 komputer       → kom-pu-ter
 membaca        → me-m-ba-ca
 banyak         → ba-nyak
+
+# Test Peluluhan (Nasal Assimilation)
+memisah        → me-m-pi-sah
+memakai        → me-m-pa-kai-i
+mengetik       → me-ng-ke-tik
+menyapu        → me-ny-sa-pu
+memasak        → me-m-pa-sak
 ```
 
 ---
@@ -357,7 +412,7 @@ banyak         → ba-nyak
 |-------|-------|------|
 | **Fokus** | Pemisahan suku kata murni | Pemisahan + analisis imbuhan |
 | **Hasil** | Suku kata saja | Awalan + sisipan + kata dasar + akhiran |
-| **Contoh** | `pem-be-la-ja-ran` | `pe-m-bel-a-jar-an` |
+| **Contoh** | `pem-be-la-ja-ran` | `pe-m-be-l-a-jar-an` |
 | **Kegunaan** | Untuk ejaan umum | Untuk analisis linguistik |
 
 ### Kapan Pakai Yang Mana?

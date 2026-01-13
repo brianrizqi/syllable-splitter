@@ -54,58 +54,95 @@ class HybridSyllableSplitter:
             # Decompose prefix to check for infix
             base_prefix, infix = self.morphology.decompose_prefix(prefix)
             
-            # CRITICAL FIX: Check if the infix should actually be kept with the root
-            # This happens when root starts with a vowel (peluluhan case)
-            # Example: "memisah" → prefix="mem" decomposes to base="me" + infix="m"
-            #          but root="isah" starts with vowel, so "m" should stay with root → "mi-sah"
+            # CRITICAL: Check if we should restore consonants for nasal assimilation
+            # This handles cases where original consonant was assimilated during prefix attachment
+            # Example: "memisah" → detected_root="isah", should restore "p" to get "pisah"
+            #          "mengetik" → detected_root="etik", should restore "k" to get "ketik"
             if infix and root and len(root) > 0:
                 vowels = 'aiueo'
-                # If root starts with a vowel, the infix is from peluluhan
-                # Put it back with the root, don't separate it
+                
+                # If detected root starts with vowel, we need to restore the consonant
                 if root[0] in vowels:
-                    root = infix + root  # Combine infix back with root
-                    infix = ''  # Clear the infix
+                    # PRIORITY 1: Restore based on infix type (most reliable)
+                    # ng → k, ny → s, m → p, n → t
+                    consonant_map = {
+                        'ng': 'k',
+                        'ny': 's', 
+                        'm': 'p',
+                        'n': 't'
+                    }
+                    
+                    if infix in consonant_map:
+                        # Restore the consonant based on infix mapping
+                        restored_consonant = consonant_map[infix]
+                        root = restored_consonant + root
+                        # Don't clear infix - we still want to separate it
+                    elif lemmatized_root and lemmatized_root[0] not in vowels:
+                        # PRIORITY 2: Use lemmatized root if available and starts with consonant
+                        # This handles cases where lemmatizer correctly returns the root
+                        root = lemmatized_root
+                        # Don't clear infix
+                    else:
+                        # PRIORITY 3: Regular peluluhan case - infix becomes part of root
+                        # This is for cases where the infix is truly part of the root
+                        root = infix + root
+                        infix = ''
             
             # If no infix found in prefix, check if root starts with a potential infix
             # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
             # The "m" should be extracted as an infix ONLY if it forms a consonant cluster
             if not infix and prefix in ['pe', 'be', 'me', 'te', 'se'] and root:
-                # Check if root starts with a consonant cluster that needs splitting
-                # Only extract infixes when they form clusters (e.g., "mb", "ng", "ny")
-                # NOT single consonants from peluluhan (e.g., "m" in "memisah" from "pisah")
+                # FIRST: Check if this is a nasal assimilation case using lemmatized root
+                # Example: "memakai" → prefix="me", detected_root="maka", lemmatized_root="pakai"
+                # We want to extract "m" as infix and use "pakai" as root
+                vowels = 'aiueo'
+                assimilated_consonants = 'ptks'
+                potential_infixes = ['m', 'n', 'l', 'r']
                 
-                # Check for consonant clusters first (these should be split)
-                consonant_clusters = ['mb', 'ng', 'ny']
-                cluster_found = False
-                
-                for cluster in consonant_clusters:
-                    if root.startswith(cluster):
-                        # Extract the first consonant as infix
-                        infix = cluster[0] if cluster != 'ng' and cluster != 'ny' else cluster
-                        root = root[len(infix):]  # Remove infix from root
-                        base_prefix = prefix
-                        cluster_found = True
-                        break
-                
-                # If no cluster found, check if it's a single consonant followed by a vowel
-                # In this case, it's likely peluluhan, so DON'T extract it as infix
-                if not cluster_found and len(root) >= 2:
-                    first_char = root[0]
-                    second_char = root[1]
-                    vowels = 'aiueo'
+                if (lemmatized_root and 
+                    len(root) >= 2 and 
+                    root[0] in potential_infixes and 
+                    root[1] in vowels and
+                    lemmatized_root[0] in assimilated_consonants):
+                    # This is nasal assimilation: extract infix and use lemmatized root
+                    infix = root[0]
+                    root = lemmatized_root
+                    base_prefix = prefix
+                else:
+                    # Check if root starts with a consonant cluster that needs splitting
+                    # Only extract infixes when they form clusters (e.g., "mb", "ng", "ny")
+                    # NOT single consonants from peluluhan (e.g., "m" in "memisah" from "pisah")
                     
-                    # Only extract as infix if first char is consonant AND second char is also consonant
-                    # This means it's a consonant cluster that needs splitting
-                    if first_char not in vowels and second_char not in vowels:
-                        # It's a consonant cluster, extract first consonant as infix
-                        potential_infixes = ['m', 'n', 'l', 'r']
-                        if first_char in potential_infixes:
-                            infix = first_char
-                            root = root[1:]  # Remove infix from root
+                    # Check for consonant clusters first (these should be split)
+                    consonant_clusters = ['mb', 'ng', 'ny']
+                    cluster_found = False
+                    
+                    for cluster in consonant_clusters:
+                        if root.startswith(cluster):
+                            # Extract the first consonant as infix
+                            infix = cluster[0] if cluster != 'ng' and cluster != 'ny' else cluster
+                            root = root[len(infix):]  # Remove infix from root
                             base_prefix = prefix
-                    # If second char is a vowel, it's peluluhan - keep consonant with root
+                            cluster_found = True
+                            break
+                    
+                    # If no cluster found, check if it's a single consonant followed by a vowel
+                    # In this case, it's likely peluluhan, so DON'T extract it as infix
+                    if not cluster_found and len(root) >= 2:
+                        first_char = root[0]
+                        second_char = root[1]
+                        
+                        # Only extract as infix if first char is consonant AND second char is also consonant
+                        # This means it's a consonant cluster that needs splitting
+                        if first_char not in vowels and second_char not in vowels:
+                            # It's a consonant cluster, extract first consonant as infix
+                            if first_char in potential_infixes:
+                                infix = first_char
+                                root = root[1:]  # Remove infix from root
+                                base_prefix = prefix
+                        # If second char is a vowel, it's peluluhan - keep consonant with root
             
-            print(f"DEBUG: word='{word}', prefix='{prefix}', base='{base_prefix}', infix='{infix}', root='{root}'")
+
             
             if infix:
                 # We have a prefix with infix (e.g., "pem" = "pe" + "m")
@@ -115,6 +152,45 @@ class HybridSyllableSplitter:
             else:
                 # No infix, just add the base prefix
                 result.append(base_prefix)
+            
+            # NESTED PREFIX CHECK: After extracting first prefix+infix, check if root has another prefix
+            # Example: "pembelajaran" → "pe" + "m" extracted, now check if "belajar" has "be" + "l"
+            if root and len(root) > 2:
+                # Check if root starts with a decomposable prefix
+                nested_base_prefixes = ['pe', 'be', 'me', 'te', 'se']
+                for nested_prefix in nested_base_prefixes:
+                    if root.startswith(nested_prefix) and len(root) > len(nested_prefix):
+                        # Check if there's an infix after this prefix
+                        potential_infix_part = root[len(nested_prefix):]
+
+                        if len(potential_infix_part) >= 2:
+                            first_char = potential_infix_part[0]
+                            second_char = potential_infix_part[1]
+                            vowels = 'aiueo'
+                            potential_infixes = ['m', 'n', 'l', 'r', 'ng', 'ny']
+                            
+                            # Check for two-char infixes first (ng, ny)
+                            if potential_infix_part[:2] in ['ng', 'ny']:
+                                nested_infix = potential_infix_part[:2]
+                                remaining_root = potential_infix_part[2:]
+                                if len(remaining_root) >= 2:  # Ensure remaining root is valid
+                                    result.append(nested_prefix)
+                                    result.append(nested_infix)
+                                    root = remaining_root
+
+                                    break
+                            # Check for single-char infixes
+                            # The infix can be followed by either consonant OR vowel
+                            # Example: "belajar" → "be" + "l" + "ajar" (l followed by vowel a)
+                            elif first_char in potential_infixes:
+                                nested_infix = first_char
+                                remaining_root = potential_infix_part[1:]
+                                if len(remaining_root) >= 2:  # Ensure remaining root is valid
+                                    result.append(nested_prefix)
+                                    result.append(nested_infix)
+                                    root = remaining_root
+
+                                    break
         
         # Step 4: Root - apply syllable rules
         if root:
