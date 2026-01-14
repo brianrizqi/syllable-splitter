@@ -58,35 +58,55 @@ class HybridSyllableSplitter:
             # This handles cases where original consonant was assimilated during prefix attachment
             # Example: "memisah" → detected_root="isah", should restore "p" to get "pisah"
             #          "mengetik" → detected_root="etik", should restore "k" to get "ketik"
+            # BUT NOT: "mengemban" → detected_root="emb", lemmatized_root="emban" (no restoration needed)
             if infix and root and len(root) > 0:
                 vowels = 'aiueo'
                 
-                # If detected root starts with vowel, we need to restore the consonant
+                # If detected root starts with vowel, check if we need to restore consonant
                 if root[0] in vowels:
-                    # PRIORITY 1: Restore based on infix type (most reliable)
-                    # ng → k, ny → s, m → p, n → t
-                    consonant_map = {
-                        'ng': 'k',
-                        'ny': 's', 
-                        'm': 'p',
-                        'n': 't'
-                    }
+                    # Strip suffix from lemmatized_root to get pure root
+                    pure_lemmatized_root = lemmatized_root
+                    if suffix and lemmatized_root and lemmatized_root.endswith(suffix):
+                        pure_lemmatized_root = lemmatized_root[:-len(suffix)]
                     
-                    if infix in consonant_map:
-                        # Restore the consonant based on infix mapping
-                        restored_consonant = consonant_map[infix]
-                        root = restored_consonant + root
-                        # Don't clear infix - we still want to separate it
-                    elif lemmatized_root and lemmatized_root[0] not in vowels:
-                        # PRIORITY 2: Use lemmatized root if available and starts with consonant
-                        # This handles cases where lemmatizer correctly returns the root
+                    # PRIORITY 1: Check if pure lemmatized root also starts with vowel
+                    # If yes, no peluluhan occurred - use FULL lemmatized root
+                    # Example: "mengemban" → detected_root="emb", lemmatized_root="emban"
+                    # The morphological analyzer incorrectly split "emban" into "emb"+"an"
+                    # We should use the full "emban" from lemmatizer and clear the suffix
+                    if pure_lemmatized_root and pure_lemmatized_root[0] in vowels:
+                        # No peluluhan - root naturally starts with vowel
+                        # Use FULL lemmatized root (including what was detected as suffix)
                         root = lemmatized_root
-                        # Don't clear infix
+                        suffix = ''  # Clear suffix since it's part of the root
+                        # Don't clear infix - we still want to separate it
+                    # PRIORITY 2: Restore based on infix type (most reliable for peluluhan)
+                    # ng → k, ny → s, m → p, n → t
+                    # This handles cases where lemmatizer returns incomplete root
+                    # Example: "mengetik" → detected_root="etik", restore 'k' to get "ketik"
                     else:
-                        # PRIORITY 3: Regular peluluhan case - infix becomes part of root
-                        # This is for cases where the infix is truly part of the root
-                        root = infix + root
-                        infix = ''
+                        consonant_map = {
+                            'ng': 'k',
+                            'ny': 's', 
+                            'm': 'p',
+                            'n': 't'
+                        }
+                        
+                        if infix in consonant_map:
+                            # Restore the consonant based on infix mapping
+                            restored_consonant = consonant_map[infix]
+                            root = restored_consonant + root
+                            # Don't clear infix - we still want to separate it
+                        elif pure_lemmatized_root and pure_lemmatized_root[0] not in vowels:
+                            # PRIORITY 3: Use pure lemmatized root if available and starts with consonant
+                            # This handles cases where lemmatizer correctly returns the root
+                            root = pure_lemmatized_root
+                            # Don't clear infix
+                        else:
+                            # PRIORITY 4: Regular peluluhan case - infix becomes part of root
+                            # This is for cases where the infix is truly part of the root
+                            root = infix + root
+                            infix = ''
             
             # If no infix found in prefix, check if root starts with a potential infix
             # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
@@ -105,8 +125,11 @@ class HybridSyllableSplitter:
                     root[1] in vowels and
                     lemmatized_root[0] in assimilated_consonants):
                     # This is nasal assimilation: extract infix and use lemmatized root
+                    # Example: "memakai" → detected_root="maka", lemmatized_root="pakai"
+                    # The morphological analyzer incorrectly split "pakai" into "maka"+"i"
                     infix = root[0]
                     root = lemmatized_root
+                    suffix = ''  # Clear suffix since it's part of the root
                     base_prefix = prefix
                 else:
                     # Check if root starts with a consonant cluster that needs splitting

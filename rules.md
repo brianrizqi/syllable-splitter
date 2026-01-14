@@ -202,13 +202,20 @@ Ketika awalan nasal (`me-`, `pe-`, dll) bertemu dengan kata dasar yang dimulai d
 - Awalan: `me`
 - Sisipan: `m` (diambil dari awal detected root)
 - Kata dasar: `pakai` (huruf `p` dikembalikan)
-- Hasil: `me-m-pa-kai-i` ✅
+- Hasil: `me-m-pa-kai` ✅
 
 **mengetik** (kata dasar: **ketik**):
 - Awalan: `me`
 - Sisipan: `ng`
 - Kata dasar: `ketik` (huruf `k` dikembalikan)
 - Hasil: `me-ng-ke-tik` ✅
+
+**mengemban** (kata dasar: **emban**):
+- Awalan: `me`
+- Sisipan: `ng`
+- Kata dasar: `emban` (dimulai dengan vokal, TIDAK ada peluluhan)
+- Hasil: `me-ng-em-ban` ✅
+- **Catatan**: Berbeda dengan kasus peluluhan, kata "emban" memang dimulai dengan vokal 'e', jadi tidak ada konsonan yang perlu dikembalikan.
 
 ---
 
@@ -378,10 +385,11 @@ banyak         → ba-nyak
 
 # Test Peluluhan (Nasal Assimilation)
 memisah        → me-m-pi-sah
-memakai        → me-m-pa-kai-i
+memakai        → me-m-pa-kai
 mengetik       → me-ng-ke-tik
 menyapu        → me-ny-sa-pu
 memasak        → me-m-pa-sak
+mengemban      → me-ng-em-ban  # Root "emban" starts with vowel, no consonant restoration
 ```
 
 ---
