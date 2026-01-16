@@ -49,16 +49,30 @@ Klik pada file `syllable_splitter_demo.ipynb` untuk membuka notebook demo.
 
 Notebook `syllable_splitter_demo.ipynb` mencakup:
 
-1. **Setup dan Import** - Mengimport modul yang diperlukan
-2. **Inisialisasi Splitter** - Membuat instance HybridSyllableSplitter
-3. **Contoh Penggunaan Dasar** - Memisahkan kata tunggal
+### BAGIAN 1: Local Splitter (Offline)
+1. **Setup dan Import** - Mengimport semua modul yang diperlukan
+2. **Inisialisasi Splitter** - Setup Hybrid, PUEBI Splitter, dan KBBI Scraper
+3. **Memisahkan Kata Tunggal** - Contoh dasar
 4. **Batch Processing** - Memisahkan banyak kata sekaligus
 5. **Analisis Morfologi** - Analisis detail kata kompleks
-6. **Perbandingan Metode** - Membandingkan Hybrid, PUEBI, dan KBBI splitter
+6. **Perbandingan Metode Local** - Membandingkan Hybrid dan PUEBI splitter
 7. **Uji Kasus Peluluhan** - Testing kasus nasal assimilation
-8. **Input Interaktif** - Mencoba kata sendiri
-9. **Analisis Batch dari File** - Menggunakan pandas untuk batch processing
-10. **Export ke CSV** - Menyimpan hasil ke file CSV
+
+### BAGIAN 2: KBBI Scraper (Online)
+8. **Scraping dari KBBI** - Mengambil data langsung dari website KBBI
+9. **Batch Processing KBBI** - Scraping beberapa kata dengan delay
+10. **Perbandingan Online vs Offline** - Membandingkan KBBI Scraper vs Hybrid Splitter
+
+### BAGIAN 3: Analisis dan Export
+11. **Input Interaktif** - Mencoba kata sendiri (offline + online)
+12. **Analisis Batch dengan Pandas** - Batch processing dengan dataframe
+13. **Export ke CSV** - Menyimpan hasil ke file CSV
+14. **Kesimpulan** - Perbandingan metode dan rekomendasi penggunaan
+
+**Catatan Penting:**
+- Method yang benar adalah `split_syllables()` bukan `split()`
+- KBBI Scraper membutuhkan koneksi internet
+- Gunakan delay saat scraping untuk tidak membebani server KBBI
 
 ## Tips
 
