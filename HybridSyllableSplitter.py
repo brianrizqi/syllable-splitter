@@ -54,6 +54,29 @@ class HybridSyllableSplitter:
             # Decompose prefix to check for infix
             base_prefix, infix = self.morphology.decompose_prefix(prefix)
             
+            # Special handling for prefixes like 'penge', 'peny', 'ber', etc.
+            # that contain an infix but weren't decomposed (e.g., 'penge' → 'pe' + 'ng' + 'e')
+            if not infix and len(prefix) >= 4:
+                vowels = 'aiueo'
+                two_char_infixes = ['ng', 'ny']
+                base_prefixes = ['pe', 'be', 'me', 'te', 'se']
+                
+                # Check if prefix matches pattern: base_prefix + two_char_infix + vowel
+                # Example: 'penge' = 'pe' + 'ng' + 'e'
+                for base in base_prefixes:
+                    for infix_pattern in two_char_infixes:
+                        if (prefix.startswith(base + infix_pattern) and 
+                            len(prefix) > len(base + infix_pattern) and
+                            prefix[len(base + infix_pattern)] in vowels):
+                            # Extract the infix and prepend the vowel to the root
+                            base_prefix = base
+                            infix = infix_pattern
+                            vowel_part = prefix[len(base + infix_pattern):]
+                            root = vowel_part + root if root else vowel_part
+                            break
+                    if infix:
+                        break
+            
             # CRITICAL: Check if we should restore consonants for nasal assimilation
             # This handles cases where original consonant was assimilated during prefix attachment
             # Example: "memisah" → detected_root="isah", should restore "p" to get "pisah"
@@ -112,25 +135,71 @@ class HybridSyllableSplitter:
             # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
             # The "m" should be extracted as an infix ONLY if it forms a consonant cluster
             if not infix and prefix in ['pe', 'be', 'me', 'te', 'se'] and root:
-                # FIRST: Check if this is a nasal assimilation case using lemmatized root
-                # Example: "memakai" → prefix="me", detected_root="maka", lemmatized_root="pakai"
-                # We want to extract "m" as infix and use "pakai" as root
+                # FIRST: Check if detected_root has a leading consonant that's not in lemmatized_root
+                # Example: "perubahan" → detected_root="rubah", lemmatized_root="ubah"
+                # The 'r' should be extracted as infix
+                # IMPORTANT: Handle both single and two-character infixes
+                # NOT for nested prefixes like "pembelajaran" where detected_root="mbelajar", lemmatized_root="ajar"
                 vowels = 'aiueo'
-                assimilated_consonants = 'ptks'
                 potential_infixes = ['m', 'n', 'l', 'r']
+                two_char_infixes = ['ng', 'ny']
                 
-                if (lemmatized_root and 
+                if lemmatized_root and len(root) >= 2:
+                    # Check for two-character infixes first (ng, ny)
+                    # Example: "pengecualian" → detected_root="ngecuali", lemmatized_root="kecuali"
+                    # The 'ng' should be extracted, even though length diff is 1 (ng replaces k)
+                    if (len(root) >= 2 and 
+                        root[:2] in two_char_infixes and
+                        not lemmatized_root.startswith(root[:2])):
+                        # Extract the two-character infix
+                        # Example: "pengecualian" → extract 'ng', use "kecuali"
+                        infix = root[:2]
+                        root = lemmatized_root
+                        # Only clear suffix if lemmatized_root includes it
+                        if suffix and lemmatized_root.endswith(suffix):
+                            suffix = ''  # Clear suffix since it's part of the root
+                        base_prefix = prefix
+                    # Check for single-character infixes
+                    # Only if length difference is exactly 1 (to avoid nested prefixes)
+                    elif (len(root) - len(lemmatized_root) == 1 and
+                        root[0] in potential_infixes and
+                        root[0] not in vowels):
+                        # Check if lemmatized_root starts with a different character
+                        # This indicates the first character is an infix
+                        if (lemmatized_root[0] in vowels or 
+                            (lemmatized_root[0] not in vowels and lemmatized_root[0] != root[0])):
+                            # Extract the first character as infix
+                            # Example: "perubahan" → extract 'r', use "ubah"
+                            infix = root[0]
+                            root = lemmatized_root
+                            # Only clear suffix if lemmatized_root includes it
+                            # Example: "mengemban" → lemmatized_root="emban" includes "an", clear it
+                            # But "perubahan" → lemmatized_root="ubah" doesn't include "an", keep it
+                            if suffix and lemmatized_root.endswith(suffix):
+                                suffix = ''  # Clear suffix since it's part of the root
+                            base_prefix = prefix
+                # SECOND: Check if this is a nasal assimilation case using lemmatized root
+                # Example: "memakai" → prefix="me", detected_root="maka", lemmatized_root="pakai"
+                # Example: "penurunan" → prefix="pe", detected_root="nurun", lemmatized_root="turun"
+                # We want to extract "m" or "n" as infix and use the lemmatized root
+                if (not infix and 
+                    lemmatized_root and 
                     len(root) >= 2 and 
                     root[0] in potential_infixes and 
-                    root[1] in vowels and
-                    lemmatized_root[0] in assimilated_consonants):
-                    # This is nasal assimilation: extract infix and use lemmatized root
-                    # Example: "memakai" → detected_root="maka", lemmatized_root="pakai"
-                    # The morphological analyzer incorrectly split "pakai" into "maka"+"i"
-                    infix = root[0]
-                    root = lemmatized_root
-                    suffix = ''  # Clear suffix since it's part of the root
-                    base_prefix = prefix
+                    root[1] in vowels):
+                    assimilated_consonants = 'ptks'
+                    if lemmatized_root[0] in assimilated_consonants:
+                        # This is nasal assimilation: extract infix and use lemmatized root
+                        # Example: "memakai" → detected_root="maka", lemmatized_root="pakai"
+                        # The morphological analyzer incorrectly split "pakai" into "maka"+"i"
+                        infix = root[0]
+                        root = lemmatized_root
+                        # Only clear suffix if lemmatized_root includes it
+                        # Example: "memakai" → lemmatized_root="pakai" includes "i", clear it
+                        # But "penurunan" → lemmatized_root="turun" doesn't include "an", keep it
+                        if suffix and lemmatized_root.endswith(suffix):
+                            suffix = ''  # Clear suffix since it's part of the root
+                        base_prefix = prefix
                 else:
                     # Check if root starts with a consonant cluster that needs splitting
                     # Only extract infixes when they form clusters (e.g., "mb", "ng", "ny")
