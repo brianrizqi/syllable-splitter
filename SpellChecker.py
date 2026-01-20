@@ -1,26 +1,51 @@
-# Indonesian Spell Checker
-# Detects typos and provides word suggestions
+# Indonesian Spell Checker with KBBI Validation
+# Detects typos, validates against KBBI, and detects non-Indonesian words
 
-from spellchecker import SpellChecker
+import pandas as pd
+import re
+import os
+from difflib import SequenceMatcher
 
 class IndonesianSpellChecker:
     
     def __init__(self):
-        # Initialize spell checker with Indonesian language
-        # Note: pyspellchecker doesn't have built-in Indonesian, 
-        # so we'll use the word frequency from our lemmatizer
-        self.spell = SpellChecker(language=None)  # Start with empty dictionary
+        """Initialize spell checker with KBBI word list."""
+        self.kbbi_words = set()
+        self.kbbi_df = None
+        self._load_kbbi()
         
-        # We'll rely on nlp-id's vocabulary for now
-        # In production, you could load a custom Indonesian word list
-        self.use_nlp_id = True
-        
-        if self.use_nlp_id:
-            try:
-                from nlp_id.lemmatizer import Lemmatizer
-                self.lemmatizer = Lemmatizer()
-            except ImportError:
-                self.use_nlp_id = False
+        # Common English words to detect non-Indonesian text
+        self.common_english_words = {
+            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
+            'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+            'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she',
+            'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their',
+            'hello', 'world', 'computer', 'learning', 'english', 'language'
+        }
+    
+    def _load_kbbi(self):
+        """Load KBBI word list from CSV file."""
+        try:
+            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_v.csv')
+            
+            # Load KBBI CSV
+            self.kbbi_df = pd.read_csv(kbbi_path, encoding='utf-8')
+            
+            # Extract words from the 'lema' column (assuming it contains the words)
+            if 'lema' in self.kbbi_df.columns:
+                self.kbbi_words = set(self.kbbi_df['lema'].str.lower().dropna())
+            elif 'word' in self.kbbi_df.columns:
+                self.kbbi_words = set(self.kbbi_df['word'].str.lower().dropna())
+            else:
+                # Try first column
+                self.kbbi_words = set(self.kbbi_df.iloc[:, 0].str.lower().dropna())
+            
+            print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI")
+            
+        except Exception as e:
+            print(f"⚠ Warning: Could not load KBBI CSV: {e}")
+            print("  Spell checker will use pattern-based detection only")
+            self.kbbi_words = set()
     
     def check_word(self, word):
         """
@@ -33,6 +58,8 @@ class IndonesianSpellChecker:
             dict: {
                 'word': original word,
                 'is_correct': boolean,
+                'error_type': 'typo' | 'not_found' | 'non_indonesian' | None,
+                'reason': explanation of the error,
                 'suggestions': list of suggested corrections
             }
         """
@@ -40,36 +67,103 @@ class IndonesianSpellChecker:
         
         # Quick checks for obvious issues
         if len(word_lower) < 2:
-            return {'word': word, 'is_correct': True, 'suggestions': []}
+            return {
+                'word': word,
+                'is_correct': True,
+                'error_type': None,
+                'reason': None,
+                'suggestions': []
+            }
         
-        # Check for suspicious patterns that are likely typos
-        import re
-        suspicious_patterns = [
-            (r'[bcdfghjklmnpqrstvwxyz]{5,}', 'Terlalu banyak konsonan berurutan'),  # 5+ consonants
-            (r'(.)\1{2,}', 'Karakter berulang'),  # Same character 3+ times
-            (r'^[bcdfghjklmnpqrstvwxyz]+$', 'Tidak ada vokal'),  # No vowels (except for very short words)
-        ]
+        # Check for non-Indonesian patterns first
+        non_indonesian_check = self._check_non_indonesian(word_lower)
+        if non_indonesian_check:
+            return {
+                'word': word,
+                'is_correct': False,
+                'error_type': 'non_indonesian',
+                'reason': non_indonesian_check,
+                'suggestions': []
+            }
         
-        for pattern, reason in suspicious_patterns:
-            if re.search(pattern, word_lower):
-                # Exception: very short words might be valid
-                if len(word_lower) <= 3 and pattern == suspicious_patterns[2][0]:
-                    continue
-                    
+        # Check for suspicious typo patterns
+        typo_check = self._check_typo_patterns(word_lower)
+        if typo_check:
+            return {
+                'word': word,
+                'is_correct': False,
+                'error_type': 'typo',
+                'reason': typo_check,
+                'suggestions': self._get_suggestions(word_lower)
+            }
+        
+        # Check against KBBI if available
+        if self.kbbi_words:
+            if word_lower not in self.kbbi_words:
                 return {
                     'word': word,
                     'is_correct': False,
-                    'suggestions': self._get_suggestions(word_lower),
-                    'reason': reason
+                    'error_type': 'not_found',
+                    'reason': 'Kata tidak ditemukan di KBBI',
+                    'suggestions': self._get_suggestions(word_lower)
                 }
         
-        # If no obvious typo patterns, assume it's correct
-        # (lemmatizer is too permissive, so we only use pattern matching)
+        # Word is correct
         return {
             'word': word,
             'is_correct': True,
+            'error_type': None,
+            'reason': None,
             'suggestions': []
         }
+    
+    def _check_non_indonesian(self, word):
+        """Check if word appears to be non-Indonesian."""
+        # Check if it's a common English word
+        if word in self.common_english_words:
+            return 'Terdeteksi sebagai kata bahasa Inggris'
+        
+        # Check for non-Indonesian character patterns
+        # Indonesian doesn't commonly use: q (except in loanwords), x, z (rare)
+        if re.search(r'[qxf]', word) and len(word) > 3:
+            # Exception: some loanwords are valid
+            if self.kbbi_words and word in self.kbbi_words:
+                return None
+            return 'Mengandung huruf yang jarang digunakan dalam bahasa Indonesia'
+        
+        # Check for common English patterns
+        english_patterns = [
+            (r'tion$', 'Akhiran bahasa Inggris (-tion)'),
+            (r'ing$', 'Akhiran bahasa Inggris (-ing)'),
+            (r'^th', 'Awalan bahasa Inggris (th-)'),
+            (r'ght', 'Pola bahasa Inggris (-ght-)'),
+        ]
+        
+        for pattern, reason in english_patterns:
+            if re.search(pattern, word):
+                # Double check with KBBI
+                if self.kbbi_words and word in self.kbbi_words:
+                    return None
+                return reason
+        
+        return None
+    
+    def _check_typo_patterns(self, word):
+        """Check for obvious typo patterns."""
+        suspicious_patterns = [
+            (r'[bcdfghjklmnpqrstvwxyz]{5,}', 'Terlalu banyak konsonan berurutan'),
+            (r'(.)\1{2,}', 'Karakter berulang berlebihan'),
+            (r'^[bcdfghjklmnpqrstvwxyz]+$', 'Tidak ada vokal'),
+        ]
+        
+        for pattern, reason in suspicious_patterns:
+            if re.search(pattern, word):
+                # Exception: very short words might be valid
+                if len(word) <= 3 and pattern == suspicious_patterns[2][0]:
+                    continue
+                return reason
+        
+        return None
     
     def check_text(self, text):
         """
@@ -79,10 +173,8 @@ class IndonesianSpellChecker:
             text (str): Text containing multiple words
             
         Returns:
-            list: List of check results for each word
+            list: List of check results for incorrect words only
         """
-        # Split by whitespace and common punctuation
-        import re
         words = re.findall(r'\b\w+\b', text)
         
         results = []
@@ -96,11 +188,31 @@ class IndonesianSpellChecker:
     
     def _get_suggestions(self, word):
         """
-        Get spelling suggestions for a misspelled word.
-        Uses edit distance and common patterns.
+        Get spelling suggestions using edit distance from KBBI.
         """
-        # This is a simple implementation
-        # In production, you'd want a proper Indonesian word list
+        if not self.kbbi_words:
+            return self._get_pattern_suggestions(word)
+        
+        suggestions = []
+        
+        # Find similar words using edit distance
+        for kbbi_word in self.kbbi_words:
+            # Only consider words with similar length
+            if abs(len(kbbi_word) - len(word)) > 2:
+                continue
+            
+            # Calculate similarity
+            similarity = SequenceMatcher(None, word, kbbi_word).ratio()
+            
+            if similarity > 0.7:  # 70% similar
+                suggestions.append((kbbi_word, similarity))
+        
+        # Sort by similarity and return top 5
+        suggestions.sort(key=lambda x: x[1], reverse=True)
+        return [s[0] for s in suggestions[:5]]
+    
+    def _get_pattern_suggestions(self, word):
+        """Get suggestions based on common typo patterns."""
         suggestions = []
         
         # Common typo patterns in Indonesian

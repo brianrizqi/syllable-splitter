@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -415,7 +417,7 @@
             }
         });
 
-        // Spell checking function
+        // Spell checking function with SweetAlert
         async function checkSpelling(text) {
             loadingSection.style.display = 'block';
             typoSection.style.display = 'none';
@@ -438,24 +440,68 @@
                 loadingSection.style.display = 'none';
 
                 if (data.has_typos) {
-                    typoSection.style.display = 'block';
+                    // Categorize errors
+                    const typos = data.typos.filter(t => t.error_type === 'typo');
+                    const notFound = data.typos.filter(t => t.error_type === 'not_found');
+                    const nonIndonesian = data.typos.filter(t => t.error_type === 'non_indonesian');
 
-                    let html = '';
-                    data.typos.forEach(typo => {
-                        html += `
-                            <div class="typo-item">
-                                <div class="typo-word">"${typo.word}"</div>
-                                <div class="typo-reason">${typo.reason || 'Kemungkinan typo'}</div>
-                                ${typo.suggestions.length > 0 ? `
-                                    <div class="typo-suggestions">
-                                        Saran: ${typo.suggestions.join(', ')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
+                    // Build HTML message
+                    let htmlMessage = '<div style="text-align: left;">';
+                    
+                    if (nonIndonesian.length > 0) {
+                        htmlMessage += '<div style="margin-bottom: 15px;"><strong>🔵 Bukan Bahasa Indonesia:</strong><ul style="margin: 5px 0;">';
+                        nonIndonesian.forEach(item => {
+                            htmlMessage += `<li><strong>${item.word}</strong> - ${item.reason}</li>`;
+                        });
+                        htmlMessage += '</ul></div>';
+                    }
+                    
+                    if (typos.length > 0) {
+                        htmlMessage += '<div style="margin-bottom: 15px;"><strong>🔴 Kemungkinan Typo:</strong><ul style="margin: 5px 0;">';
+                        typos.forEach(item => {
+                            htmlMessage += `<li><strong>${item.word}</strong> - ${item.reason}`;
+                            if (item.suggestions && item.suggestions.length > 0) {
+                                htmlMessage += `<br><small style="color: #666;">Saran: ${item.suggestions.join(', ')}</small>`;
+                            }
+                            htmlMessage += '</li>';
+                        });
+                        htmlMessage += '</ul></div>';
+                    }
+                    
+                    if (notFound.length > 0) {
+                        htmlMessage += '<div style="margin-bottom: 15px;"><strong>🟡 Tidak Ditemukan di KBBI:</strong><ul style="margin: 5px 0;">';
+                        notFound.forEach(item => {
+                            htmlMessage += `<li><strong>${item.word}</strong>`;
+                            if (item.suggestions && item.suggestions.length > 0) {
+                                htmlMessage += `<br><small style="color: #666;">Saran: ${item.suggestions.join(', ')}</small>`;
+                            }
+                            htmlMessage += '</li>';
+                        });
+                        htmlMessage += '</ul></div>';
+                    }
+                    
+                    htmlMessage += '</div>';
+
+                    // Show SweetAlert
+                    const result = await Swal.fire({
+                        title: 'Peringatan!',
+                        html: htmlMessage,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Lanjutkan Tetap',
+                        cancelButtonText: 'Perbaiki Dulu',
+                        confirmButtonColor: '#2563eb',
+                        cancelButtonColor: '#6b7280',
+                        customClass: {
+                            popup: 'swal-wide'
+                        }
                     });
 
-                    typoContent.innerHTML = html;
+                    if (result.isConfirmed) {
+                        await processText(text);
+                    } else {
+                        inputText.focus();
+                    }
                 } else {
                     await processText(text);
                 }
