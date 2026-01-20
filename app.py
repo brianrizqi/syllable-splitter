@@ -21,6 +21,10 @@ spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
 def index():
     return render_template('index.html')
 
+@app.route('/docs')
+def docs():
+    return render_template('docs.html')
+
 @app.route('/split', methods=['POST'])
 def split_text():
     data = request.get_json()
