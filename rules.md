@@ -1,261 +1,477 @@
-# 📚 Cara Kerja Aplikasi Pemisah Suku Kata
+# 📚 Indonesian Syllable Splitter - Complete Documentation
 
-**Aplikasi untuk memisahkan kata bahasa Indonesia menjadi suku kata**
+**Aplikasi pemisah suku kata bahasa Indonesia dengan 3 metode berbeda dan deteksi typo otomatis**
 
 ---
 
-## 📖 Apa itu aplikasi ini?
+## 📖 Tentang Aplikasi
 
-Aplikasi ini adalah **website** yang bisa memisahkan kata bahasa Indonesia menjadi suku-suku kata.
+Aplikasi ini adalah **web-based tool** yang dapat memisahkan kata bahasa Indonesia menjadi suku-suku kata menggunakan berbagai metode, lengkap dengan:
+- ✅ **3 Metode Pemisahan**: PUEBI, SylBI, dan KBBI Online
+- ✅ **Deteksi Typo Otomatis**: Validasi dengan 112,643 kata dari KBBI
+- ✅ **Deteksi Bahasa**: Identifikasi kata non-Indonesia
+- ✅ **Analisis Morfologi**: Pemisahan awalan, sisipan, kata dasar, dan akhiran
+- ✅ **CLI Support**: Dapat dijalankan via command line
 
 **Contoh:**
-- `pembelajaran` → `pe-m-be-l-a-jar-an`
+- `pembelajaran` → `pe-m-be-l-a-jar-an` (SylBI)
 - `Indonesia` → `In-do-ne-si-a`
+- `computer` → ⚠️ Terdeteksi bahasa Inggris
 
 ---
 
-## 🎯 Fitur Aplikasi
+## 🎯 Tiga Metode Pemisahan
 
-### 1. Dua Cara Pemisahan
-- **PUEBI** - Cara resmi dari pemerintah
-- **KBBI** - Cara yang lebih detail (memisahkan imbuhan)
+### 1. **PUEBI** (Pedoman Umum Ejaan Bahasa Indonesia)
+Metode resmi dari Kemendikbud berdasarkan aturan pemenggalan kata PUEBI.
 
-### 2. Cek Ejaan
-- Bisa deteksi kalau ada typo (salah ketik)
-- Kasih saran perbaikan
+**Karakteristik:**
+- Pemisahan suku kata murni tanpa analisis morfologi
+- Mengikuti aturan fonetik bahasa Indonesia
+- Cocok untuk keperluan ejaan umum
 
-### 3. Analisis Kata
-- Bisa tahu mana awalan (prefix)
-- Bisa tahu mana kata dasar (root)
-- Bisa tahu mana akhiran (suffix)
-
----
-
-## 🏗️ Struktur Aplikasi
-
-### File-file Penting
-
+**Contoh:**
 ```
-📁 Syllable Splitter/
-├── 🐍 app.py                          # Program utama (Flask)
-├── 📄 requirements.txt                # Daftar library yang dibutuhkan
-│
-├── 📁 Core Modules/                   # Folder program inti
-│   ├── PUEBIOfficialSplitter.py      # Cara PUEBI
-│   ├── HybridSyllableSplitter.py     # Cara KBBI
-│   ├── KBBISyllableSplitter.py       # Aturan suku kata KBBI
-│   ├── MorphologicalAnalyzer.py      # Analisis imbuhan
-│   ├── SpellChecker.py               # Cek ejaan
-│   └── exceptions.json               # Daftar kata-kata khusus
-│
-├── 📁 templates/
-│   └── index.html                    # Halaman website
-│
-└── 📁 static/
-    └── style.css                     # Tampilan website
-```
-
-### Alur Kerja
-
-```
-User ketik kata → Cek ejaan (opsional) → Pilih metode → Proses → Hasil
-                                              ↓
-                                        PUEBI / KBBI
-                                              ↓
-                                      Pisahkan suku kata
-                                              ↓
-                                        Tampilkan hasil
+pembelajaran  → pem-be-la-ja-ran
+membaca       → mem-ba-ca
+Indonesia     → In-do-ne-si-a
 ```
 
 ---
 
-## 📏 Aturan Pemisahan Suku Kata
+### 2. **SylBI** (Syllabification for Bahasa Indonesia)
+Metode hybrid yang menggabungkan analisis morfologi dengan pemisahan suku kata.
 
-### Metode PUEBI (Cara Resmi)
-
-#### Aturan 1: Dua Vokal Berurutan
-- **Vokal**: a, e, i, o, u
-- **Aturan**: Kalau ada 2 vokal berurutan, pisahkan!
-- **Contoh**: 
-  - `buah` → `bu-ah`
-  - `main` → `ma-in`
-
-#### Aturan 2: Diftong (Vokal Kembar)
-- **Diftong**: ai, au, ei, oi
-- **Aturan**: JANGAN dipisahkan!
-- **Contoh**:
-  - `pandai` → `pan-dai` ✅ (bukan `pan-da-i` ❌)
-  - `saudara` → `sau-da-ra` ✅
-
-#### Aturan 3: Vokal-Konsonan-Vokal (VKV)
-- **Aturan**: Pisahkan sebelum konsonan
-- **Contoh**:
-  - `bapak` → `ba-pak`
-  - `lawan` → `la-wan`
-
-#### Aturan 4: Vokal-Konsonan-Konsonan-Vokal (VKKV)
-- **Aturan**: Pisahkan di tengah-tengah 2 konsonan
-- **Contoh**:
-  - `mandi` → `man-di`
-  - `sombong` → `som-bong`
-
-#### Aturan 5: Gabungan Konsonan Khusus
-- **Konsonan khusus**: ng, ny, sy, kh, ch
-- **Aturan**: JANGAN dipisahkan!
-- **Contoh**:
-  - `banyak` → `ba-nyak` ✅ (bukan `ban-yak` ❌)
-  - `syarat` → `sya-rat` ✅
-
----
-
-### Metode KBBI (Cara Detail)
-
-Metode ini lebih pintar karena bisa memisahkan **imbuhan** (awalan dan akhiran).
-
-#### Langkah 1: Cek Kata Khusus
-- Cek apakah kata ada di daftar khusus (`exceptions.json`)
-- Kalau ada, pakai yang sudah ditentukan
-
-#### Langkah 2: Cari Imbuhan
-- Cari **awalan** (me-, ber-, pe-, dll)
-- Cari **kata dasar**
-- Cari **akhiran** (-an, -kan, -i, dll)
-
-#### Langkah 3: Pisahkan Setiap Bagian
-- Pisahkan awalan jadi suku kata
-- Pisahkan kata dasar jadi suku kata
-- Tambahkan akhiran
-
-#### Contoh Perbedaan:
-
-**Kata: "pembelajaran"**
-
-| Metode | Hasil | Penjelasan |
-|--------|-------|------------|
-| PUEBI  | `pem-be-la-ja-ran` | Pisah suku kata biasa |
-| KBBI   | `pe-m-be-l-a-jar-an` | `pe` (awalan 1) + `m` (sisipan 1) + `be` (awalan 2) + `l` (sisipan 2) + `a-jar` (kata dasar) + `an` (akhiran) |
-
----
-
-## 🔍 Analisis Imbuhan
-
-### Jenis-jenis Imbuhan
-
-#### 1. Awalan (Prefix)
-Contoh: me-, ber-, pe-, ter-, di-, ke-, se-
+**Karakteristik:**
+- Memisahkan awalan (prefix), sisipan (infix), kata dasar (root), dan akhiran (suffix)
+- Menangani peluluhan (nasal assimilation)
+- Menangani awalan bertingkat (nested prefixes)
+- Cocok untuk analisis linguistik dan riset
 
 **Contoh:**
-- `membaca` → awalan: `me`, kata dasar: `baca`
-- `berjalan` → awalan: `ber`, kata dasar: `jalan`
+```
+pembelajaran  → pe-m-be-l-a-jar-an
+                (pe + m + be + l + ajar + an)
+                
+membaca       → me-m-ba-ca
+                (me + m + baca)
+                
+mengetik      → me-ng-ke-tik
+                (me + ng + ketik)
+```
 
-#### 2. Akhiran (Suffix)
-Contoh: -kan, -an, -i, -nya, -ku, -mu
+#### **Cara Kerja SylBI:**
 
-**Contoh:**
-- `bacakan` → kata dasar: `baca`, akhiran: `kan`
-- `rumahnya` → kata dasar: `rumah`, akhiran: `nya`
+##### **Langkah 1: Analisis Morfologi**
+Menggunakan lemmatizer dari `nlp-id` untuk mendeteksi:
+- **Prefix** (awalan): me-, ber-, pe-, ter-, di-, ke-, se-
+- **Root** (kata dasar): kata asli tanpa imbuhan
+- **Suffix** (akhiran): -kan, -an, -i, -nya, -ku, -mu
 
-#### 3. Sisipan (Infix)
-Huruf yang "nyempil" di tengah awalan.
+##### **Langkah 2: Dekomposisi Prefix**
+Memisahkan prefix menjadi **base prefix** dan **infix** (sisipan):
 
-**Contoh:**
-- `pem` → `pe` + `m` (sisipan)
-- `pel` → `pe` + `l` (sisipan)
-- `bel` → `be` + `l` (sisipan)
+| Prefix | Base | Infix | Contoh |
+|--------|------|-------|--------|
+| `pem` | `pe` | `m` | **pem**baca → pe + m + baca |
+| `pel` | `pe` | `l` | **pel**ajar → pe + l + ajar |
+| `bel` | `be` | `l` | **bel**ajar → be + l + ajar |
+| `peng` | `pe` | `ng` | **peng**ecualian → pe + ng + kecualian |
+| `peny` | `pe` | `ny` | **peny**apu → pe + ny + sapu |
 
-#### 4. Awalan Bertingkat (Nested Prefix)
-Kata bisa punya lebih dari satu awalan dengan sisipan masing-masing.
-
-**Contoh:**
-- `pembelajaran` → `pe` + `m` + `be` + `l` + `ajar` + `an`
-  - Awalan pertama: `pe` dengan sisipan `m`
-  - Awalan kedua: `be` dengan sisipan `l`
-  - Kata dasar: `ajar`
-  - Akhiran: `an`
-
-#### 5. Peluluhan (Nasal Assimilation)
-Ketika awalan nasal (`me-`, `pe-`, dll) bertemu dengan kata dasar yang dimulai dengan konsonan tertentu, konsonan tersebut **hilang** (luluh) dan digantikan oleh sisipan nasal.
+##### **Langkah 3: Penanganan Peluluhan (Nasal Assimilation)**
+Ketika prefix nasal bertemu dengan kata dasar yang dimulai konsonan tertentu, konsonan tersebut **luluh** (hilang). SylBI mengembalikan konsonan asli untuk pemisahan yang akurat.
 
 **Aturan Peluluhan:**
 
-| Sisipan | Konsonan Asli | Contoh |
-|---------|---------------|--------|
-| `m` | `p` | `memisah` = `me` + `m` + **p**isah → `me-m-pi-sah` |
-| `n` | `t` | `menari` = `me` + `n` + **t**ari → `me-n-ta-ri` |
-| `ng` | `k` | `mengetik` = `me` + `ng` + **k**etik → `me-ng-ke-tik` |
-| `ny` | `s` | `menyapu` = `me` + `ny` + **s**apu → `me-ny-sa-pu` |
+| Infix | Konsonan Luluh | Contoh | Hasil |
+|-------|----------------|--------|-------|
+| `m` | `p` | me**m**isah (← **p**isah) | me-m-**pi**-sah |
+| `m` | `p` | me**m**akai (← **p**akai) | me-m-**pa**-kai |
+| `n` | `t` | me**n**ari (← **t**ari) | me-n-**ta**-ri |
+| `n` | `t` | pe**n**urunan (← **t**urun) | pe-n-**tu**-run-an |
+| `ng` | `k` | me**ng**etik (← **k**etik) | me-ng-**ke**-tik |
+| `ny` | `s` | me**ny**apu (← **s**apu) | me-ny-**sa**-pu |
 
-**Cara Kerja:**
-1. Aplikasi menggunakan **lemmatizer** dari `nlp-id` untuk mendeteksi kata dasar
-2. Jika kata dasar dimulai dengan konsonan yang luluh (p, t, k, s), konsonan tersebut **dikembalikan**
-3. Hasil: awalan + sisipan + **konsonan asli** + sisa kata dasar
+**Algoritma Peluluhan:**
+1. Deteksi infix dari prefix (m, n, ng, ny)
+2. Gunakan lemmatizer untuk mendapatkan kata dasar asli
+3. Jika kata dasar dimulai dengan p/t/k/s, kembalikan konsonan tersebut
+4. Pisahkan: prefix + infix + **konsonan** + sisa kata
 
 **Contoh Detail:**
 
 **memisah** (kata dasar: **pisah**):
-- Awalan: `me`
-- Sisipan: `m`
-- Kata dasar: `pisah` (huruf `p` dikembalikan)
-- Hasil: `me-m-pi-sah` ✅
+```
+Input:  memisah
+Prefix: me
+Infix:  m (dari pem-)
+Root:   pisah (lemmatizer mengembalikan "pisah")
+Proses: Konsonan 'p' dikembalikan karena infix 'm' → peluluhan dari 'p'
+Output: me-m-pi-sah ✅
+```
 
 **memakai** (kata dasar: **pakai**):
-- Awalan: `me`
-- Sisipan: `m` (diambil dari awal detected root)
-- Kata dasar: `pakai` (huruf `p` dikembalikan)
-- Hasil: `me-m-pa-kai` ✅
+```
+Input:  memakai
+Prefix: me
+Infix:  m (dari pem-)
+Root:   pakai (lemmatizer mengembalikan "pakai")
+Proses: Konsonan 'p' dikembalikan karena infix 'm' → peluluhan dari 'p'
+Output: me-m-pa-kai ✅
+```
 
 **mengetik** (kata dasar: **ketik**):
-- Awalan: `me`
-- Sisipan: `ng`
-- Kata dasar: `ketik` (huruf `k` dikembalikan)
-- Hasil: `me-ng-ke-tik` ✅
+```
+Input:  mengetik
+Prefix: me
+Infix:  ng (dari peng-)
+Root:   ketik (lemmatizer mengembalikan "ketik")
+Proses: Konsonan 'k' dikembalikan karena infix 'ng' → peluluhan dari 'k'
+Output: me-ng-ke-tik ✅
+```
 
 **mengemban** (kata dasar: **emban**):
-- Awalan: `me`
-- Sisipan: `ng`
-- Kata dasar: `emban` (dimulai dengan vokal, TIDAK ada peluluhan)
-- Hasil: `me-ng-em-ban` ✅
-- **Catatan**: Berbeda dengan kasus peluluhan, kata "emban" memang dimulai dengan vokal 'e', jadi tidak ada konsonan yang perlu dikembalikan.
+```
+Input:  mengemban
+Prefix: me
+Infix:  ng (dari peng-)
+Root:   emban (lemmatizer mengembalikan "emban")
+Proses: TIDAK ada peluluhan (kata dasar dimulai dengan vokal 'e')
+Output: me-ng-em-ban ✅
+```
+
+##### **Langkah 4: Penanganan Awalan Bertingkat (Nested Prefixes)**
+Kata dapat memiliki lebih dari satu prefix dengan infix masing-masing.
+
+**Contoh: pembelajaran**
+```
+Input:  pembelajaran
+Analisis:
+  - Prefix 1: pe + m (pem-)
+  - Prefix 2: be + l (bel-)
+  - Root:     ajar
+  - Suffix:   an
+  
+Output: pe-m-be-l-a-jar-an ✅
+```
+
+**Algoritma:**
+1. Ekstrak prefix pertama dan infixnya
+2. Cek apakah sisa kata dimulai dengan prefix lain
+3. Jika ya, ekstrak prefix kedua dan infixnya
+4. Ulangi sampai tidak ada prefix lagi
+5. Sisanya adalah root + suffix
+
+##### **Langkah 5: Pemisahan Suku Kata**
+Setelah morfologi teridentifikasi, setiap bagian dipisahkan menjadi suku kata:
+- **Prefix & Infix**: Dipisahkan sebagai suku kata individual
+- **Root**: Dipisahkan menggunakan aturan KBBI
+- **Suffix**: Biasanya tetap satu suku (kecuali >3 huruf)
 
 ---
 
-## ✅ Cek Ejaan (Spell Checker)
+### 3. **KBBI Scraper** (Online Dictionary)
+Mengambil pemisahan suku kata langsung dari KBBI Online (kbbi.kemdikbud.go.id).
 
-### Cara Deteksi Typo
+**Karakteristik:**
+- Data langsung dari sumber resmi
+- Memerlukan koneksi internet
+- Fallback ke PUEBI jika kata tidak ditemukan
 
-#### 1. Terlalu Banyak Konsonan
-- Kalau ada 5+ konsonan berurutan → **TYPO!**
-- Contoh: `pmbljrn` ❌ (7 konsonan berurutan)
-
-#### 2. Huruf Berulang
-- Kalau ada huruf sama 3+ kali berurutan → **TYPO!**
-- Contoh: `mmmembaca` ❌ (m berulang 3x)
-
-#### 3. Tidak Ada Vokal
-- Kalau kata panjang tapi tidak ada vokal → **TYPO!**
-- Contoh: `bljr` ❌ (tidak ada vokal)
-
-### Saran Perbaikan
-Aplikasi akan kasih saran kata yang mungkin benar:
-- `bljr` → saran: `belajar`, `bejar`
+**Contoh:**
+```
+pembelajaran  → pem-bel-a-jar-an (sesuai KBBI)
+membaca       → mem-ba-ca
+```
 
 ---
 
-## 🔌 API (Cara Pakai dari Program Lain)
+## ✅ Deteksi Typo & Validasi KBBI
 
-### 1. Pisahkan Suku Kata
+### **Fitur Spell Checking**
 
-**Kirim ke:** `POST /split`
+Aplikasi menggunakan **112,643 kata dari KBBI** untuk validasi dan memberikan 3 jenis peringatan:
 
-**Data yang dikirim:**
+#### **1. 🔴 Kemungkinan Typo**
+Deteksi pola salah eja:
+- **Konsonan berlebihan**: 5+ konsonan berurutan
+  - `pmbljrn` ❌ → Saran: `pembelajaran`
+- **Karakter berulang**: 3+ karakter sama berurutan
+  - `mmmembaca` ❌ → Saran: `membaca`
+- **Tidak ada vokal**: Kata panjang tanpa a/i/u/e/o
+  - `bljr` ❌ → Saran: `belajar`
+
+#### **2. 🟡 Tidak Ditemukan di KBBI**
+Kata tidak ada dalam database KBBI:
+```
+komputr ❌ → Saran: komputer, komputasi
+Indonsia ❌ → Saran: Indonesia
+```
+
+**Algoritma Suggestions:**
+- Menggunakan **edit distance** (SequenceMatcher)
+- Mencari kata dengan similarity >70%
+- Mempertimbangkan panjang kata (±2 karakter)
+- Menampilkan top 5 suggestions
+
+#### **3. 🔵 Bukan Bahasa Indonesia**
+Deteksi kata asing:
+
+**Common English Words:**
+```
+computer, learning, hello, world → Terdeteksi bahasa Inggris
+```
+
+**English Patterns:**
+```
+-tion  → education, information
+-ing   → learning, teaching
+th-    → the, this, that
+-ght   → night, light
+```
+
+**Huruf Jarang:**
+```
+q, x, f → question, example, coffee
+(kecuali kata serapan yang ada di KBBI)
+```
+
+### **Penggunaan di Web Interface**
+
+Ketika spell check diaktifkan:
+1. User mengetik teks
+2. Klik "Pisahkan Suku Kata"
+3. **SweetAlert popup** muncul jika ada error
+4. User dapat:
+   - **Lanjutkan Tetap**: Proses meskipun ada error
+   - **Perbaiki Dulu**: Kembali edit teks
+
+### **Penggunaan di CLI**
+
+```bash
+# Dengan spell check (default)
+python3 HybridSyllableSplitter.py "computer learning"
+
+# Output:
+⚠️  PERINGATAN DETEKSI KATA:
+============================================================
+
+🔵 Bukan Bahasa Indonesia:
+  • computer - Terdeteksi sebagai kata bahasa Inggris
+  • learning - Akhiran bahasa Inggris (-ing)
+
+============================================================
+Lanjutkan pemisahan suku kata? (y/n):
+
+# Skip spell check
+python3 HybridSyllableSplitter.py "membaca" --no-spell-check
+```
+
+---
+
+## 📏 Aturan PUEBI (Detail)
+
+### **Aturan 1: Vokal-Vokal (VV)**
+Dua vokal berurutan dipisahkan, **kecuali** diftong.
+
+**Vokal**: a, e, i, o, u
+
+**Contoh:**
+```
+buah    → bu-ah
+main    → ma-in
+laut    → la-ut
+```
+
+### **Aturan 2: Diftong**
+Diftong **tidak** dipisahkan: ai, au, ei, oi
+
+**Contoh:**
+```
+pandai   → pan-dai  ✅ (bukan pan-da-i ❌)
+saudara  → sau-da-ra ✅
+survei   → sur-vei  ✅
+```
+
+### **Aturan 3: Vokal-Konsonan-Vokal (VKV)**
+Pisahkan sebelum konsonan.
+
+**Contoh:**
+```
+bapak  → ba-pak
+lawan  → la-wan
+rumah  → ru-mah
+```
+
+### **Aturan 4: Vokal-Konsonan-Konsonan-Vokal (VKKV)**
+Pisahkan di antara dua konsonan.
+
+**Contoh:**
+```
+mandi    → man-di
+sombong  → som-bong
+penting  → pen-ting
+```
+
+### **Aturan 5: Gabungan Konsonan Khusus**
+Konsonan khusus **tidak** dipisahkan: ng, ny, sy, kh, ch, dh, gh, ph, sh, th
+
+**Contoh:**
+```
+banyak   → ba-nyak  ✅ (bukan ban-yak ❌)
+syarat   → sya-rat  ✅
+makhkuk  → makh-luk ✅
+```
+
+### **Aturan 6: Vokal-Konsonan-Konsonan-Konsonan-Vokal (VKKKV)**
+Pisahkan setelah konsonan pertama: VC-CCV
+
+**Contoh:**
+```
+instrumen  → in-stru-men
+ultra      → ul-tra
+```
+
+---
+
+## 🛠️ Teknologi & Arsitektur
+
+### **Backend**
+- **Python 3.12**
+- **Flask 3.0.0** - Web framework
+- **nlp-id** - Indonesian NLP library (lemmatizer)
+- **pandas** - KBBI CSV processing
+- **BeautifulSoup4** - KBBI web scraping
+- **difflib** - Edit distance untuk suggestions
+
+### **Frontend**
+- **HTML5** + **CSS3** + **JavaScript**
+- **SweetAlert2** - Beautiful alert dialogs
+- **Google Fonts (Inter)** - Modern typography
+- **Responsive Design** - Mobile-friendly
+
+### **Data**
+- **kbbi_v.csv** - 112,643 kata dari KBBI
+- **exceptions.json** - Kata-kata dengan aturan khusus
+
+---
+
+## 📁 Struktur File
+
+```
+📁 Syllable Splitter/
+├── 🐍 app.py                          # Flask application
+├── 📄 requirements.txt                # Python dependencies
+├── 📄 rules.md                        # Dokumentasi ini
+│
+├── 📁 Core Modules/
+│   ├── PUEBIOfficialSplitter.py      # PUEBI method
+│   ├── HybridSyllableSplitter.py     # SylBI method
+│   ├── KBBISyllableSplitter.py       # KBBI syllable rules
+│   ├── KBBIScraper.py                # KBBI online scraper
+│   ├── MorphologicalAnalyzer.py      # Morphology analysis
+│   ├── SpellChecker.py               # Spell checking + KBBI validation
+│   └── exceptions.json               # Exception dictionary
+│
+├── 📁 templates/
+│   └── index.html                    # Web interface
+│
+├── 📁 static/
+│   └── style.css                     # Styling
+│
+└── 📊 kbbi_v.csv                      # KBBI word database (112,643 words)
+```
+
+---
+
+## 🚀 Cara Menggunakan
+
+### **1. Web Interface**
+
+#### **Setup:**
+```bash
+# Clone repository
+git clone <repository-url>
+cd "Syllable Splitter"
+
+# Create virtual environment
+python3 -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate  # Mac/Linux
+# atau
+venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run application
+python3 app.py
+```
+
+#### **Akses:**
+Buka browser: `http://localhost:5000`
+
+#### **Fitur Web:**
+- ✅ Input teks (single/multiple words)
+- ✅ Pilih metode (PUEBI/SylBI/KBBI)
+- ✅ Toggle spell check
+- ✅ SweetAlert warnings
+- ✅ Copy hasil ke clipboard
+- ✅ Contoh cepat (quick examples)
+
+---
+
+### **2. Command Line Interface**
+
+#### **HybridSyllableSplitter (SylBI):**
+```bash
+# Basic usage
+python3 HybridSyllableSplitter.py "pembelajaran"
+# Output: pe-m-be-l-a-jar-an
+
+# With verbose (show morphology)
+python3 HybridSyllableSplitter.py "pembelajaran" --verbose
+# Output:
+# Morphology: prefix='pem', root='belajar', suffix='an'
+# Result: ['pe', 'm', 'be', 'l', 'a', 'jar', 'an']
+# Joined: pe-m-be-l-a-jar-an
+
+# Skip spell check
+python3 HybridSyllableSplitter.py "membaca" --no-spell-check
+```
+
+#### **PUEBIOfficialSplitter (PUEBI):**
+```bash
+python3 PUEBIOfficialSplitter.py "pembelajaran"
+# Output: pem-be-la-ja-ran
+
+python3 PUEBIOfficialSplitter.py "computer" --no-spell-check
+```
+
+#### **KBBIScraper (KBBI Online):**
+```bash
+python3 KBBIScraper.py "pembelajaran"
+# Output: pem-bel-a-jar-an (from KBBI online)
+```
+
+---
+
+## 🔌 API Endpoints
+
+### **1. POST /split**
+Memisahkan teks menjadi suku kata.
+
+**Request:**
 ```json
 {
   "text": "pembelajaran Indonesia",
-  "method": "kbbi"
+  "method": "sylbi"
 }
 ```
 
-**Hasil yang didapat:**
+**Response:**
 ```json
 {
   "results": [
@@ -268,174 +484,227 @@ Aplikasi akan kasih saran kata yang mungkin benar:
       "syllables": ["In", "do", "ne", "si", "a"]
     }
   ],
-  "method": "kbbi"
+  "method": "sylbi"
 }
 ```
 
-### 2. Cek Ejaan
+**Methods:** `puebi`, `sylbi`, `kbbi`
 
-**Kirim ke:** `POST /check_spelling`
+---
 
-**Data yang dikirim:**
+### **2. POST /check_spelling**
+Memeriksa ejaan dan memberikan suggestions.
+
+**Request:**
 ```json
 {
-  "text": "pmbljrn"
+  "text": "computer pmbljrn"
 }
 ```
 
-**Hasil yang didapat:**
+**Response:**
 ```json
 {
   "has_typos": true,
   "typos": [
     {
+      "word": "computer",
+      "is_correct": false,
+      "error_type": "non_indonesian",
+      "reason": "Terdeteksi sebagai kata bahasa Inggris",
+      "suggestions": []
+    },
+    {
       "word": "pmbljrn",
       "is_correct": false,
+      "error_type": "typo",
       "reason": "Terlalu banyak konsonan berurutan",
-      "suggestions": []
+      "suggestions": ["pembelajaran", "pembela"]
     }
   ]
 }
 ```
 
----
-
-## 🛠️ Teknologi yang Dipakai
-
-### Backend (Program di Server)
-- **Python 3.12** - Bahasa pemrograman
-- **Flask 3.0.0** - Framework web
-- **nlp-id** - Library untuk analisis bahasa Indonesia
-- **pyspellchecker** - Library untuk cek ejaan
-
-### Frontend (Tampilan Website)
-- **HTML5** - Struktur halaman
-- **CSS3** - Desain dan warna
-- **JavaScript** - Interaksi dinamis
-- **Google Fonts (Inter)** - Font keren
+**Error Types:**
+- `typo` - Pola salah eja
+- `not_found` - Tidak ada di KBBI
+- `non_indonesian` - Bukan bahasa Indonesia
 
 ---
 
-## 🚀 Cara Menjalankan Aplikasi
+## 🧪 Testing Examples
 
-### 1. Install Library
+### **Test SylBI (Morphological Analysis)**
+
 ```bash
-# Buat virtual environment
-python3 -m venv venv
+# Basic words
+pembelajaran  → pe-m-be-l-a-jar-an
+membaca       → me-m-ba-ca
+Indonesia     → In-do-ne-si-a
 
-# Aktifkan virtual environment
-source venv/bin/activate  # Mac/Linux
-# atau
-venv\Scripts\activate  # Windows
+# Nasal assimilation (peluluhan)
+memisah       → me-m-pi-sah      # m + pisah
+memakai       → me-m-pa-kai      # m + pakai
+mengetik      → me-ng-ke-tik     # ng + ketik
+menyapu       → me-ny-sa-pu      # ny + sapu
+penurunan     → pe-n-tu-run-an   # n + turun
 
-# Install semua library
-pip install -r requirements.txt
+# No assimilation (root starts with vowel)
+mengemban     → me-ng-em-ban     # ng + emban (no 'k')
+mengajar      → me-ng-a-jar      # ng + ajar (no 'k')
+
+# Nested prefixes
+pembelajaran  → pe-m-be-l-a-jar-an  # (pe+m) + (be+l) + ajar + an
+
+# Two-character infixes
+pengecualian  → pe-ng-ke-cu-a-li-an  # pe + ng + kecualian
+penyapu       → pe-ny-sa-pu          # pe + ny + sapu
 ```
 
-### 2. Jalankan Aplikasi
+### **Test PUEBI (Phonetic Rules)**
+
 ```bash
-python app.py
+pembelajaran  → pem-be-la-ja-ran
+membaca       → mem-ba-ca
+banyak        → ba-nyak
+saudara       → sau-da-ra
+instrumen     → in-stru-men
 ```
 
-### 3. Buka di Browser
-Buka browser, ketik: `http://127.0.0.1:5000`
+### **Test Spell Checking**
 
----
+```bash
+# Valid Indonesian
+python3 HybridSyllableSplitter.py "pembelajaran"
+# ✓ No warnings
 
-## 📝 Daftar Kata Khusus (Exception Dictionary)
+# Typo
+python3 HybridSyllableSplitter.py "pmbljrn"
+# 🔴 Typo: Terlalu banyak konsonan berurutan
 
-File: `exceptions.json`
+# Non-Indonesian
+python3 HybridSyllableSplitter.py "computer learning"
+# 🔵 Non-Indonesian: Terdeteksi bahasa Inggris
 
-Berisi kata-kata yang punya aturan pemisahan khusus:
-
-```json
-{
-  "belajar": ["bel", "a", "jar"],
-  "pelajar": ["pel", "a", "jar"],
-  "ajar": ["a", "jar"],
-  "bangun": ["ba", "ngun"],
-  "tangan": ["ta", "ngan"]
-}
-```
-
-**Kenapa perlu?**
-- Ada kata yang tidak mengikuti aturan umum
-- Agar hasil lebih akurat sesuai KBBI
-
----
-
-## 🧪 Contoh Testing
-
-### Test PUEBI
-```
-pembelajaran   → pem-be-la-ja-ran
-Indonesia      → In-do-ne-si-a
-komputer       → kom-pu-ter
-membaca        → mem-ba-ca
-banyak         → ba-nyak
-```
-
-### Test KBBI
-```
-pembelajaran   → pe-m-be-l-a-jar-an
-Indonesia      → In-do-ne-si-a
-komputer       → kom-pu-ter
-membaca        → me-m-ba-ca
-banyak         → ba-nyak
-
-# Test Peluluhan (Nasal Assimilation)
-memisah        → me-m-pi-sah
-memakai        → me-m-pa-kai
-mengetik       → me-ng-ke-tik
-menyapu        → me-ny-sa-pu
-memasak        → me-m-pa-sak
-mengemban      → me-ng-em-ban  # Root "emban" starts with vowel, no consonant restoration
+# Not in KBBI
+python3 HybridSyllableSplitter.py "komputr"
+# 🟡 Not Found: Saran: komputer, komputasi
 ```
 
 ---
 
 ## 📚 Referensi
 
-### Dokumen Resmi
+### **Dokumen Resmi**
 1. **PUEBI** - Pedoman Umum Ejaan Bahasa Indonesia
-   - Dari: Kementerian Pendidikan dan Kebudayaan
+   - Sumber: Kemendikbud
    - Link: https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf
 
 2. **KBBI Online**
-   - Dari: Badan Pengembangan dan Pembinaan Bahasa
+   - Sumber: Badan Pengembangan dan Pembinaan Bahasa
    - Link: https://kbbi.kemdikbud.go.id/
 
-### Library yang Dipakai
-1. **syllable_splitter** - Library dasar pemisah suku kata
-2. **nlp-id** - Tools NLP bahasa Indonesia
-3. **pyspellchecker** - Library cek ejaan
+### **Libraries**
+1. **nlp-id** - Indonesian NLP tools
+   - GitHub: https://github.com/ir-nlp-csui/nlp-id
+2. **SweetAlert2** - Beautiful alerts
+   - Website: https://sweetalert2.github.io/
 
 ---
 
-## 💡 Kesimpulan
+## 💡 Perbandingan Metode
 
-### Perbedaan PUEBI vs KBBI
+| Aspek | PUEBI | SylBI | KBBI Scraper |
+|-------|-------|-------|--------------|
+| **Fokus** | Fonetik | Morfologi + Fonetik | Referensi Resmi |
+| **Analisis Imbuhan** | ❌ | ✅ | ❌ |
+| **Peluluhan** | ❌ | ✅ | ❌ |
+| **Nested Prefix** | ❌ | ✅ | ❌ |
+| **Internet** | ❌ | ❌ | ✅ |
+| **Kecepatan** | ⚡⚡⚡ | ⚡⚡ | ⚡ |
+| **Akurasi** | Tinggi | Sangat Tinggi | Referensi |
+| **Use Case** | Ejaan umum | Riset linguistik | Validasi KBBI |
 
-| Aspek | PUEBI | KBBI |
-|-------|-------|------|
-| **Fokus** | Pemisahan suku kata murni | Pemisahan + analisis imbuhan |
-| **Hasil** | Suku kata saja | Awalan + sisipan + kata dasar + akhiran |
-| **Contoh** | `pem-be-la-ja-ran` | `pe-m-be-l-a-jar-an` |
-| **Kegunaan** | Untuk ejaan umum | Untuk analisis linguistik |
+### **Kapan Menggunakan?**
 
-### Kapan Pakai Yang Mana?
+**PUEBI:**
+- ✅ Keperluan ejaan umum
+- ✅ Pemisahan suku kata sederhana
+- ✅ Tidak butuh analisis morfologi
 
-- **Pakai PUEBI** kalau:
-  - Cuma butuh pisah suku kata biasa
-  - Untuk keperluan ejaan
-  
-- **Pakai KBBI** kalau:
-  - Butuh tahu imbuhan
-  - Untuk analisis bahasa
-  - Untuk riset linguistik
+**SylBI:**
+- ✅ Analisis linguistik
+- ✅ Riset morfologi bahasa Indonesia
+- ✅ Butuh detail awalan, sisipan, kata dasar, akhiran
+- ✅ Studi peluluhan dan imbuhan
+
+**KBBI Scraper:**
+- ✅ Validasi dengan sumber resmi
+- ✅ Cross-check hasil
+- ✅ Ada koneksi internet
 
 ---
 
-**Selesai! 🎉**
+## 🎓 Untuk Peneliti & Developer
 
-Semoga dokumentasi ini mudah dipahami dan membantu presentasi kamu!
+### **Extending the System**
+
+#### **Menambah Kata Exception:**
+Edit `exceptions.json`:
+```json
+{
+  "kata_khusus": ["ka", "ta", "khu", "sus"],
+  "contoh": ["con", "toh"]
+}
+```
+
+#### **Custom Spell Checker:**
+Extend `SpellChecker.py`:
+```python
+class CustomSpellChecker(IndonesianSpellChecker):
+    def __init__(self):
+        super().__init__()
+        # Add custom words
+        self.kbbi_words.update(['kata1', 'kata2'])
+```
+
+#### **API Integration:**
+```python
+import requests
+
+response = requests.post('http://localhost:5000/split', json={
+    'text': 'pembelajaran',
+    'method': 'sylbi'
+})
+
+result = response.json()
+print(result['results'][0]['syllables'])
+# Output: ['pe', 'm', 'be', 'l', 'a', 'jar', 'an']
+```
+
+---
+
+## 📄 Lisensi
+
+MIT License - Silakan digunakan untuk keperluan akademis dan komersial.
+
+---
+
+## 👥 Kontribusi
+
+Kontribusi sangat diterima! Silakan:
+1. Fork repository
+2. Buat branch fitur baru
+3. Submit pull request
+
+---
+
+## 📞 Kontak & Support
+
+Untuk pertanyaan, bug reports, atau feature requests, silakan buka issue di GitHub repository.
+
+---
+
+**Selamat menggunakan Indonesian Syllable Splitter! 🎉**
+
+*Dokumentasi ini dibuat untuk memudahkan pemahaman dan penggunaan aplikasi, baik untuk pengguna umum maupun peneliti linguistik.*

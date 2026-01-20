@@ -98,186 +98,282 @@
             <!-- Left Column: Main Input -->
             <div class="main-column">
                 <div class="card main-card">
-                    <div class="card-header">
-                        <h2>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="manual">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
                             Masukkan Teks
-                        </h2>
-                    </div>
-
-                    <div class="input-section">
-                        <textarea id="inputText"
-                            placeholder="Ketik atau paste teks di sini... Contoh: pembelajaran, Indonesia, komputer"
-                            rows="5"></textarea>
-
-                        <!-- Method Selector -->
-                        <div class="method-selector">
-                            <label class="method-label">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path
-                                        d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24">
-                                    </path>
-                                </svg>
-                                Pilih Metode Pemisahan
-                            </label>
-                            <div class="method-options">
-                                <label class="method-option">
-                                    <input type="radio" name="method" value="puebi" checked>
-                                    <span class="method-radio"></span>
-                                    <div class="method-info">
-                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <div class="method-name-wrapper">
-                                            <span class="method-name">PUEBI</span>
-                                            <a href="https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf"
-                                                target="_blank" class="info-icon" title="Lihat Pedoman PUEBI">
-                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                                    <circle cx="7" cy="7" r="6" stroke="currentColor"
-                                                        stroke-width="1.5" />
-                                                    <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
-                                                        stroke-linecap="round" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                        <span class="method-desc">Aturan resmi PUEBI</span>
-                                    </div>
-                                </label>
-                                <label class="method-option">
-                                    <input type="radio" name="method" value="sylbi">
-                                    <span class="method-radio"></span>
-                                    <div class="method-info">
-                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <polyline points="12 6 12 12 16 14"></polyline>
-                                        </svg>
-                                        <div class="method-name-wrapper">
-                                            <span class="method-name">SylBI</span>
-                                        </div>
-                                        <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
-                                    </div>
-                                </label>
-                                <label class="method-option">
-                                    <input type="radio" name="method" value="kbbi">
-                                    <span class="method-radio"></span>
-                                    <div class="method-info">
-                                        <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z">
-                                            </path>
-                                        </svg>
-                                        <div class="method-name-wrapper">
-                                            <span class="method-name">KBBI</span>
-                                            <a href="https://kbbi.kemdikbud.go.id/" target="_blank" class="info-icon"
-                                                title="Buka KBBI">
-                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                                    <circle cx="7" cy="7" r="6" stroke="currentColor"
-                                                        stroke-width="1.5" />
-                                                    <path d="M7 10V7M7 4H7.01" stroke="currentColor" stroke-width="1.5"
-                                                        stroke-linecap="round" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                        <span class="method-desc">Kamus resmi (perlu internet)</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Spell Check Option -->
-                        <div class="spell-check-option">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="spellCheckEnabled" checked>
-                                <svg class="checkbox-custom" width="20" height="20" viewBox="0 0 20 20">
-                                    <rect class="checkbox-box" x="0.5" y="0.5" width="19" height="19" rx="4"
-                                        fill="white" stroke="#d1d5db" stroke-width="2" />
-                                    <path class="checkbox-check" d="M5 10 L8.5 13.5 L15 6.5" stroke="white"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                                </svg>
-                                <span class="checkbox-text">
-                                    <span class="checkbox-title">Cek Ejaan Sebelum Memproses</span>
-                                    <span class="checkbox-desc">Deteksi typo dan berikan saran perbaikan</span>
-                                </span>
-                            </label>
-                        </div>
-
-                        <button id="splitBtn" class="btn-primary">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        </button>
+                        <button class="tab-btn" data-tab="csv">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
-                                <polyline points="13 17 18 12 13 7"></polyline>
-                                <polyline points="6 17 11 12 6 7"></polyline>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
                             </svg>
-                            Pisahkan Suku Kata
+                            Upload CSV
                         </button>
                     </div>
 
-                    <!-- Typo Warning Section -->
-                    <div id="typoSection" class="typo-section" style="display: none;">
-                        <div class="typo-header">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path
-                                    d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
-                                    stroke="currentColor" stroke-width="1.5" />
-                                <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                            </svg>
-                            <h3>Kemungkinan Typo Terdeteksi</h3>
+                    <!-- Manual Input Tab Content -->
+                    <div id="manualTab" class="tab-content active">
+
+                        <div class="input-section">
+                            <textarea id="inputText"
+                                placeholder="Ketik atau paste teks di sini... Contoh: pembelajaran, Indonesia, komputer"
+                                rows="5"></textarea>
+
+                            <!-- Method Selector -->
+                            <div class="method-selector">
+                                <label class="method-label">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path
+                                            d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24">
+                                        </path>
+                                    </svg>
+                                    Pilih Metode Pemisahan
+                                </label>
+                                <div class="method-options">
+                                    <label class="method-option">
+                                        <input type="radio" name="method" value="puebi" checked>
+                                        <span class="method-radio"></span>
+                                        <div class="method-info">
+                                            <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                </path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                            <div class="method-name-wrapper">
+                                                <span class="method-name">PUEBI</span>
+                                                <a href="https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf"
+                                                    target="_blank" class="info-icon" title="Lihat Pedoman PUEBI">
+                                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                        <circle cx="7" cy="7" r="6" stroke="currentColor"
+                                                            stroke-width="1.5" />
+                                                        <path d="M7 10V7M7 4H7.01" stroke="currentColor"
+                                                            stroke-width="1.5" stroke-linecap="round" />
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                            <span class="method-desc">Aturan resmi PUEBI</span>
+                                        </div>
+                                    </label>
+                                    <label class="method-option">
+                                        <input type="radio" name="method" value="sylbi">
+                                        <span class="method-radio"></span>
+                                        <div class="method-info">
+                                            <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            <div class="method-name-wrapper">
+                                                <span class="method-name">SylBI</span>
+                                            </div>
+                                            <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
+                                        </div>
+                                    </label>
+                                    <label class="method-option">
+                                        <input type="radio" name="method" value="kbbi">
+                                        <span class="method-radio"></span>
+                                        <div class="method-info">
+                                            <svg class="method-icon" width="32" height="32" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                <path
+                                                    d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z">
+                                                </path>
+                                            </svg>
+                                            <div class="method-name-wrapper">
+                                                <span class="method-name">KBBI</span>
+                                                <a href="https://kbbi.kemdikbud.go.id/" target="_blank"
+                                                    class="info-icon" title="Buka KBBI">
+                                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                        <circle cx="7" cy="7" r="6" stroke="currentColor"
+                                                            stroke-width="1.5" />
+                                                        <path d="M7 10V7M7 4H7.01" stroke="currentColor"
+                                                            stroke-width="1.5" stroke-linecap="round" />
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                            <span class="method-desc">Kamus resmi (perlu internet)</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Spell Check Option -->
+                            <div class="spell-check-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="spellCheckEnabled" checked>
+                                    <svg class="checkbox-custom" width="20" height="20" viewBox="0 0 20 20">
+                                        <rect class="checkbox-box" x="0.5" y="0.5" width="19" height="19" rx="4"
+                                            fill="white" stroke="#d1d5db" stroke-width="2" />
+                                        <path class="checkbox-check" d="M5 10 L8.5 13.5 L15 6.5" stroke="white"
+                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                            fill="none" />
+                                    </svg>
+                                    <span class="checkbox-text">
+                                        <span class="checkbox-title">Cek Ejaan Sebelum Memproses</span>
+                                        <span class="checkbox-desc">Deteksi typo dan berikan saran perbaikan</span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <button id="splitBtn" class="btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="13 17 18 12 13 7"></polyline>
+                                    <polyline points="6 17 11 12 6 7"></polyline>
+                                </svg>
+                                Pisahkan Suku Kata
+                            </button>
                         </div>
-                        <div id="typoContent" class="typo-content"></div>
-                        <div class="typo-actions">
-                            <button id="proceedAnywayBtn" class="btn-secondary">Lanjutkan Tetap</button>
-                            <button id="fixTypoBtn" class="btn-primary">Perbaiki Dulu</button>
+
+                        <!-- Typo Warning Section -->
+                        <div id="typoSection" class="typo-section" style="display: none;">
+                            <div class="typo-header">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path
+                                        d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
+                                        stroke="currentColor" stroke-width="1.5" />
+                                    <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                <h3>Kemungkinan Typo Terdeteksi</h3>
+                            </div>
+                            <div id="typoContent" class="typo-content"></div>
+                            <div class="typo-actions">
+                                <button id="proceedAnywayBtn" class="btn-secondary">Lanjutkan Tetap</button>
+                                <button id="fixTypoBtn" class="btn-primary">Perbaiki Dulu</button>
+                            </div>
+                        </div>
+
+                        <!-- Loading Section -->
+                        <div id="loadingSection" class="loading-section" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Memproses teks Anda...</p>
+                        </div>
+
+                        <!-- Result Section -->
+                        <div id="resultSection" class="result-section" style="display: none;">
+                            <div class="result-header">
+                                <div>
+                                    <h3>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Hasil Pemisahan
+                                    </h3>
+                                    <span id="methodBadge" class="method-badge"></span>
+                                </div>
+                                <button id="copyBtn" class="btn-secondary">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path
+                                            d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z"
+                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                        <path
+                                            d="M3.33333 10H2.66667C2.31304 10 1.97391 9.85952 1.72386 9.60947C1.47381 9.35943 1.33333 9.02029 1.33333 8.66667V2.66667C1.33333 2.31304 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31304 1.33333 2.66667 1.33333H8.66667C9.02029 1.33333 9.35943 1.47381 9.60947 1.72386C9.85952 1.97391 10 2.31304 10 2.66667V3.33333"
+                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                    Salin Semua
+                                </button>
+                            </div>
+                            <div id="resultContent" class="result-content"></div>
                         </div>
                     </div>
+                    <!-- End Manual Input Tab -->
 
-                    <!-- Loading Section -->
-                    <div id="loadingSection" class="loading-section" style="display: none;">
-                        <div class="spinner"></div>
-                        <p>Memproses teks Anda...</p>
-                    </div>
-
-                    <!-- Result Section -->
-                    <div id="resultSection" class="result-section" style="display: none;">
-                        <div class="result-header">
-                            <div>
+                    <!-- CSV Upload Tab Content -->
+                    <div id="csvTab" class="tab-content">
+                        <div class="csv-section" style="margin-top: 2rem;">
+                            <div class="card-header">
                                 <h3>
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
                                     </svg>
-                                    Hasil Pemisahan
+                                    Batch Processing (CSV)
                                 </h3>
-                                <span id="methodBadge" class="method-badge"></span>
                             </div>
-                            <button id="copyBtn" class="btn-secondary">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path
-                                        d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z"
-                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                    <path
-                                        d="M3.33333 10H2.66667C2.31304 10 1.97391 9.85952 1.72386 9.60947C1.47381 9.35943 1.33333 9.02029 1.33333 8.66667V2.66667C1.33333 2.31304 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31304 1.33333 2.66667 1.33333H8.66667C9.02029 1.33333 9.35943 1.47381 9.60947 1.72386C9.85952 1.97391 10 2.31304 10 2.66667V3.33333"
-                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                        stroke-linejoin="round" />
+
+                            <div class="csv-actions">
+                                <button id="downloadTemplateBtn" class="btn-secondary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Download Template CSV
+                                </button>
+                            </div>
+
+                            <!-- Upload Dropzone -->
+                            <div id="csvDropzone" class="csv-dropzone">
+                                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
                                 </svg>
-                                Salin Semua
-                            </button>
+                                <p class="dropzone-text">Drag & drop CSV file here or <span
+                                        class="dropzone-link">browse</span></p>
+                                <p class="dropzone-hint">Format: word,method (max 16MB)</p>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div id="csvProgress" class="csv-progress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div id="csvProgressBar" class="progress-fill"></div>
+                                </div>
+                                <p id="csvProgressText">Processing: 0 / 0</p>
+                            </div>
+
+                            <!-- Batch Results -->
+                            <div id="csvResults" class="csv-results" style="display: none;">
+                                <div class="result-header">
+                                    <h3>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Batch Results
+                                    </h3>
+                                    <button id="exportCsvBtn" class="btn-secondary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        Export Results
+                                    </button>
+                                </div>
+                                <div id="csvResultsTable" class="csv-results-table"></div>
+                            </div>
                         </div>
-                        <div id="resultContent" class="result-content"></div>
                     </div>
+                    <!-- End CSV Upload Tab -->
                 </div>
             </div>
 
@@ -318,7 +414,8 @@
                             Cara Kerja
                         </h3>
                     </div>
-                    <p>Aplikasi ini menggunakan algoritma pemisahan suku kata bahasa Indonesia berdasarkan pola konsonan
+                    <p>Aplikasi ini menggunakan algoritma pemisahan suku kata bahasa Indonesia berdasarkan pola
+                        konsonan
                         dan vokal. Backend diproses dengan Python Flask untuk akurasi maksimal!</p>
 
                     <div class="features-list">
@@ -447,7 +544,7 @@
 
                     // Build HTML message
                     let htmlMessage = '<div style="text-align: left;">';
-                    
+
                     if (nonIndonesian.length > 0) {
                         htmlMessage += '<div style="margin-bottom: 15px;"><strong>🔵 Bukan Bahasa Indonesia:</strong><ul style="margin: 5px 0;">';
                         nonIndonesian.forEach(item => {
@@ -455,7 +552,7 @@
                         });
                         htmlMessage += '</ul></div>';
                     }
-                    
+
                     if (typos.length > 0) {
                         htmlMessage += '<div style="margin-bottom: 15px;"><strong>🔴 Kemungkinan Typo:</strong><ul style="margin: 5px 0;">';
                         typos.forEach(item => {
@@ -467,7 +564,7 @@
                         });
                         htmlMessage += '</ul></div>';
                     }
-                    
+
                     if (notFound.length > 0) {
                         htmlMessage += '<div style="margin-bottom: 15px;"><strong>🟡 Tidak Ditemukan di KBBI:</strong><ul style="margin: 5px 0;">';
                         notFound.forEach(item => {
@@ -479,7 +576,7 @@
                         });
                         htmlMessage += '</ul></div>';
                     }
-                    
+
                     htmlMessage += '</div>';
 
                     // Show SweetAlert
@@ -637,6 +734,242 @@
                     link.classList.add('active');
                 }
             });
+        });
+
+        // Tab Switching Functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+
+                // Remove active class from all tabs and contents
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked tab and corresponding content
+                btn.classList.add('active');
+                document.getElementById(targetTab + 'Tab').classList.add('active');
+            });
+        });
+
+        // CSV Upload Functionality
+        const csvDropzone = document.getElementById('csvDropzone');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const csvProgress = document.getElementById('csvProgress');
+        const csvProgressBar = document.getElementById('csvProgressBar');
+        const csvProgressText = document.getElementById('csvProgressText');
+        const csvResults = document.getElementById('csvResults');
+        const csvResultsTable = document.getElementById('csvResultsTable');
+
+        let batchResults = [];
+
+        // Download template
+        downloadTemplateBtn.addEventListener('click', () => {
+            window.location.href = '/download-template';
+        });
+
+        // Dropzone click to browse
+        csvDropzone.addEventListener('click', () => {
+            csvFileInput.click();
+        });
+
+        // Drag and drop handlers
+        csvDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            csvDropzone.classList.add('dragover');
+        });
+
+        csvDropzone.addEventListener('dragleave', () => {
+            csvDropzone.classList.remove('dragover');
+        });
+
+        csvDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            csvDropzone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleCsvUpload(files[0]);
+            }
+        });
+
+        // File input change
+        csvFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleCsvUpload(e.target.files[0]);
+            }
+        });
+
+        // Handle CSV upload
+        async function handleCsvUpload(file) {
+            if (!file.name.endsWith('.csv')) {
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Please upload a CSV file',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('spell_check', spellCheckEnabled.checked ? 'true' : 'false');
+
+            // Show progress
+            csvProgress.style.display = 'block';
+            csvResults.style.display = 'none';
+            csvProgressBar.style.width = '0%';
+            csvProgressText.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('/upload-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Upload failed');
+                }
+
+                const data = await response.json();
+
+                // Animate progress
+                csvProgressBar.style.width = '100%';
+                csvProgressText.textContent = `Processed: ${data.processed} / ${data.total}`;
+
+                // Store results
+                batchResults = data.results;
+
+                // Display results
+                setTimeout(() => {
+                    csvProgress.style.display = 'none';
+                    displayBatchResults(data.results);
+                }, 500);
+
+            } catch (error) {
+                console.error('Error:', error);
+                csvProgress.style.display = 'none';
+                await Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+
+            // Reset file input
+            csvFileInput.value = '';
+        }
+
+        // Display batch results
+        function displayBatchResults(results) {
+            csvResults.style.display = 'block';
+
+            let html = '<table class="results-table">';
+            html += '<thead><tr>';
+            html += '<th>Word</th>';
+            html += '<th>Method</th>';
+            html += '<th>Syllables</th>';
+            html += '<th>Status</th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+
+            results.forEach(result => {
+                const statusClass = result.has_errors ? 'status-warning' : 'status-success';
+                const statusIcon = result.has_errors ? '⚠️' : '✓';
+
+                html += '<tr>';
+                html += `<td><strong>${result.word}</strong></td>`;
+                html += `<td><span class="method-badge ${result.method}">${result.method.toUpperCase()}</span></td>`;
+                html += `<td>${result.joined}</td>`;
+                html += `<td class="${statusClass}">${statusIcon}</td>`;
+                html += '</tr>';
+
+                // Show error details if any
+                if (result.has_errors && result.errors.length > 0) {
+                    html += '<tr class="error-row">';
+                    html += '<td colspan="4">';
+                    result.errors.forEach(error => {
+                        const errorType = error.error_type === 'non_indonesian' ? '🔵' :
+                            error.error_type === 'typo' ? '🔴' : '🟡';
+                        html += `<div class="error-detail">${errorType} ${error.word}: ${error.reason}`;
+                        if (error.suggestions && error.suggestions.length > 0) {
+                            html += ` (Saran: ${error.suggestions.join(', ')})`;
+                        }
+                        html += '</div>';
+                    });
+                    html += '</td>';
+                    html += '</tr>';
+                }
+            });
+
+            html += '</tbody></table>';
+            csvResultsTable.innerHTML = html;
+
+            // Scroll to results
+            setTimeout(() => {
+                csvResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        // Export results
+        exportCsvBtn.addEventListener('click', async () => {
+            if (batchResults.length === 0) {
+                await Swal.fire({
+                    title: 'No Results',
+                    text: 'Please process a CSV file first',
+                    icon: 'info',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch('/export-results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ results: batchResults })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `syllable_results_${new Date().getTime()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                await Swal.fire({
+                    title: 'Success!',
+                    text: 'Results exported successfully',
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb',
+                    timer: 2000
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to export results',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
         });
 
         // Add smooth animations on load
