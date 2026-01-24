@@ -7,6 +7,7 @@ from PUEBIOfficialSplitter import PUEBIOfficialSplitter
 from HybridSyllableSplitter import HybridSyllableSplitter
 from SpellChecker import IndonesianSpellChecker
 from KBBIScraper import KBBIScraper
+from SyllableValidationDB import SyllableValidationDB
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -16,6 +17,7 @@ splitter_puebi = PUEBIOfficialSplitter()  # Official PUEBI rules
 splitter_sylbi = HybridSyllableSplitter()  # Hybrid morphological splitter for SylBI
 kbbi_scraper = KBBIScraper()  # KBBI scraper for online dictionary
 spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
+validation_db = SyllableValidationDB()  # Validation database handler
 
 @app.route('/')
 def index():
@@ -30,6 +32,7 @@ def split_text():
     data = request.get_json()
     text = data.get('text', '')
     method = data.get('method', 'puebi')  # Default to PUEBI
+    bypass_db = data.get('bypass_db', False)  # Option to bypass database
     
     if not text:
         return jsonify({'error': 'No text provided'}), 400
@@ -38,39 +41,41 @@ def split_text():
     words = re.findall(r'\b[\w]+\b', text)
     
     results = []
+    from_db_any = False
     
-    # Handle different methods
-    if method == 'kbbi':
-        # Use KBBI scraper (requires internet connection)
-        for word in words:
-            # Query KBBI online dictionary
-            syllables = kbbi_scraper.get_syllables(word)
-            
-            # If KBBI lookup fails, fallback to PUEBI method
-            if syllables is None:
-                syllables = splitter_puebi.split_syllables(word)
-            
-            results.append({
-                'word': word,
-                'syllables': syllables
-            })
-    else:
-        # Use local splitters (PUEBI or SylBI)
-        if method == 'sylbi':
-            splitter = splitter_sylbi
-        else:
-            splitter = splitter_puebi
+    for word in words:
+        syllables = None
+        from_db = False
         
-        for word in words:
-            syllables = splitter.split_syllables(word)
-            results.append({
-                'word': word,
-                'syllables': syllables
-            })
+        # 1. Check database first (if not bypassed)
+        if not bypass_db:
+            validation = validation_db.check_word_exists(word, method)
+            if validation:
+                syllables = validation['final_result'].split('-')
+                from_db = True
+                from_db_any = True
+        
+        # 2. If not found in DB or bypassed, use algorithms
+        if syllables is None:
+            if method == 'kbbi':
+                syllables = kbbi_scraper.get_syllables(word)
+                if syllables is None:
+                    syllables = splitter_puebi.split_syllables(word)
+            elif method == 'sylbi':
+                syllables = splitter_sylbi.split_syllables(word)
+            else:
+                syllables = splitter_puebi.split_syllables(word)
+        
+        results.append({
+            'word': word,
+            'syllables': syllables,
+            'from_db': from_db
+        })
     
     return jsonify({
         'results': results,
-        'method': method
+        'method': method,
+        'from_db_any': from_db_any
     })
 
 @app.route('/check_spelling', methods=['POST'])
@@ -236,6 +241,75 @@ def export_results():
     
     except Exception as e:
         return jsonify({'error': f'Error exporting results: {str(e)}'}), 500
+
+@app.route('/check_word_history', methods=['POST'])
+def check_word_history():
+    """Check if a word has been validated before."""
+    data = request.get_json()
+    word = data.get('word', '').strip()
+    method = data.get('method', None)
+    
+    if not word:
+        return jsonify({'error': 'No word provided'}), 400
+    
+    # Check if word exists in database
+    validation = validation_db.check_word_exists(word, method)
+    
+    if validation:
+        return jsonify({
+            'exists': True,
+            'validation': validation
+        })
+    else:
+        return jsonify({
+            'exists': False
+        })
+
+@app.route('/save_validation', methods=['POST'])
+def save_validation():
+    """Save a validation (correct or corrected) to the database."""
+    data = request.get_json()
+    word = data.get('word', '').strip()
+    method = data.get('method', 'puebi')
+    system_result = data.get('system_result', '')
+    validation_type = data.get('validation_type', 'correct')  # 'correct' or 'corrected'
+    final_result = data.get('final_result', '')
+    
+    if not word or not system_result or not final_result:
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    if validation_type not in ['correct', 'corrected']:
+        return jsonify({'error': 'Invalid validation type'}), 400
+    
+    # Save to database
+    success = validation_db.add_validation(
+        word=word,
+        method=method,
+        system_result=system_result,
+        validation_type=validation_type,
+        final_result=final_result
+    )
+    
+    if success:
+        return jsonify({
+            'success': True,
+            'message': 'Validation saved successfully'
+        })
+    else:
+        return jsonify({'error': 'Failed to save validation'}), 500
+
+@app.route('/validation_stats', methods=['GET'])
+def validation_stats():
+    """Get validation database statistics."""
+    stats = validation_db.get_statistics()
+    return jsonify(stats)
+
+@app.route('/database')
+def view_database():
+    records = validation_db.export_database()
+    # Sort by timestamp descending
+    records.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return render_template('database.html', records=records)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

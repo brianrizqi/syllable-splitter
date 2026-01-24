@@ -200,12 +200,12 @@
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Kembali ke Aplikasi
+            Kembali ke Beranda
         </a>
 
         <div class="docs-header">
-            <h1>📚 Dokumentasi</h1>
-            <p>Panduan lengkap penggunaan Indonesian Syllable Splitter</p>
+            <h1>📚 Dokumentasi Lengkap</h1>
+            <p>Aplikasi pemisah suku kata bahasa Indonesia dengan 3 metode berbeda dan deteksi typo otomatis</p>
         </div>
 
         <!-- Tentang Aplikasi -->
@@ -219,148 +219,119 @@
                 Tentang Aplikasi
             </h2>
             <p>
-                Indonesian Syllable Splitter adalah aplikasi web untuk memisahkan kata bahasa Indonesia menjadi
-                suku-suku kata
-                dengan berbagai metode. Aplikasi ini dilengkapi dengan deteksi typo otomatis menggunakan database KBBI
-                (112,643 kata) dan mendukung batch processing melalui upload CSV.
+                Aplikasi ini adalah <strong>web-based tool</strong> yang dapat memisahkan kata bahasa Indonesia menjadi
+                suku-suku kata menggunakan berbagai metode, lengkap dengan:
             </p>
-
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>✅ 3 Metode Pemisahan</h4>
-                    <p>PUEBI, SylBI, dan KBBI Online untuk berbagai kebutuhan</p>
-                </div>
-                <div class="feature-card">
-                    <h4>🔍 Deteksi Typo</h4>
-                    <p>Validasi otomatis dengan 112,643 kata dari KBBI</p>
-                </div>
-                <div class="feature-card">
-                    <h4>🌐 Deteksi Bahasa</h4>
-                    <p>Identifikasi kata non-Indonesia secara otomatis</p>
-                </div>
-                <div class="feature-card">
-                    <h4>📊 Batch Processing</h4>
-                    <p>Upload CSV untuk memproses banyak kata sekaligus</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Cara Menggunakan -->
-        <div class="docs-section">
-            <h2>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
-                Cara Menggunakan
-            </h2>
-
-            <h3>📝 Tab: Masukkan Teks (Manual Input)</h3>
-            <ol>
-                <li>Ketik atau paste teks di area input</li>
-                <li>Pilih metode pemisahan (PUEBI/SylBI/KBBI)</li>
-                <li>Aktifkan "Cek Ejaan" jika ingin deteksi typo</li>
-                <li>Klik "Pisahkan Suku Kata"</li>
-                <li>Hasil akan ditampilkan di bawah</li>
-            </ol>
+            <ul>
+                <li>✅ <strong>3 Metode Pemisahan</strong>: PUEBI, SylBI, dan KBBI Online</li>
+                <li>✅ <strong>Deteksi Typo Otomatis</strong>: Validasi dengan 112,643 kata dari KBBI</li>
+                <li>✅ <strong>Deteksi Bahasa</strong>: Identifikasi kata non-Indonesia</li>
+                <li>✅ <strong>Analisis Morfologi</strong>: Pemisahan awalan, sisipan, kata dasar, dan akhiran</li>
+                <li>✅ <strong>CLI Support</strong>: Dapat dijalankan via command line</li>
+            </ul>
 
             <div class="example-box">
                 <strong>Contoh:</strong><br>
-                Input: <code>pembelajaran Indonesia</code><br>
-                Metode: SylBI<br>
-                Output: <code>pe-m-be-l-a-jar-an In-do-ne-si-a</code>
-            </div>
-
-            <h3>📄 Tab: Upload CSV (Batch Processing)</h3>
-            <ol>
-                <li>Klik "Download Template CSV" untuk mendapatkan format</li>
-                <li>Isi template dengan kata-kata yang ingin diproses</li>
-                <li>Upload file CSV (drag & drop atau browse)</li>
-                <li>Tunggu proses selesai (progress bar akan muncul)</li>
-                <li>Lihat hasil di tabel</li>
-                <li>Klik "Export Results" untuk download hasil</li>
-            </ol>
-
-            <div class="code-block">
-                Format CSV Template:<br>
-                word,method<br>
-                pembelajaran,sylbi<br>
-                Indonesia,puebi<br>
-                membaca,sylbi
+                - <code>pembelajaran</code> → <code>pe-m-be-l-a-jar-an</code> (SylBI)<br>
+                - <code>Indonesia</code> → <code>In-do-ne-si-a</code><br>
+                - <code>computer</code> → ⚠️ Terdeteksi bahasa Inggris
             </div>
         </div>
 
-        <!-- Metode Pemisahan -->
+        <!-- Tiga Metode -->
         <div class="docs-section">
             <h2>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="16 18 22 12 16 6"></polyline>
                     <polyline points="8 6 2 12 8 18"></polyline>
                 </svg>
-                Metode Pemisahan Suku Kata
+                Tiga Metode Pemisahan
             </h2>
 
             <h3>1. PUEBI (Pedoman Umum Ejaan Bahasa Indonesia)</h3>
-            <p>
-                Metode resmi dari Kemendikbud berdasarkan aturan pemenggalan kata PUEBI.
-                Cocok untuk keperluan ejaan umum.
-            </p>
-            <div class="example-box">
-                <strong>Contoh:</strong> pembelajaran → <code>pem-be-la-ja-ran</code>
+            <p>Metode resmi dari Kemendikbud berdasarkan aturan pemenggalan kata PUEBI.</p>
+            <ul>
+                <li>Pemisahan suku kata murni tanpa analisis morfologi</li>
+                <li>Mengikuti aturan fonetik bahasa Indonesia</li>
+                <li>Cocok untuk keperluan ejaan umum</li>
+            </ul>
+            <div class="code-block">
+                pembelajaran → pem-be-la-ja-ran<br>
+                membaca → mem-ba-ca<br>
+                Indonesia → In-do-ne-si-a
             </div>
+
+            <hr style="margin: 2rem 0; opacity: 0.1;">
 
             <h3>2. SylBI (Syllabification for Bahasa Indonesia)</h3>
-            <p>
-                Metode hybrid yang menggabungkan analisis morfologi dengan pemisahan suku kata.
-                Memisahkan awalan, sisipan, kata dasar, dan akhiran. Cocok untuk analisis linguistik.
-            </p>
-            <div class="example-box">
-                <strong>Contoh:</strong> pembelajaran → <code>pe-m-be-l-a-jar-an</code><br>
-                <small>(pe + m + be + l + ajar + an)</small>
-            </div>
+            <p>Metode hybrid yang menggabungkan analisis morfologi dengan pemisahan suku kata.</p>
+            <ul>
+                <li>Memisahkan awalan (prefix), sisipan (infix), kata dasar (root), dan akhiran (suffix)</li>
+                <li>Menangani peluluhan (nasal assimilation)</li>
+                <li>Menangani awalan bertingkat (nested prefixes)</li>
+                <li>Cocok untuk analisis linguistik dan riset</li>
+            </ul>
 
-            <h3>3. KBBI Scraper (Online Dictionary)</h3>
-            <p>
-                Mengambil pemisahan suku kata langsung dari KBBI Online. Memerlukan koneksi internet.
-                Fallback ke PUEBI jika kata tidak ditemukan.
-            </p>
+            <div class="example-box">
+                <strong>Cara Kerja SylBI:</strong><br><br>
+                <strong>Langkah 1: Analisis Morfologi</strong><br>
+                Mendeteksi Prefix (me-, ber-, pe-, dll), Root (kata dasar), dan Suffix (-kan, -an, -i, dll).<br><br>
+
+                <strong>Langkah 2: Dekomposisi Prefix</strong><br>
+                Memisahkan prefix menjadi base prefix dan infix (sisipan). Contoh: <code>pem</code> → <code>pe</code>
+                (base) + <code>m</code> (infix).<br><br>
+
+                <strong>Langkah 3: Penanganan Peluluhan</strong><br>
+                Mengembalikan konsonan asli (p/t/k/s) yang luluh. Contoh: <code>memisah</code> (dari pisah) →
+                <code>me-m-pi-sah</code>.
+            </div>
 
             <table class="comparison-table">
                 <thead>
                     <tr>
-                        <th>Aspek</th>
-                        <th>PUEBI</th>
-                        <th>SylBI</th>
-                        <th>KBBI</th>
+                        <th>Infix</th>
+                        <th>Konsonan Luluh</th>
+                        <th>Contoh</th>
+                        <th>Hasil</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Fokus</strong></td>
-                        <td>Fonetik</td>
-                        <td>Morfologi + Fonetik</td>
-                        <td>Referensi Resmi</td>
+                        <td>m</td>
+                        <td>p</td>
+                        <td>memisah</td>
+                        <td>me-m-pi-sah</td>
                     </tr>
                     <tr>
-                        <td><strong>Analisis Imbuhan</strong></td>
-                        <td><span class="badge badge-warning">Tidak</span></td>
-                        <td><span class="badge badge-success">Ya</span></td>
-                        <td><span class="badge badge-warning">Tidak</span></td>
+                        <td>n</td>
+                        <td>t</td>
+                        <td>menari</td>
+                        <td>me-n-ta-ri</td>
                     </tr>
                     <tr>
-                        <td><strong>Internet</strong></td>
-                        <td><span class="badge badge-success">Tidak Perlu</span></td>
-                        <td><span class="badge badge-success">Tidak Perlu</span></td>
-                        <td><span class="badge badge-warning">Perlu</span></td>
+                        <td>ng</td>
+                        <td>k</td>
+                        <td>mengetik</td>
+                        <td>me-ng-ke-tik</td>
                     </tr>
                     <tr>
-                        <td><strong>Kecepatan</strong></td>
-                        <td><span class="badge badge-success">Sangat Cepat</span></td>
-                        <td><span class="badge badge-info">Cepat</span></td>
-                        <td><span class="badge badge-warning">Sedang</span></td>
+                        <td>ny</td>
+                        <td>s</td>
+                        <td>menyapu</td>
+                        <td>me-ny-sa-pu</td>
                     </tr>
                 </tbody>
             </table>
+
+            <hr style="margin: 2rem 0; opacity: 0.1;">
+
+            <h3>3. KBBI Scraper (Online Dictionary)</h3>
+            <p>Mengambil pemisahan suku kata langsung dari KBBI Online (kbbi.kemdikbud.go.id).</p>
+            <ul>
+                <li>Data langsung dari sumber resmi</li>
+                <li>Memerlukan koneksi internet</li>
+                <li>Fallback ke PUEBI jika kata tidak ditemukan</li>
+            </ul>
         </div>
 
         <!-- Deteksi Typo -->
@@ -374,99 +345,72 @@
                 </svg>
                 Deteksi Typo & Validasi KBBI
             </h2>
+            <p>Aplikasi menggunakan <strong>112,643 kata dari KBBI</strong> untuk validasi dan memberikan 3 jenis
+                peringatan:</p>
 
-            <p>Aplikasi menggunakan 112,643 kata dari KBBI untuk validasi dan memberikan 3 jenis peringatan:</p>
-
-            <h3>🔴 Kemungkinan Typo</h3>
-            <p>Deteksi pola salah eja seperti:</p>
             <ul>
-                <li>Konsonan berlebihan (5+ konsonan berurutan)</li>
-                <li>Karakter berulang (3+ karakter sama berurutan)</li>
-                <li>Tidak ada vokal dalam kata panjang</li>
+                <li><strong>🔴 Kemungkinan Typo</strong>: Deteksi pola konsonan berlebihan, karakter berulang, atau
+                    tidak ada vokal.</li>
+                <li><strong>🟡 Tidak Ditemukan di KBBI</strong>: Memberikan saran kata mirip dengan <i>similarity
+                        >70%</i>.</li>
+                <li><strong>🔵 Bukan Bahasa Indonesia</strong>: Deteksi kata bahasa Inggris (pola -tion, -ing, th-) atau
+                    huruf jarang (q, x, f).</li>
             </ul>
-            <div class="example-box">
-                <strong>Contoh:</strong> pmbljrn → Saran: <code>pembelajaran</code>
-            </div>
-
-            <h3>🟡 Tidak Ditemukan di KBBI</h3>
-            <p>Kata tidak ada dalam database KBBI. Sistem akan memberikan saran kata yang mirip menggunakan edit
-                distance algorithm.</p>
-            <div class="example-box">
-                <strong>Contoh:</strong> komputr → Saran: <code>komputer, komputasi</code>
-            </div>
-
-            <h3>🔵 Bukan Bahasa Indonesia</h3>
-            <p>Deteksi kata asing berdasarkan:</p>
-            <ul>
-                <li>Common English words (computer, learning, hello, dll)</li>
-                <li>Pola bahasa Inggris (-tion, -ing, th-, ght)</li>
-                <li>Huruf jarang dalam bahasa Indonesia (q, x, f)</li>
-            </ul>
-            <div class="example-box">
-                <strong>Contoh:</strong> computer → <code>Terdeteksi sebagai kata bahasa Inggris</code>
-            </div>
         </div>
 
-        <!-- API Endpoints -->
         <div class="docs-section">
             <h2>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="16 18 22 12 16 6"></polyline>
-                    <polyline points="8 6 2 12 8 18"></polyline>
-                </svg>
-                API Endpoints
-            </h2>
-
-            <h3>POST /split</h3>
-            <p>Memisahkan teks menjadi suku kata</p>
-            <div class="code-block">
-                Request:<br>
-                {<br>
-                "text": "pembelajaran",<br>
-                "method": "sylbi"<br>
-                }<br><br>
-                Response:<br>
-                {<br>
-                "results": [{<br>
-                "word": "pembelajaran",<br>
-                "syllables": ["pe","m","be","l","a","jar","an"]<br>
-                }],<br>
-                "method": "sylbi"<br>
-                }
-            </div>
-
-            <h3>POST /check_spelling</h3>
-            <p>Memeriksa ejaan dan memberikan suggestions</p>
-
-            <h3>GET /download-template</h3>
-            <p>Download template CSV untuk batch processing</p>
-
-            <h3>POST /upload-csv</h3>
-            <p>Upload dan proses file CSV</p>
-
-            <h3>POST /export-results</h3>
-            <p>Export hasil batch processing sebagai CSV</p>
-        </div>
-
-        <!-- Tips & Tricks -->
-        <div class="docs-section">
-            <h2>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
                     <path
-                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
                     </path>
                 </svg>
-                Tips & Tricks
+                Perbandingan Metode
             </h2>
-
-            <ul>
-                <li><strong>Gunakan PUEBI</strong> untuk keperluan ejaan umum dan kecepatan maksimal</li>
-                <li><strong>Gunakan SylBI</strong> untuk analisis linguistik dan riset morfologi</li>
-                <li><strong>Gunakan KBBI</strong> untuk validasi dengan sumber resmi</li>
-                <li><strong>Aktifkan Cek Ejaan</strong> untuk memastikan kata yang diinput benar</li>
-                <li><strong>Batch Processing</strong> sangat berguna untuk memproses ratusan kata sekaligus</li>
-                <li><strong>Export Results</strong> untuk menyimpan hasil dan analisis lebih lanjut</li>
-            </ul>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspek</th>
+                        <th>PUEBI</th>
+                        <th>SylBI</th>
+                        <th>KBBI Scraper</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Fokus</td>
+                        <td>Fonetik</td>
+                        <td>Morfologi + Fonetik</td>
+                        <td>Referensi Resmi</td>
+                    </tr>
+                    <tr>
+                        <td>Analisis Imbuhan</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                    </tr>
+                    <tr>
+                        <td>Peluluhan</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                    </tr>
+                    <tr>
+                        <td>Internet</td>
+                        <td>❌</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td>Kecepatan</td>
+                        <td>⚡⚡⚡</td>
+                        <td>⚡⚡</td>
+                        <td>⚡</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <!-- Footer -->
@@ -474,7 +418,7 @@
             style="text-align: center; margin-top: 4rem; padding-top: 2rem; border-top: 2px solid rgba(59, 130, 246, 0.1);">
             <p style="color: var(--text-muted);">
                 Indonesian Syllable Splitter © 2026<br>
-                <small>Powered by Flask, nlp-id, and KBBI</small>
+                <small>Selamat menggunakan aplikasi ini untuk keperluan linguistik dan akademis! 🎉</small>
             </p>
         </div>
     </div>

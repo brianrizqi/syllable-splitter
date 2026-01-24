@@ -190,6 +190,14 @@
                                             </svg>
                                             <div class="method-name-wrapper">
                                                 <span class="method-name">SylBI</span>
+                                                <a href="/docs" class="info-icon" title="Lihat Dokumentasi SylBI">
+                                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                                        <circle cx="7" cy="7" r="6" stroke="currentColor"
+                                                            stroke-width="1.5" />
+                                                        <path d="M7 10V7M7 4H7.01" stroke="currentColor"
+                                                            stroke-width="1.5" stroke-linecap="round" />
+                                                    </svg>
+                                                </a>
                                             </div>
                                             <span class="method-desc">Sylabifikasi Bahasa Indonesia</span>
                                         </div>
@@ -221,24 +229,6 @@
                                         </div>
                                     </label>
                                 </div>
-                            </div>
-
-                            <!-- Spell Check Option -->
-                            <div class="spell-check-option">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="spellCheckEnabled" checked>
-                                    <svg class="checkbox-custom" width="20" height="20" viewBox="0 0 20 20">
-                                        <rect class="checkbox-box" x="0.5" y="0.5" width="19" height="19" rx="4"
-                                            fill="white" stroke="#d1d5db" stroke-width="2" />
-                                        <path class="checkbox-check" d="M5 10 L8.5 13.5 L15 6.5" stroke="white"
-                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                                            fill="none" />
-                                    </svg>
-                                    <span class="checkbox-text">
-                                        <span class="checkbox-title">Cek Ejaan Sebelum Memproses</span>
-                                        <span class="checkbox-desc">Deteksi typo dan berikan saran perbaikan</span>
-                                    </span>
-                                </label>
                             </div>
 
                             <button id="splitBtn" class="btn-primary">
@@ -304,6 +294,37 @@
                                 </button>
                             </div>
                             <div id="resultContent" class="result-content"></div>
+                        </div>
+                    </div>
+
+                    <!-- Correction Modal -->
+                    <div id="correctionModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Koreksi Pemisahan Suku Kata</h3>
+                                <button id="closeModal" class="close-btn">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Kata:</strong> <span id="modalWord"></span></p>
+                                <p><strong>Hasil Sistem:</strong> <span id="modalSystemResult"></span></p>
+                                <div class="form-group">
+                                    <label for="correctionInput">Masukkan koreksi Anda:</label>
+                                    <input type="text" id="correctionInput" placeholder="Contoh: pem-bel-a-jar-an" />
+                                    <p class="input-hint">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                        Format: pisahkan suku kata dengan tanda hubung (-)
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button id="cancelCorrection" class="btn-secondary">Batal</button>
+                                <button id="submitCorrection" class="btn-primary">Simpan Koreksi</button>
+                            </div>
                         </div>
                     </div>
                     <!-- End Manual Input Tab -->
@@ -498,7 +519,7 @@
         const typoContent = document.getElementById('typoContent');
         const proceedAnywayBtn = document.getElementById('proceedAnywayBtn');
         const fixTypoBtn = document.getElementById('fixTypoBtn');
-        const spellCheckEnabled = document.getElementById('spellCheckEnabled');
+        // const spellCheckEnabled = document.getElementById('spellCheckEnabled');
 
         // Split button handler
         splitBtn.addEventListener('click', async () => {
@@ -509,11 +530,11 @@
                 return;
             }
 
-            if (spellCheckEnabled.checked) {
-                await checkSpelling(text);
-            } else {
-                await processText(text);
-            }
+            // if (spellCheckEnabled.checked) {
+            // await checkSpelling(text);
+            // } else {
+            await processText(text);
+            // }
         });
 
         // Enter key handler
@@ -669,8 +690,20 @@
         });
 
         // Process text function
-        async function processText(text) {
+        async function processText(text, bypassDb = false) {
             const selectedMethod = document.querySelector('input[name="method"]:checked').value;
+
+            // Only show history notification for single word manual input if not bypassing DB
+            if (!bypassDb) {
+                const words = text.trim().split(/\s+/);
+                if (words.length === 1) {
+                    const historyCheck = await checkWordHistory(words[0], selectedMethod);
+                    if (historyCheck) {
+                        // Word exists in database, show notification
+                        await showHistoryNotification(historyCheck);
+                    }
+                }
+            }
 
             loadingSection.style.display = 'block';
             resultSection.style.display = 'none';
@@ -683,7 +716,8 @@
                     },
                     body: JSON.stringify({
                         text: text,
-                        method: selectedMethod
+                        method: selectedMethod,
+                        bypass_db: bypassDb
                     })
                 });
 
@@ -712,11 +746,52 @@
                     let html = '';
 
                     data.results.forEach(item => {
+                        const syllablesJoined = item.syllables.join('-');
                         html += `
-                            <div class="word-result">
-                                <span class="original-word">${item.word}</span>
+                            <div class="word-result" data-word="${item.word}" data-method="${data.method}" data-syllables="${syllablesJoined}">
+                                <div class="word-result-header">
+                                    <span class="original-word">${item.word}</span>
+                                    ${item.from_db ? `
+                                        <div class="db-notice">
+                                            <span class="db-badge">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                                                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                                                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+                                                </svg>
+                                                Hasil dari Database
+                                            </span>
+                                            <button class="btn-text-only" onclick="processText('${text}', true)">
+                                                Lihat pengerjaan secara rules
+                                            </button>
+                                        </div>
+                                    ` : `
+                                        <span class="rules-badge">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="16 18 22 12 16 6"></polyline>
+                                                <polyline points="8 6 2 12 8 18"></polyline>
+                                            </svg>
+                                            Pengerjaan Rules
+                                        </span>
+                                    `}
+                                </div>
                                 <div class="syllables">
                                     ${item.syllables.map(syl => `<span class="syllable">${syl}</span>`).join('')}
+                                </div>
+                                <div class="validation-buttons">
+                                    <button class="btn-correct" onclick="handleCorrectValidation('${item.word}', '${data.method}', '${syllablesJoined}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Sudah Sesuai
+                                    </button>
+                                    <button class="btn-correction" onclick="showCorrectionModal('${item.word}', '${data.method}', '${syllablesJoined}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                        Koreksi
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -827,7 +902,7 @@
 
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('spell_check', spellCheckEnabled.checked ? 'true' : 'false');
+            // formData.append('spell_check', spellCheckEnabled.checked ? 'true' : 'false');
 
             // Show progress
             csvProgress.style.display = 'block';
@@ -981,6 +1056,192 @@
                 });
             }
         });
+
+        // Validation workflow functions
+        let currentValidationData = {};
+
+        // Check if word exists in database
+        async function checkWordHistory(word, method) {
+            try {
+                const response = await fetch('/check_word_history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ word: word, method: method })
+                });
+
+                if (!response.ok) {
+                    return null;
+                }
+
+                const data = await response.json();
+                return data.exists ? data.validation : null;
+            } catch (error) {
+                console.error('Error checking word history:', error);
+                return null;
+            }
+        }
+
+        // Show history notification
+        async function showHistoryNotification(validation) {
+            const validationType = validation.validation_type === 'correct' ? 'Sudah Sesuai' : 'Dikoreksi';
+            const icon = validation.validation_type === 'correct' ? 'success' : 'info';
+
+            await Swal.fire({
+                title: 'Kata Sudah Pernah Dicek',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Kata:</strong> ${validation.word}</p>
+                        <p><strong>Metode:</strong> ${validation.method.toUpperCase()}</p>
+                        <p><strong>Status:</strong> ${validationType}</p>
+                        <p><strong>Hasil:</strong> ${validation.final_result}</p>
+                        <p><small style="color: #666;">Dicek pada: ${new Date(validation.timestamp).toLocaleString('id-ID')}</small></p>
+                    </div>
+                `,
+                icon: icon,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+
+        // Handle "Sudah Sesuai" button
+        async function handleCorrectValidation(word, method, syllables) {
+            const result = await Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Apakah Anda yakin hasil pemisahan sudah sesuai?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Sudah Sesuai',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#6b7280'
+            });
+
+            if (result.isConfirmed) {
+                await saveValidation(word, method, syllables, 'correct', syllables);
+            }
+        }
+
+        // Show correction modal
+        function showCorrectionModal(word, method, syllables) {
+            currentValidationData = { word, method, syllables };
+
+            document.getElementById('modalWord').textContent = word;
+            document.getElementById('modalSystemResult').textContent = syllables;
+            document.getElementById('correctionInput').value = '';
+            document.getElementById('correctionModal').style.display = 'flex';
+        }
+
+        // Close modal handlers
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('correctionModal').style.display = 'none';
+        });
+
+        document.getElementById('cancelCorrection').addEventListener('click', () => {
+            document.getElementById('correctionModal').style.display = 'none';
+        });
+
+        // Submit correction
+        document.getElementById('submitCorrection').addEventListener('click', async () => {
+            const correction = document.getElementById('correctionInput').value.trim();
+
+            if (!correction) {
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Silakan masukkan koreksi terlebih dahulu',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            // Validate format (should contain hyphens)
+            if (!correction.includes('-')) {
+                await Swal.fire({
+                    title: 'Format Salah',
+                    text: 'Gunakan tanda hubung (-) untuk memisahkan suku kata. Contoh: pem-bel-a-jar-an',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            document.getElementById('correctionModal').style.display = 'none';
+
+            await saveValidation(
+                currentValidationData.word,
+                currentValidationData.method,
+                currentValidationData.syllables,
+                'corrected',
+                correction
+            );
+        });
+
+        // Save validation to database
+        async function saveValidation(word, method, systemResult, validationType, finalResult) {
+            try {
+                const response = await fetch('/save_validation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: word,
+                        method: method,
+                        system_result: systemResult,
+                        validation_type: validationType,
+                        final_result: finalResult
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save validation');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const message = validationType === 'correct'
+                        ? 'Validasi berhasil disimpan!'
+                        : 'Koreksi berhasil disimpan!';
+
+                    await Swal.fire({
+                        title: 'Berhasil!',
+                        text: message,
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb',
+                        timer: 2000
+                    });
+
+                    // Remove validation buttons from the word result
+                    const wordResult = document.querySelector(`[data-word="${word}"]`);
+                    if (wordResult) {
+                        const validationButtons = wordResult.querySelector('.validation-buttons');
+                        if (validationButtons) {
+                            validationButtons.innerHTML = `
+                                <div class="validation-saved">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    ${validationType === 'correct' ? 'Tersimpan sebagai Sesuai' : 'Tersimpan sebagai Koreksi'}
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    throw new Error('Validation save failed');
+                }
+            } catch (error) {
+                console.error('Error saving validation:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Gagal menyimpan validasi',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+        }
 
         // Add smooth animations on load
         window.addEventListener('load', () => {
