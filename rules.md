@@ -272,66 +272,88 @@ python3 HybridSyllableSplitter.py "membaca" --no-spell-check
 
 ## 📏 Aturan PUEBI (Detail)
 
-### **Aturan 1: Vokal-Vokal (VV)**
-Dua vokal berurutan dipisahkan, **kecuali** diftong.
+Pemisahan suku kata murni mengikuti aturan fonetik bahasa Indonesia berdasarkan **Pedoman Umum Ejaan Bahasa Indonesia (PUEBI)**.
 
-**Vokal**: a, e, i, o, u
+### **1. Pemenggalan Kata Dasar**
 
-**Contoh:**
-```
-buah    → bu-ah
-main    → ma-in
-laut    → la-ut
-```
+#### **a. Vokal Berurutan (VV)**
+Jika di tengah kata terdapat huruf vokal yang berurutan, pemenggalannya dilakukan di antara kedua huruf vokal itu.
+- `buah` → `bu-ah`
+- `main` → `ma-in`
+- `niat` → `ni-at`
+- `saat` → `sa-at`
 
-### **Aturan 2: Diftong**
-Diftong **tidak** dipisahkan: ai, au, ei, oi
+#### **b. Diftong**
+Huruf diftong **ai, au, ei, dan oi** tidak dipenggal.
+- `pandai` → `pan-dai`
+- `aula` → `au-la`
+- `saudara` → `sau-da-ra`
+- `survei` → `sur-vei`
+- `amboi` → `am-boi`
 
-**Contoh:**
-```
-pandai   → pan-dai  ✅ (bukan pan-da-i ❌)
-saudara  → sau-da-ra ✅
-survei   → sur-vei  ✅
-```
+#### **c. Vokal-Konsonan-Vokal (VKV)**
+Jika di tengah kata dasar terdapat huruf konsonan (termasuk gabungan huruf konsonan) di antara dua huruf vokal, pemenggalannya dilakukan sebelum huruf konsonan itu.
+- `bapak` → `ba-pak`
+- `lawan` → `la-wan`
+- `dengan` → `de-ngan`
+- `kenyang` → `ke-nyang`
+- `mutakhir` → `mu-ta-khir`
+- `musyawarah` → `mu-sya-wa-rah`
 
-### **Aturan 3: Vokal-Konsonan-Vokal (VKV)**
-Pisahkan sebelum konsonan.
+#### **d. Dua Konsonan Berurutan (VKKV)**
+Jika di tengah kata dasar terdapat dua huruf konsonan yang berurutan, pemenggalannya dilakukan di antara kedua huruf konsonan itu.
+**Catatan:** Gabungan huruf konsonan yang melambangkan satu bunyi tidak dipenggal.
+- `April` → `Ap-ril`
+- `caplok` → `cap-lok`
+- `makh-luk` → `makh-luk`
+- `mandi` → `man-di`
+- `sanggup` → `sang-gup`
+- `sombong` → `som-bong`
+- `swasta` → `swas-ta`
+- `bangsa` → `bang-sa` (cluster)
+- `banyak` → `ba-nyak` (cluster)
 
-**Contoh:**
-```
-bapak  → ba-pak
-lawan  → la-wan
-rumah  → ru-mah
-```
+#### **e. Tiga Konsonan Berurutan atau Lebih (VKKKV)**
+Jika di tengah kata dasar terdapat tiga huruf konsonan atau lebih yang masing-masing melambangkan satu bunyi, pemenggalannya dilakukan di antara huruf konsonan yang pertama dan huruf konsonan yang kedua.
+- `ultra` → `ul-tra`
+- `infra` → `in-fra`
+- `bentrok` → `ben-trok`
+- `instrumen` → `in-stru-men`
+- `bang-krut` → `bang-krut` (cluster `ng` tidak dipenggal)
 
-### **Aturan 4: Vokal-Konsonan-Konsonan-Vokal (VKKV)**
-Pisahkan di antara dua konsonan.
+---
 
-**Contoh:**
-```
-mandi    → man-di
-sombong  → som-bong
-penting  → pen-ting
-```
+### **2. Pemenggalan Kata Turunan**
 
-### **Aturan 5: Gabungan Konsonan Khusus**
-Konsonan khusus **tidak** dipisahkan: ng, ny, sy, kh, ch, dh, gh, ph, sh, th
+Pemenggalan kata turunan sedapat-dapatnya dilakukan di antara bentuk dasar dan unsur pembentuknya.
+- `ber-jalan`
+- `mem-bantu`
+- `di-ambil`
+- `ter-bawa`
+- `makan-an`
+- `letak-kan`
+- `pergi-lah`
+- `apa-kah`
 
-**Contoh:**
-```
-banyak   → ba-nyak  ✅ (bukan ban-yak ❌)
-syarat   → sya-rat  ✅
-makhkuk  → makh-luk ✅
-```
+**Catatan Khusus:**
+1. **Peluluhan**: Pemenggalan kata berimbuhan yang bentuk dasarnya mengalami perubahan dilakukan seperti pada kata dasar.
+   - `me-nu-tup` (dari tutup)
+   - `me-ma-kai` (dari pakai)
+   - `pe-mi-kir` (dari pikir)
+2. **Sisipan**: Pemenggalan kata bersisipan dilakukan seperti pada kata dasar.
+   - `ge-lem-bung` (sisipan -el-)
+   - `ge-mu-ruh` (sisipan -em-)
+   - `si-nam-bung` (sisipan -in-)
+   - `te-lun-juk` (sisipan -el-)
 
-### **Aturan 6: Vokal-Konsonan-Konsonan-Konsonan-Vokal (VKKKV)**
-Pisahkan setelah konsonan pertama: VC-CCV
+---
 
-**Contoh:**
-```
-instrumen  → in-stru-men
-ultra      → ul-tra
-```
+### **3. Unsur Gabungan**
+Jika sebuah kata terdiri atas dua unsur atau lebih dan salah satu unsurnya itu dapat bergabung dengan unsur lain, pemenggalannya dilakukan di antara unsur-unsur itu. Tiap unsur gabungan itu dipenggal seperti pada kata dasar.
+- `biografi` → `bio-grafi` → `bi-o-gra-fi`
+- `biodata` → `bio-data` → `bi-o-da-ta`
+- `pascapanen` → `pasca-panen` → `pas-ca-pa-nen`
+- `kilometer` → `kilo-meter` → `ki-lo-me-ter`
 
 ---
 

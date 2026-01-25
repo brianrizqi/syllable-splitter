@@ -12,13 +12,15 @@ class MorphologicalAnalyzer:
         # Indonesian prefixes (sorted by length for greedy matching)
         self.prefixes = [
             # Complex prefixes (longest first for greedy matching)
-            'memper', 'memper', 'diper', 'keber', 'terpem', 'terpe',
-            'mempel', 'mempe', 'pember', 'penge', 'penge',
+            'memper', 'diper', 'keber', 'terpem', 'terpe',
+            'mempel', 'mempe', 'pember', 'penge',
+            # Other common prefixes (moved up for greedier match)
+            'ber', 'ter', 'per',
             # Nasal prefixes with variations
             'meng', 'meny', 'mem', 'men', 'me',
             'peng', 'peny', 'pem', 'pen', 'pe',
-            # Other common prefixes
-            'ber', 'ter', 'per', 'di', 'ke', 'se'
+            # Remaining
+            'di', 'ke', 'se'
         ]
         
         # Indonesian suffixes (including particles and possessives)
@@ -33,14 +35,14 @@ class MorphologicalAnalyzer:
         
         # Circumfixes (prefix + suffix combinations)
         self.circumfixes = [
-            # ke- + -an (nominalization)
-            ('ke', 'an'),
-            # pe- + -an (nominalization)
-            ('pe', 'an'), ('pem', 'an'), ('pen', 'an'), ('peng', 'an'), ('peny', 'an'),
             # per- + -an (nominalization)
             ('per', 'an'),
             # ber- + -an (reciprocal/collective)
             ('ber', 'an'), ('ber', 'kan'),
+            # ke- + -an (nominalization)
+            ('ke', 'an'),
+            # pe- + -an (nominalization)
+            ('pe', 'an'), ('pem', 'an'), ('pen', 'an'), ('peng', 'an'), ('peny', 'an'),
             # me- + -kan/-i (transitive verbs)
             ('me', 'kan'), ('me', 'i'),
             ('mem', 'kan'), ('mem', 'i'),
