@@ -178,29 +178,30 @@ class PUEBIOfficialSplitter:
             return self.apply_single_letter_filter(self.split_base_word(word))
 
         # Rule 2: Kata Turunan (Derived Words)
-        # We need to decide if we use Rule 2 (morpheme boundary) or Note 1 (syllable splitting)
+        # We need to decide if we use Rule 2 (morpheme boundary) or Note 1/2 (syllable splitting)
         
-        # Check for infix (Note 2) -> Syllable based
-        is_infix = False
+        # Note 2: Sisipan (Infiks) -> Syllable based
+        # Sisipan: -el-, -er-, -em-, -in-
+        is_sisipan = False
         for inf in ['el', 'er', 'em', 'in']:
             if word_lower.startswith(word_lower[0] + inf) and word_lower[1:1+len(inf)] == inf:
                 if m_prefix not in ['per', 'ber', 'ter', 'me', 'pe', 'di', 'ke', 'se']:
-                    is_infix = True
+                    is_sisipan = True
                     break
         
-        # Check for changed base (Note 1) -> Syllable based
-        # If nasalized (m-root != lem-root) or root part differs from lemma
-        is_changed = False
+        # Note 1: Apitan atau Luluhan (Simulfiks) -> Syllable based
+        # If nasalized (m-root != lem-root) or root part in word differs from lemma
+        is_simulfix = False
         if lem_root and lem_root in word_lower:
             start_idx = word_lower.find(lem_root)
             actual_root_part = word_lower[start_idx : start_idx + len(lem_root)]
             if actual_root_part != lem_root:
-                is_changed = True
+                is_simulfix = True
         else:
-            # Root not found as-is (e.g., 'menutup' root 'tutup')
-            is_changed = True
+            # Root not found as-is (e.g., 'menutup' root 'tutup') -> Luluhan/Simulfiks
+            is_simulfix = True
             
-        if is_changed or is_infix:
+        if is_simulfix or is_sisipan:
             # Rule 2 Note 1 & 2: Split like base word (phonetic)
             return self.apply_single_letter_filter(self.split_base_word(word))
 

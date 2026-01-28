@@ -336,11 +336,11 @@ Pemenggalan kata turunan sedapat-dapatnya dilakukan di antara bentuk dasar dan u
 - `apa-kah`
 
 **Catatan Khusus:**
-1. **Peluluhan**: Pemenggalan kata berimbuhan yang bentuk dasarnya mengalami perubahan dilakukan seperti pada kata dasar.
+1. **Apitan atau Luluhan (Simulfiks)**: Pemenggalan kata berimbuhan yang bentuk dasarnya mengalami perubahan dilakukan seperti pada kata dasar.
    - `me-nu-tup` (dari tutup)
    - `me-ma-kai` (dari pakai)
    - `pe-mi-kir` (dari pikir)
-2. **Sisipan**: Pemenggalan kata bersisipan dilakukan seperti pada kata dasar.
+2. **Sisipan (Infiks)**: Pemenggalan kata bersisipan dilakukan seperti pada kata dasar.
    - `ge-lem-bung` (sisipan -el-)
    - `ge-mu-ruh` (sisipan -em-)
    - `si-nam-bung` (sisipan -in-)
