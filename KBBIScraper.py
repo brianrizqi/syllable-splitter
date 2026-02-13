@@ -43,12 +43,13 @@ class KBBIScraper:
             if not entry:
                 return None
             
-            # Get the text which contains syllables
-            entry_text = entry.get_text(strip=True)
+            # Get the text, inserting a space between elements to prevent merging words
+            # (e.g., prevent "a.ir" and "bentuk tidak baku" becoming "a.irbentuk")
+            entry_text = entry.get_text(" ", strip=True)
             
             # Extract syllables (format: "ajar (1) » pem.bel.a.jar.an")
             # or sometimes just "pem.bel.a.jar.an"
-            syllable_match = re.search(r'([a-z]+(?:\.[a-z]+)+)', entry_text)
+            syllable_match = re.search(r'([A-Za-z]+(?:\.[A-Za-z]+)+)', entry_text)
             
             if syllable_match:
                 syllable_string = syllable_match.group(1)

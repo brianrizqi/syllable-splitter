@@ -62,7 +62,18 @@ def split_text():
                 if syllables is None:
                     syllables = splitter_puebi.split_syllables(word)
             elif method == 'sylbi':
-                syllables = splitter_sylbi.split_syllables(word)
+                # SylBI Fallback Logic:
+                # If word has morphological affixes, use SylBI (Hybrid) rules
+                # If word is a base word (no affixes), follow KBBI rules (scraper)
+                prefix, root, suffix = splitter_sylbi.morphology.analyze(word)
+                
+                if not prefix and not suffix:
+                    # No affixes detected, try KBBI online first
+                    syllables = kbbi_scraper.get_syllables(word)
+                
+                # If it has affixes OR KBBI online failed for base word
+                if syllables is None:
+                    syllables = splitter_sylbi.split_syllables(word)
             else:
                 syllables = splitter_puebi.split_syllables(word)
         
