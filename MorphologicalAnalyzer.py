@@ -35,8 +35,11 @@ class MorphologicalAnalyzer:
         
         # Circumfixes (prefix + suffix combinations)
         self.circumfixes = [
+            # memper- / diper- (longest/most specific first)
+            ('memper', 'kan'), ('memper', 'i'),
+            ('diper', 'kan'), ('diper', 'i'),
             # per- + -an (nominalization)
-            ('per', 'an'),
+            ('per', 'an'), ('per', 'kan'), ('per', 'i'),
             # ber- + -an (reciprocal/collective)
             ('ber', 'an'), ('ber', 'kan'),
             # ke- + -an (nominalization)

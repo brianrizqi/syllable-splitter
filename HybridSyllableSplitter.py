@@ -40,6 +40,8 @@ class HybridSyllableSplitter:
         if word_lower in self.exceptions:
             return self.exceptions[word_lower]
         
+        is_modified = False
+        
         # Step 2: Morphological analysis using lemmatizer
         # detected_root has infixes (e.g., "mbelajar"), lemmatized_root is pure (e.g., "ajar")
         prefix, detected_root, suffix, lemmatized_root = self.morphology.analyze_with_lemmatizer(word)
@@ -99,37 +101,21 @@ class HybridSyllableSplitter:
                     # We should use the full "emban" from lemmatizer and clear the suffix
                     if pure_lemmatized_root and pure_lemmatized_root[0] in vowels:
                         # No peluluhan - root naturally starts with vowel
-                        # Use FULL lemmatized root (including what was detected as suffix)
-                        root = lemmatized_root
-                        suffix = ''  # Clear suffix since it's part of the root
+                        # Only clear suffix IF it's actually part of the lemmatized_root
+                        # Example: "mengemban" -> lemmatized="emban", suffix="an" -> clear suffix
+                        # Example: "terelakkan" -> lemmatized="elak", suffix="kan" -> DON'T clear suffix
+                        root = pure_lemmatized_root
+                        if suffix and lemmatized_root.endswith(suffix):
+                             suffix = '' 
                         # Don't clear infix - we still want to separate it
-                    # PRIORITY 2: Restore based on infix type (most reliable for peluluhan)
-                    # ng → k, ny → s, m → p, n → t
-                    # This handles cases where lemmatizer returns incomplete root
-                    # Example: "mengetik" → detected_root="etik", restore 'k' to get "ketik"
                     else:
-                        consonant_map = {
-                            'ng': 'k',
-                            'ny': 's', 
-                            'm': 'p',
-                            'n': 't'
-                        }
-                        
-                        if infix in consonant_map:
-                            # Restore the consonant based on infix mapping
-                            restored_consonant = consonant_map[infix]
-                            root = restored_consonant + root
-                            # Don't clear infix - we still want to separate it
-                        elif pure_lemmatized_root and pure_lemmatized_root[0] not in vowels:
-                            # PRIORITY 3: Use pure lemmatized root if available and starts with consonant
-                            # This handles cases where lemmatizer correctly returns the root
-                            root = pure_lemmatized_root
-                            # Don't clear infix
-                        else:
-                            # PRIORITY 4: Regular peluluhan case - infix becomes part of root
-                            # This is for cases where the infix is truly part of the root
-                            root = infix + root
-                            infix = ''
+                        # PRIORITY 2: Regular peluluhan case - infix becomes part of root
+                        # TBBBI 4.2.2.1: e.g. "memukul". 'pukul' dropped 'p', became 'mukul'.
+                        # This should be processed as the mutated base phonetically together.
+                        # Restore the infix to the root and clear infix, 
+                        # so that stem tracking sees it as modified later.
+                        root = infix + root
+                        infix = ''
             
             # If no infix found in prefix, check if root starts with a potential infix
             # This handles cases like "pembelajaran" where prefix="pe", root="mbelajar"
@@ -236,56 +222,46 @@ class HybridSyllableSplitter:
             
 
             
+            # If we extracted an infix but didn't actually merge it into the root
+            # (which means Rule 1 applies: base word intact), we need to reconstruct 
+            # the full phonological prefix before splitting it.
+            # E.g. base_prefix='me', infix='m' -> full_prefix='mem' 
+            full_prefix = base_prefix
             if infix:
-                # We have a prefix with infix (e.g., "pem" = "pe" + "m")
-                # Split them into separate syllables
-                result.append(base_prefix)
-                result.append(infix)
-            else:
-                # No infix, just add the base prefix
-                result.append(base_prefix)
+                full_prefix += infix
+                
+            # Reconstruct the pure lemmatized_root string based on suffix presence
+            pure_root = lemmatized_root
+            original_stem = prefix + detected_root
+            simple_concat = prefix + pure_root
+            is_modified = (original_stem != simple_concat)
             
-            # NESTED PREFIX CHECK: After extracting first prefix+infix, check if root has another prefix
-            # Example: "pembelajaran" → "pe" + "m" extracted, now check if "belajar" has "be" + "l"
-            if root and len(root) > 2:
-                # Check if root starts with a decomposable prefix
-                nested_base_prefixes = ['pe', 'be', 'me', 'te', 'se']
-                for nested_prefix in nested_base_prefixes:
-                    if root.startswith(nested_prefix) and len(root) > len(nested_prefix):
-                        # Check if there's an infix after this prefix
-                        potential_infix_part = root[len(nested_prefix):]
+            # Special case for memper/diper: if the only difference is the suffix
+            # (e.g. "memperistri" -> word="memper"+"istr"+"i", lem_root="istri")
+            # We want to treat this as NOT modified to preserve prefix boundary "mem-per-..."
+            if is_modified and prefix in ['memper', 'diper']:
+                if detected_root + suffix == lemmatized_root:
+                    is_modified = False
+                    root = lemmatized_root
+                    suffix = '' # Suffix is now part of the root for splitting
 
-                        if len(potential_infix_part) >= 2:
-                            first_char = potential_infix_part[0]
-                            second_char = potential_infix_part[1]
-                            vowels = 'aiueo'
-                            potential_infixes = ['m', 'n', 'l', 'r', 'ng', 'ny']
-                            
-                            # Check for two-char infixes first (ng, ny)
-                            if potential_infix_part[:2] in ['ng', 'ny']:
-                                nested_infix = potential_infix_part[:2]
-                                remaining_root = potential_infix_part[2:]
-                                if len(remaining_root) >= 2:  # Ensure remaining root is valid
-                                    result.append(nested_prefix)
-                                    result.append(nested_infix)
-                                    root = remaining_root
-
-                                    break
-                            # Check for single-char infixes
-                            # The infix can be followed by either consonant OR vowel
-                            # Example: "belajar" → "be" + "l" + "ajar" (l followed by vowel a)
-                            elif first_char in potential_infixes:
-                                nested_infix = first_char
-                                remaining_root = potential_infix_part[1:]
-                                if len(remaining_root) >= 2:  # Ensure remaining root is valid
-                                    result.append(nested_prefix)
-                                    result.append(nested_infix)
-                                    root = remaining_root
-
-                                    break
+            if is_modified:
+                # Rule 2: Base word modified (peluluhan / assimilation / dropped letters)
+                # Combine prefix, detected_root AND suffix since suffix processing will be skipped
+                # This ensures circumfixes like me- -i (memakai) don't get truncated
+                combined_stem = original_stem + suffix 
+                stem_syllables = self.kbbi_splitter.split_syllables(combined_stem)
+                result.extend(stem_syllables)
+            else:
+                # Rule 1: Base word intact
+                # Split prefix normally, then split pure root phonetically
+                
+                # Split the full prefix itself (e.g. 'mem', 'meng', 'memper')
+                prefix_syllables = self.kbbi_splitter.split_syllables(full_prefix)
+                result.extend(prefix_syllables)
         
         # Step 4: Root - apply syllable rules
-        if root:
+        if root and not is_modified:
             # Check if root is in exceptions
             if root in self.exceptions:
                 result.extend(self.exceptions[root])
@@ -296,7 +272,7 @@ class HybridSyllableSplitter:
 
         
         # Step 5: Suffix - usually keep as one syllable
-        if suffix:
+        if suffix and not is_modified:
             if len(suffix) <= 3:
                 result.append(suffix)
             else:

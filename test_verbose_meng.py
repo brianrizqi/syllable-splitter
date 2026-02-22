@@ -1,0 +1,9 @@
+from HybridSyllableSplitter import HybridSyllableSplitter
+
+splitter = HybridSyllableSplitter()
+words = ['membuka', 'menutup', 'membangun', 'mendorong', 'memukul', 'menghitung']
+for w in words:
+    print(f"--- {w} ---")
+    prefix, detected_root, suffix, lemmatized_root = splitter.morphology.analyze_with_lemmatizer(w)
+    print(f"Morph: prefix='{prefix}', detected='{detected_root}', suffix='{suffix}', lemmatized='{lemmatized_root}'")
+    print(f"Result: {splitter.split_syllables(w)}")
