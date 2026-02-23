@@ -11,16 +11,7 @@ class MorphologicalAnalyzer:
         
         # Indonesian prefixes (sorted by length for greedy matching)
         self.prefixes = [
-            # Complex prefixes (longest first for greedy matching)
-            'memper', 'diper', 'keber', 'terpem', 'terpe',
-            'mempel', 'mempe', 'pember', 'penge',
-            # Other common prefixes (moved up for greedier match)
-            'ber', 'ter', 'per',
-            # Nasal prefixes with variations
-            'meng', 'meny', 'mem', 'men', 'me',
-            'peng', 'peny', 'pem', 'pen', 'pe',
-            # Remaining
-            'di', 'ke', 'se'
+            'me', 'mem', 'men', 'meny', 'meng', 'pen', 'pem', 'peng', 'pe', 'ber', 'ter', 'di', 'ke', 'se', 'per', 'be', 'pel', 'te'
         ]
         
         # Indonesian suffixes (including particles and possessives)
@@ -38,14 +29,18 @@ class MorphologicalAnalyzer:
             # memper- / diper- (longest/most specific first)
             ('memper', 'kan'), ('memper', 'i'),
             ('diper', 'kan'), ('diper', 'i'),
-            # per- + -an (nominalization)
-            ('per', 'an'), ('per', 'kan'), ('per', 'i'),
-            # ber- + -an (reciprocal/collective)
-            ('ber', 'an'), ('ber', 'kan'),
+            # per- (prioritize -kan/-i over -an)
+            ('per', 'kan'), ('per', 'i'), ('per', 'an'),
+            # ber- (prioritize -kan over -an)
+            ('ber', 'kan'), ('ber', 'an'),
             # ke- + -an (nominalization)
             ('ke', 'an'),
-            # pe- + -an (nominalization)
-            ('pe', 'an'), ('pem', 'an'), ('pen', 'an'), ('peng', 'an'), ('peny', 'an'),
+            # pe- (nominalization/causative)
+            ('pe', 'kan'), ('pe', 'i'), ('pe', 'an'),
+            ('pem', 'kan'), ('pem', 'i'), ('pem', 'an'),
+            ('pen', 'kan'), ('pen', 'i'), ('pen', 'an'),
+            ('peng', 'kan'), ('peng', 'i'), ('peng', 'an'),
+            ('peny', 'kan'), ('peny', 'i'), ('peny', 'an'),
             # me- + -kan/-i (transitive verbs)
             ('me', 'kan'), ('me', 'i'),
             ('mem', 'kan'), ('mem', 'i'),
