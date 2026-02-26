@@ -11,16 +11,8 @@ class MorphologicalAnalyzer:
         
         # Indonesian prefixes (sorted by length for greedy matching)
         self.prefixes = [
-            # Complex prefixes (longest first for greedy matching)
-            'memper', 'diper', 'keber', 'terpem', 'terpe',
-            'mempel', 'mempe', 'pember', 'penge',
-            # Other common prefixes (moved up for greedier match)
-            'ber', 'ter', 'per',
-            # Nasal prefixes with variations
-            'meng', 'meny', 'mem', 'men', 'me',
-            'peng', 'peny', 'pem', 'pen', 'pe',
-            # Remaining
-            'di', 'ke', 'se'
+            'memper', 'mempel', 'pember', 'pembel', 'penyer', 'penyel', 'diper', 'dipel',
+            'me', 'mem', 'men', 'meny', 'meng', 'pen', 'pem', 'peng', 'pe', 'ber', 'ter', 'di', 'ke', 'se', 'per', 'be', 'pel', 'te'
         ]
         
         # Indonesian suffixes (including particles and possessives)
@@ -33,16 +25,28 @@ class MorphologicalAnalyzer:
             'ku', 'mu', 'nya'
         ]
         
+        # Internal infixes (TBBBI 4.3.1.6)
+        self.internal_infixes = ['el', 'er', 'em', 'in']
+        
         # Circumfixes (prefix + suffix combinations)
         self.circumfixes = [
-            # per- + -an (nominalization)
-            ('per', 'an'),
-            # ber- + -an (reciprocal/collective)
-            ('ber', 'an'), ('ber', 'kan'),
+            # memper- / diper- (longest/most specific first)
+            ('memper', 'kan'), ('memper', 'i'), ('mempel', 'i'),
+            ('diper', 'kan'), ('diper', 'i'), ('dipel', 'i'),
+            ('pembel', 'an'), ('pember', 'an'),
+            ('penyel', 'an'), ('penyer', 'an'),
+            # per- (prioritize -kan/-i over -an)
+            ('per', 'kan'), ('per', 'i'), ('per', 'an'),
+            # ber- (prioritize -kan over -an)
+            ('ber', 'kan'), ('ber', 'an'),
             # ke- + -an (nominalization)
             ('ke', 'an'),
-            # pe- + -an (nominalization)
-            ('pe', 'an'), ('pem', 'an'), ('pen', 'an'), ('peng', 'an'), ('peny', 'an'),
+            # pe- (nominalization/causative)
+            ('pe', 'kan'), ('pe', 'i'), ('pe', 'an'),
+            ('pem', 'kan'), ('pem', 'i'), ('pem', 'an'),
+            ('pen', 'kan'), ('pen', 'i'), ('pen', 'an'),
+            ('peng', 'kan'), ('peng', 'i'), ('peng', 'an'),
+            ('peny', 'kan'), ('peny', 'i'), ('peny', 'an'),
             # me- + -kan/-i (transitive verbs)
             ('me', 'kan'), ('me', 'i'),
             ('mem', 'kan'), ('mem', 'i'),
@@ -139,18 +143,66 @@ class MorphologicalAnalyzer:
         
         return (prefix, root, suffix)
     
+    def analyze_internal_infix(self, word):
+        """
+        Detect internal infixes (-el-, -er-, -em-, -in-) in base words.
+        Example: "gerigi" -> infix="er", root="gigi"
+        
+        Returns:
+            tuple: (internal_infix, root) or (None, word)
+        """
+        if len(word) < 5:  # Minimum length for C1 + Infix + C2 + V + C3 (e.g. g + er + igi)
+            return (None, word)
+            
+        vowels = 'aiueo'
+        # Regular consonants mapping for root reconstruction if needed
+        # (Though usually it's just C1 + rest)
+        
+        # Forbidden prefix-like starts to avoid false infix detection
+        # e.g. "per..." should be seen as prefix "per", not "p" + infix "er"
+        forbidden_infix_starts = ['per', 'ber', 'ter', 'mem', 'pem', 'men', 'pen', 'meng', 'peng']
+        
+        for infix in self.internal_infixes:
+            # Infix is usually at position 1 (after first consonant)
+            # Pattern: C + Infix + RootRemainder
+            if word[1:1+len(infix)] == infix and word[0] not in vowels:
+                # Check if this start is actually a standard prefix
+                prefix_check = word[0:1+len(infix)].lower()
+                if prefix_check in forbidden_infix_starts:
+                     # special case for "mem" and "pem" - they might be prefix + nasal
+                     # but "gemetar" is "g" + "em". 
+                     # we skip only if it's a very clear prefix start followed by a vowel
+                     # actually, let's just avoid 'per', 'ber', 'ter' for now
+                     if prefix_check in ['per', 'ber', 'ter']:
+                          continue
+                
+                # Potential root is C1 + RootRemainder
+                # e.g. "gerigi" -> g + igi = "gigi"
+                potential_root = word[0] + word[1+len(infix):]
+                
+                # Validation: the potential root must have a valid syllable structure.
+                # Specifically, after C1, the next character must be a vowel (CV pattern).
+                # This prevents false positives like "kerja" -> "kja" (invalid).
+                # True infixed words: "gerigi" -> "gigi" (g+i = valid CV).
+                if len(potential_root) >= 2 and potential_root[1] not in vowels:
+                    continue
+                
+                # Check if potential root "looks" like a valid word part (vowel present)
+                if any(v in potential_root for v in vowels):
+                    return (infix, potential_root)
+                    
+        return (None, word)
+
     def analyze_with_lemmatizer(self, word):
         """
         Analyze word using nlp-id lemmatizer for accurate root detection.
         Uses pattern matching for prefix/suffix boundaries.
         
         Returns:
-            tuple: (prefix, detected_root, suffix, lemmatized_root)
-                  - detected_root: root with possible infixes (e.g., "mbelajar")
-                  - lemmatized_root: true root from lemmatizer (e.g., "ajar")
+            tuple: (prefix, detected_root, suffix, lemmatized_root, internal_infix)
         """
         if not word:
-            return ('', '', '', '')
+            return ('', '', '', '', None)
         
         original_word = word.lower()
         
@@ -160,7 +212,34 @@ class MorphologicalAnalyzer:
         # Use lemmatizer to get the accurate root word
         lemmatized_root = self.lemmatizer.lemmatize(original_word).strip()
         
-        return (prefix, detected_root, suffix, lemmatized_root)
+        # Internal infix detection (TBBBI 4.3.1.6)
+        internal_infix = None
+        
+        # Decision logic:
+        # 1. If we have a clear prefix, trust it but check for infix in the root
+        if prefix:
+             # Logic for prefixed words that have infixed roots (e.g. "beterbangan")
+             internal_infix, root_after_infix = self.analyze_internal_infix(detected_root)
+             if internal_infix:
+                  lemmatized_root = root_after_infix
+        # 2. If no prefix detected, OR if prefix is suspect (lemmatizer doesn't agree)
+        # Check for internal infix in the whole word
+        else:
+             internal_infix, root_after_infix = self.analyze_internal_infix(original_word)
+             if internal_infix:
+                  lemmatized_root = root_after_infix
+        
+        # 3. Special case for Suspect Prefix (e.g. "selidik" -> prefix "se" but root is "sidik")
+        # If we didn't find an infix yet, but lemmatizer says the word is a base word, 
+        # and we saw a prefix, try re-analyzing as a base word with infix.
+        if not internal_infix and prefix and lemmatized_root == original_word:
+             internal_infix, root_after_infix = self.analyze_internal_infix(original_word)
+             if internal_infix:
+                  lemmatized_root = root_after_infix
+                  prefix = '' # It's actually a base word with an infix
+                  detected_root = original_word
+        
+        return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
     
     def _reconstruct_morphemes(self, word, root):
         """
