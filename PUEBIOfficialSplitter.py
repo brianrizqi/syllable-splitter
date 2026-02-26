@@ -171,7 +171,7 @@ class PUEBIOfficialSplitter:
                 return self.apply_single_letter_filter(raw_split)
 
         # Analyze morphology
-        m_prefix, m_root, m_suffix, lem_root = self.morphology.analyze_with_lemmatizer(word)
+        m_prefix, m_root, m_suffix, lem_root, internal_infix = self.morphology.analyze_with_lemmatizer(word)
         
         # Determine if it's a base word (Rule 1) or derived word (Rule 2)
         if word_lower == lem_root or not lem_root:
