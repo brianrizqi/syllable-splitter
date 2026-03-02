@@ -26,11 +26,16 @@ Kami telah memverifikasi dan mengimplementasikan aturan dari Tata Bahasa Baku Ba
 
 ### A. Restorasi Morfemis Tingkat Lanjut (Aturan Pembimbing)
 Sistem telah dimutakhirkan berdasarkan arahan pembimbing untuk menyederhanakan awalan:
--   **Penyederhanaan Prefiks `me- / pe-`**: Variasi nasal (`meng-`, `men-`, `mem-`) kini disederhanakan menjadi bentuk dasarnya (**`me-`** atau **`pe-`**) sementara akar kata tetap utuh.
-    -   `menulis` → **`me-tu-lis`**
-    -   `mengerjakan` → **`me-ker-ja-kan`**
-    -   `penulis` → **`pe-tu-lis`**
-    -   `mengambil` → **`me-am-bil`**
+-   **Penyederhanaan Prefiks**: 
+    -   Prefiks verba nasal (`meng-`, `men-`, `mem-`) disederhanakan menjadi **`me-`** sementara akar kata tetap utuh.
+        -   `menulis` → **`me-tu-lis`**
+        -   `mengerjakan` → **`me-ker-ja-kan`**
+        -   `mengambil` → **`me-am-bil`**
+    -   Prefiks nominalisasi/agen (`pem-`, `pen-`, `peny-`, `pe-`, `penge-`, `peng-`) secara universal disederhanakan menjadi **`per-`**.
+        -   `pembeli` → **`per-be-li`**
+        -   `penyanyi` → **`per-any-i`**
+        -   `pengecualian` → **`per-ke-cu-a-li-an`**
+        -   `pengambil` → **`per-am-bil`**
 -   **Konsistensi `ber- / per-`**: Sesuai permintaan sebelumnya, awalan `ber-` dan `per-` tetap mempertahankan restorasi `r`.
     -   `belajar` → **`ber-a-jar`**
     -   `pelajari` → **`per-a-jar-i`**
