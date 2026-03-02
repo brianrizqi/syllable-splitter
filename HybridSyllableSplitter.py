@@ -87,12 +87,14 @@ class HybridSyllableSplitter:
                 'memper': ['me', 'per'],
                 'mempel': ['me', 'per'],
                 'pember': ['pe', 'ber'],
-                'pembel': ['pe', 'ber'],
+                'pembel': ['per', 'ber'], # Changed from ['pe', 'ber'] to ['per', 'ber']
                 'diper': ['di', 'per'],
-                'dipel': ['di', 'per']
+                'dipel': ['di', 'per'],
+                'diber': ['di', 'ber'], # Added
+                'keber': ['ke', 'ber'], # Added
+                'keter': ['ke', 'ter']  # Added
             }
             
-            is_composite = False
             if prefix in composite_prefix_map:
                 result.extend(composite_prefix_map[prefix])
                 # SPECIAL: If root starts with 'mpe' or 'mbe' (e.g. 'mempelajar'),
@@ -348,11 +350,18 @@ class HybridSyllableSplitter:
                         is_peluluhan = True
                         nasal_part = 'r'
                 
-                if is_peluluhan:
+                if is_peluluhan or base_prefix in ['pe', 'me', 'be', 'te']:
                     # MORPHEMIC PRIORITY: Restore original root boundary
-                    # REFINED (Supervisor's Rule): Use base_prefix for me/pe nasal, 
-                    # but keep 'r/l' for ber/per/ter variants.
-                    if nasal_part in ['r', 'l']:
+                    # REFINED: Rule from User - all 'pe' variants (pe, pem, peng, pel) must be 'per'.
+                    # For 'me', we still use 'me'.
+                    if base_prefix == 'pe':
+                        morphemic_prefix = 'per'
+                    elif base_prefix == 'me':
+                        morphemic_prefix = 'me'
+                    elif base_prefix == 'te':
+                        morphemic_prefix = 'ter'
+                    elif nasal_part in ['r', 'l']:
+                        # Handles ber-/bel- etc.
                         morphemic_prefix = base_prefix + nasal_part
                     else:
                         morphemic_prefix = base_prefix
@@ -368,7 +377,7 @@ class HybridSyllableSplitter:
                     if suffix and root.endswith(suffix):
                          suffix = ''
                 else:
-                    # PHONETIC PRIORITY: For complex modifications (e.g. 'pembelajaran')
+                    # PHONETIC PRIORITY: For complex modifications
                     # splitting the whole word phonetically is most reliable.
                     stem_syllables = self.kbbi_splitter.split_syllables(word)
                     result.extend(stem_syllables)
@@ -377,10 +386,12 @@ class HybridSyllableSplitter:
                     suffix = ""
             elif not is_composite:
                 # Rule 1: Base word intact (e.g. 'mengambil')
-                # REFINED (Supervisor's Rule): Use base_prefix for me/pe nasal.
+                # REFINED (Supervisor's Rule): Universalize 'pe' to 'per'. Use 'me' for 'meng-'.
                 morphemic_prefix = full_prefix
-                if base_prefix in ['me', 'pe'] and infix and infix not in ['r', 'l']:
-                     morphemic_prefix = base_prefix
+                if base_prefix == 'me' and infix and infix not in ['r', 'l']:
+                     morphemic_prefix = 'me'
+                elif base_prefix == 'pe':
+                     morphemic_prefix = 'per'
                      
                 prefix_syllables = self.kbbi_splitter.split_syllables(morphemic_prefix)
                 result.extend(prefix_syllables)
