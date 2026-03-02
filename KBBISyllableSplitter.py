@@ -67,11 +67,20 @@ class KBBISyllableSplitter:
                         current = ""
                     elif num_consonants >= 2:
                         # VCCV or more
-                        # Check if consonants form a cluster
+                        # Check if consonants form a cluster at the start
                         if consonants_ahead[:2] in self.consonant_clusters:
-                            # Keep cluster with next syllable: V-CCV
-                            syllables.append(current)
-                            current = ""
+                            if num_consonants > 2:
+                                # Digraph followed by more (e.g. ngg in tinggal)
+                                # Take the digraph and split: VC(cluster)-CV
+                                current += consonants_ahead[:2]
+                                syllables.append(current)
+                                current = ""
+                                i += 2 # Skip the digraph we just added
+                            else:
+                                # Just a digraph (e.g. ny in hanya)
+                                # V-CCV: split before the digraph
+                                syllables.append(current)
+                                current = ""
                         else:
                             # VC-CV: take first consonant, leave rest
                             current += consonants_ahead[0]

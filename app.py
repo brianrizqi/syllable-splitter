@@ -63,15 +63,16 @@ def split_text():
                     syllables = splitter_puebi.split_syllables(word)
             elif method == 'sylbi':
                 # SylBI Fallback Logic:
-                # If word has morphological affixes, use SylBI (Hybrid) rules
-                # If word is a base word (no affixes), follow KBBI rules (scraper)
+                # If word has morphological affixes or infixes, use SylBI (Hybrid) rules
+                # If word is a base word (no affixes/infixes), follow KBBI rules (scraper)
                 prefix, root, suffix = splitter_sylbi.morphology.analyze(word)
+                internal_infix, _ = splitter_sylbi.morphology.analyze_internal_infix(word.lower())
                 
-                if not prefix and not suffix:
-                    # No affixes detected, try KBBI online first
+                if not prefix and not suffix and not internal_infix:
+                    # No affixes or infixes detected, try KBBI online first
                     syllables = kbbi_scraper.get_syllables(word)
                 
-                # If it has affixes OR KBBI online failed for base word
+                # If it has affixes/infixes OR KBBI online failed for base word
                 if syllables is None:
                     syllables = splitter_sylbi.split_syllables(word)
             else:
