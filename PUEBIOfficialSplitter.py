@@ -131,25 +131,9 @@ class PUEBIOfficialSplitter:
         """
         PUEBI Catatan 3: Pemenggalan kata yang menyebabkan munculnya 
         satu huruf di awal atau akhir baris tidak dilakukan.
+        (Note: Di-disable untuk keperluan analisis silabel murni)
         """
-        if not syllables or len(syllables) <= 1:
-            return syllables
-            
-        res = list(syllables)
-        # Filter first letter
-        if len(res[0]) == 1:
-            res[1] = res[0] + res[1]
-            res.pop(0)
-            
-        if len(res) <= 1:
-            return res
-            
-        # Filter last letter
-        if len(res[-1]) == 1:
-            res[-2] = res[-2] + res[-1]
-            res.pop()
-            
-        return res
+        return syllables
 
     def split_syllables(self, word):
         """
@@ -215,19 +199,16 @@ class PUEBIOfficialSplitter:
             
             result = []
             if prefix_part:
-                # Handle nested prefixes morpheme-by-morpheme
-                if prefix_part.lower().startswith('memper') or prefix_part.lower().startswith('diper'):
-                    result.append(prefix_part[:3])
-                    result.append(prefix_part[3:])
-                else:
-                    result.append(prefix_part)
+                # Handle prefixes phonetically to naturally split composite prefixes
+                # e.g., 'memper' -> 'mem-per', 'diper' -> 'di-per', 'diber' -> 'di-ber'
+                result.extend(self.split_base_word(prefix_part))
             
             if root_part:
-                result.append(root_part)
+                result.extend(self.split_base_word(root_part))
                 
             if suffix_part:
-                # Handle complex suffixes (rare but possible)
-                result.append(suffix_part)
+                # Split suffixes that might have multiple syllables
+                result.extend(self.split_base_word(suffix_part))
                 
             return self.apply_single_letter_filter(result)
 
