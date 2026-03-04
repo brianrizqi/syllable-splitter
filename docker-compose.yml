@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: syllable-splitter-app
+    ports:
+      - "80:8000"  # Mapping port 80 (VPS/Host) ke 8000 (Container)
+    restart: unless-stopped
+    volumes:
+      # Agar database CSV persisten tidak hilang saat container mati/restart
+      - ./syllable_validations.csv:/app/syllable_validations.csv
+    environment:
+      - FLASK_ENV=production
