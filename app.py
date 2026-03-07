@@ -2,7 +2,12 @@ from flask import Flask, render_template, request, jsonify, send_file, make_resp
 import re
 import csv
 import io
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env or .env.local
+load_dotenv()
 from PUEBIOfficialSplitter import PUEBIOfficialSplitter
 from HybridSyllableSplitter import HybridSyllableSplitter
 from SpellChecker import IndonesianSpellChecker

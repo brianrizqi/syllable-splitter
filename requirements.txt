@@ -5,3 +5,6 @@ pyspellchecker==0.8.4
 beautifulsoup4==4.14.3
 requests==2.32.5
 flask-compress
+gspread==6.1.0
+google-auth==2.29.0
+python-dotenv==1.0.1
