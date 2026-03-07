@@ -13,19 +13,47 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Initialize splitters and other components with resilience
+initialization_errors = []
+
 try:
-    splitter_puebi = PUEBIOfficialSplitter()  # Official PUEBI rules
-    splitter_sylbi = HybridSyllableSplitter()  # Hybrid morphological splitter for SylBI
-    kbbi_scraper = KBBIScraper()  # KBBI scraper for online dictionary
-    spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
-    validation_db = SyllableValidationDB()  # Validation database handler
+    splitter_puebi = PUEBIOfficialSplitter()
 except Exception as e:
-    print(f"⚠ Warning: Some components failed to initialize: {e}")
-    # Partial failure fallback is handled in routes
+    initialization_errors.append(f"PUEBI Splitter: {e}")
+
+try:
+    splitter_sylbi = HybridSyllableSplitter()
+except Exception as e:
+    initialization_errors.append(f"SylBI Splitter: {e}")
+
+try:
+    kbbi_scraper = KBBIScraper()
+except Exception as e:
+    initialization_errors.append(f"KBBI Scraper: {e}")
+
+try:
+    spell_checker = IndonesianSpellChecker()
+except Exception as e:
+    initialization_errors.append(f"Spell Checker: {e}")
+
+try:
+    validation_db = SyllableValidationDB()
+except Exception as e:
+    initialization_errors.append(f"Validation DB: {e}")
+
+if initialization_errors:
+    print(f"⚠ Warning: Some components failed to initialize:\n" + "\n".join(initialization_errors))
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'ok' if not initialization_errors else 'partial_failure',
+        'errors': initialization_errors,
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.route('/docs')
 def docs():
