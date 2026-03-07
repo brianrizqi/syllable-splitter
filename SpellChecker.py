@@ -1,7 +1,7 @@
 # Indonesian Spell Checker with KBBI Validation
 # Detects typos, validates against KBBI, and detects non-Indonesian words
 
-import pandas as pd
+import csv
 import re
 import os
 from difflib import SequenceMatcher
@@ -11,7 +11,6 @@ class IndonesianSpellChecker:
     def __init__(self):
         """Initialize spell checker with KBBI word list."""
         self.kbbi_words = set()
-        self.kbbi_df = None
         self._load_kbbi()
         
         # Common English words to detect non-Indonesian text
@@ -24,21 +23,34 @@ class IndonesianSpellChecker:
         }
     
     def _load_kbbi(self):
-        """Load KBBI word list from CSV file."""
+        """Load KBBI word list from CSV file using built-in csv module."""
         try:
             kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_v.csv')
             
-            # Load KBBI CSV
-            self.kbbi_df = pd.read_csv(kbbi_path, encoding='utf-8')
-            
-            # Extract words from the 'lema' column (assuming it contains the words)
-            if 'lema' in self.kbbi_df.columns:
-                self.kbbi_words = set(self.kbbi_df['lema'].str.lower().dropna())
-            elif 'word' in self.kbbi_df.columns:
-                self.kbbi_words = set(self.kbbi_df['word'].str.lower().dropna())
-            else:
-                # Try first column
-                self.kbbi_words = set(self.kbbi_df.iloc[:, 0].str.lower().dropna())
+            with open(kbbi_path, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                # From looking at the CSV head, 'nama' seems to be the word column
+                # Supporting multiple possible column names for robustness
+                word_col = None
+                if 'nama' in reader.fieldnames:
+                    word_col = 'nama'
+                elif 'lema' in reader.fieldnames:
+                    word_col = 'lema'
+                elif 'word' in reader.fieldnames:
+                    word_col = 'word'
+                
+                if word_col:
+                    for row in reader:
+                        word = row[word_col]
+                        if word:
+                            self.kbbi_words.add(word.lower().strip())
+                else:
+                    # Fallback to first column if no known header is found
+                    first_col = reader.fieldnames[0]
+                    for row in reader:
+                        word = row[first_col]
+                        if word:
+                            self.kbbi_words.add(word.lower().strip())
             
             print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI")
             

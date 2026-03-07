@@ -1,0 +1,17 @@
+# Vercel Ignore File
+venv/
+.venv/
+__pycache__/
+*.pyc
+.git/
+.DS_Store
+*.pdf
+jupyter_notebooks/
+test_*.py
+test-syllable.py
+laporan_implementasi.md
+README*.md
+Dockerfile
+docker-compose.yml
+netlify/
+netlify.toml
