@@ -4,3 +4,5 @@ pyspellchecker==0.8.4
 beautifulsoup4==4.14.3
 requests==2.32.5
 pandas
+serverless-wsgi
+flask-compress
