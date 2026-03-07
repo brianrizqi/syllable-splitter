@@ -32,7 +32,6 @@ class SyllableValidationDB:
         """Initialize Google Sheets connection from environment variables."""
         creds_json = os.environ.get('GOOGLE_SHEETS_CREDENTIALS')
         if creds_json:
-            print(f"ℹ DEBUG: GOOGLE_SHEETS_CREDENTIALS found (length: {len(creds_json)})")
             try:
                 import gspread
                 from google.oauth2.service_account import Credentials
@@ -59,7 +58,8 @@ class SyllableValidationDB:
                 print(f"⚠ Warning: Google Sheets initialization failed: {e}")
                 self.sheet = None
         else:
-            print("ℹ DEBUG: GOOGLE_SHEETS_CREDENTIALS NOT found in environment.")
+            # If no credentials, we just use local CSV (no warning needed for local dev)
+            pass
 
     def _ensure_local_database_exists(self):
         """Create local database file with headers if it doesn't exist."""
@@ -88,7 +88,6 @@ class SyllableValidationDB:
         # 1. Use Google Sheets if connected
         if self.sheet:
             try:
-                print(f"ℹ DEBUG: Appending to Google Sheets for word: {word}")
                 self.sheet.append_row([new_record[f] for f in self.fieldnames])
                 return True
             except Exception as e:
@@ -96,7 +95,6 @@ class SyllableValidationDB:
                 return False
 
         # 2. Fallback to Local CSV
-        print(f"ℹ DEBUG: Falling back to Local CSV for word: {word}")
         if self.is_readonly:
             return False
             
