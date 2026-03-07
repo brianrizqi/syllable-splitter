@@ -21,14 +21,19 @@ class SyllableValidationDB:
             'final_result', 
             'timestamp'
         ]
+        self.is_readonly = False
         self._ensure_database_exists()
     
     def _ensure_database_exists(self):
         """Create database file with headers if it doesn't exist."""
         if not os.path.exists(self.db_path):
-            with open(self.db_path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-                writer.writeheader()
+            try:
+                with open(self.db_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                    writer.writeheader()
+            except (OSError, IOError) as e:
+                print(f"⚠ Warning: Database is read-only or inaccessible: {e}")
+                self.is_readonly = True
     
     def add_validation(self, word: str, method: str, system_result: str, 
                       validation_type: str, final_result: str) -> bool:
@@ -44,6 +49,9 @@ class SyllableValidationDB:
         Returns:
             True if successful, False otherwise
         """
+        if self.is_readonly:
+            return False
+            
         try:
             timestamp = datetime.now().isoformat()
             new_record = {
@@ -78,6 +86,10 @@ class SyllableValidationDB:
                 writer.writeheader()
                 writer.writerows(records)
             return True
+        except (OSError, IOError) as e:
+            print(f"⚠ Warning: Could not save validation to {self.db_path}: {e}")
+            self.is_readonly = True
+            return False
         except Exception as e:
             print(f"Error saving validation: {e}")
             return False

@@ -12,12 +12,16 @@ from SyllableValidationDB import SyllableValidationDB
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Initialize three splitters
-splitter_puebi = PUEBIOfficialSplitter()  # Official PUEBI rules
-splitter_sylbi = HybridSyllableSplitter()  # Hybrid morphological splitter for SylBI
-kbbi_scraper = KBBIScraper()  # KBBI scraper for online dictionary
-spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
-validation_db = SyllableValidationDB()  # Validation database handler
+# Initialize splitters and other components with resilience
+try:
+    splitter_puebi = PUEBIOfficialSplitter()  # Official PUEBI rules
+    splitter_sylbi = HybridSyllableSplitter()  # Hybrid morphological splitter for SylBI
+    kbbi_scraper = KBBIScraper()  # KBBI scraper for online dictionary
+    spell_checker = IndonesianSpellChecker()  # Spell checker for typo detection
+    validation_db = SyllableValidationDB()  # Validation database handler
+except Exception as e:
+    print(f"⚠ Warning: Some components failed to initialize: {e}")
+    # Partial failure fallback is handled in routes
 
 @app.route('/')
 def index():
@@ -322,6 +326,9 @@ def view_database():
     # Sort by timestamp descending
     records.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
     return render_template('database.html', records=records)
+
+# Export app for Vercel/Netlify serverless functions
+app_handle = app
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
