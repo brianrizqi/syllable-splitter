@@ -1,13 +1,17 @@
 # Morphological Analyzer for Indonesian Language
 # Detects prefixes, suffixes, and circumfixes
 
-from nlp_id.lemmatizer import Lemmatizer
-
 class MorphologicalAnalyzer:
     
     def __init__(self):
-        # Initialize lemmatizer for accurate root detection
-        self.lemmatizer = Lemmatizer()
+        # Initialize Simplemma for accurate root detection (lightweight)
+        # It uses a dictionary-based approach to find the true lemma/base word.
+        try:
+            import simplemma
+            self.lemmatizer = simplemma
+        except Exception as e:
+            print(f"⚠ Warning: Failed to load Simplemma: {e}")
+            self.lemmatizer = None
         
         # Indonesian prefixes (sorted by length for greedy matching)
         self.prefixes = [
@@ -209,8 +213,16 @@ class MorphologicalAnalyzer:
         # Use pattern matching to get prefix, detected root, and suffix
         prefix, detected_root, suffix = self.analyze(original_word)
         
-        # Use lemmatizer to get the accurate root word
-        lemmatized_root = self.lemmatizer.lemmatize(original_word).strip()
+        # Use Simplemma to get the accurate root word (lemma)
+        if self.lemmatizer:
+            try:
+                # simplemma.lemmatize returns the dictionary base form
+                lemmatized_root = self.lemmatizer.lemmatize(original_word, lang='id').strip()
+            except Exception as e:
+                print(f"⚠ Warning: Lemmatization failed for '{original_word}': {e}")
+                lemmatized_root = original_word
+        else:
+            lemmatized_root = original_word
         
         # Internal infix detection (TBBBI 4.3.1.6)
         internal_infix = None
