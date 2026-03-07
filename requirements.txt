@@ -1,3 +1,4 @@
+gunicorn
 Flask==3.0.0
 nlp-id==0.1.20.0
 pyspellchecker==0.8.4
