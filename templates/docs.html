@@ -223,11 +223,12 @@
                 suku-suku kata menggunakan berbagai metode, lengkap dengan:
             </p>
             <ul>
-                <li>✅ <strong>3 Metode Pemisahan</strong>: PUEBI, SylBI, dan KBBI Online</li>
+                <li>✅ <strong>3 Metode Pemisahan</strong>: PUEBI, SylBI (Morfemis), dan KBBI Online</li>
+                <li>✅ <strong>Standar TBBBI</strong>: Sesuai Tata Bahasa Baku Bahasa Indonesia bab 4.3.1</li>
+                <li>✅ <strong>Root-Preserving</strong>: Menjaga keutuhan akar kata dalam pemenggalan</li>
                 <li>✅ <strong>Deteksi Typo Otomatis</strong>: Validasi dengan 112,643 kata dari KBBI</li>
-                <li>✅ <strong>Deteksi Bahasa</strong>: Identifikasi kata non-Indonesia</li>
-                <li>✅ <strong>Analisis Morfologi</strong>: Pemisahan awalan, sisipan, kata dasar, dan akhiran</li>
-                <li>✅ <strong>CLI Support</strong>: Dapat dijalankan via command line</li>
+                <li>✅ <strong>Analisis Morfologi Lanjut</strong>: Restorasi konsonan luluh dan penyederhanaan awalan</li>
+                <li>✅ <strong>Penanganan Frasa</strong>: Mendukung kata majemuk dan reduplikasi (kata ulang)</li>
             </ul>
 
             <div class="example-box">
@@ -273,52 +274,94 @@
             </ul>
 
             <div class="example-box">
-                <strong>Cara Kerja SylBI:</strong><br><br>
-                <strong>Langkah 1: Analisis Morfologi</strong><br>
-                Mendeteksi Prefix (me-, ber-, pe-, dll), Root (kata dasar), dan Suffix (-kan, -an, -i, dll).<br><br>
+                <strong>Cara Kerja SylBI (Root-Preserving):</strong><br><br>
+                <strong>1. Analisis & Restorasi Morfemis Lanjut:</strong><br>
+                Sistem menyederhanakan awalan untuk menjaga akar kata tetap utuh sesuai arahan TBBBI:<br>
+                -   <strong>Prefiks Nasal</strong> (`meng-`, `men-`, `mem-`) → <strong>`me-`</strong> (Contoh: <code>menulis</code> → <code>me-tu-lis</code>)<br>
+                -   <strong>Prefiks Nominal</strong> (`pem-`, `pen-`, `peng-`) → <strong>`per-`</strong> (Contoh: <code>pembeli</code> → <code>per-be-li</code>)<br>
+                -   <strong>Restorasi Konsonan</strong>: Mengembalikan konsonan p/t/k/s yang luluh.<br><br>
 
-                <strong>Langkah 2: Dekomposisi Prefix</strong><br>
-                Memisahkan prefix menjadi base prefix dan infix (sisipan). Contoh: <code>pem</code> → <code>pe</code>
-                (base) + <code>m</code> (infix).<br><br>
+                <strong>2. Penanganan Imbuhan Bersarang:</strong><br>
+                Menangani kata kompleks seperti <code>mempelajari</code> yang terdiri dari prefiks komposit (<code>me-</code> + <code>per-</code> + <code>ajar</code> + <code>-i</code>).<br><br>
 
-                <strong>Langkah 3: Penanganan Peluluhan</strong><br>
-                Mengembalikan konsonan asli (p/t/k/s) yang luluh. Contoh: <code>memisah</code> (dari pisah) →
-                <code>me-m-pi-sah</code>.
+                <strong>3. Penanganan Frasa & Reduplikasi:</strong><br>
+                Mendukung frasa majemuk (<code>bertanggung jawab</code>) dan kata ulang (<code>beratus-ratus</code>, <code>semau-mauku</code>) secara akurat.
             </div>
 
             <table class="comparison-table">
                 <thead>
                     <tr>
-                        <th>Infix</th>
-                        <th>Konsonan Luluh</th>
-                        <th>Contoh</th>
-                        <th>Hasil</th>
+                        <th>Jenis Infiks</th>
+                        <th>Contoh Kata</th>
+                        <th>Akar Kata</th>
+                        <th>Hasil SylBI</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>m</td>
-                        <td>p</td>
-                        <td>memisah</td>
-                        <td>me-m-pi-sah</td>
+                        <td>-el-</td>
+                        <td>selenggara</td>
+                        <td>senggara</td>
+                        <td>seng-el-ga-ra</td>
                     </tr>
                     <tr>
-                        <td>n</td>
-                        <td>t</td>
-                        <td>menari</td>
-                        <td>me-n-ta-ri</td>
+                        <td>-in-</td>
+                        <td>kinerja</td>
+                        <td>kerja</td>
+                        <td>ker-in-ja</td>
                     </tr>
                     <tr>
-                        <td>ng</td>
-                        <td>k</td>
-                        <td>mengetik</td>
-                        <td>me-ng-ke-tik</td>
+                        <td>-er-</td>
+                        <td>gerigi</td>
+                        <td>gigi</td>
+                        <td>gi-er-gi</td>
                     </tr>
                     <tr>
-                        <td>ny</td>
-                        <td>s</td>
-                        <td>menyapu</td>
-                        <td>me-ny-sa-pu</td>
+                        <td>-em-</td>
+                        <td>gemetar</td>
+                        <td>getar</td>
+                        <td>ge-em-tar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 2rem 0; opacity: 0.1;">
+
+            <h3>Aturan TBBBI (Tahap 1 - 7)</h3>
+            <p>Implementasi pemenggalan morfemis ini mengacu pada standar <strong>Tata Bahasa Baku Bahasa Indonesia (TBBBI) bab 4.3.1</strong>:</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aturan</th>
+                        <th>Deskripsi</th>
+                        <th>Contoh Hasil</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>4.2.2.1</strong></td>
+                        <td>Restorasi k, p, t, s (Prefiks me-)</td>
+                        <td><code>mengerjakan</code> → <code>me-ker-ja-kan</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4.3.1.1</strong></td>
+                        <td>Restorasi 'r' (Prefiks ber-)</td>
+                        <td><code>bekerja</code> → <code>ber-ker-ja</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4.3.1.2</strong></td>
+                        <td>Penanganan Konfiks ber-...-an</td>
+                        <td><code>berdesakan</code> → <code>ber-de-sak-an</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4.3.1.6</strong></td>
+                        <td>Pemenggalan Infiks Morfemis</td>
+                        <td><code>selenggara</code> → <code>seng-el-ga-ra</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4.3.1.7</strong></td>
+                        <td>Konfiks Adversatif ke-...-an</td>
+                        <td><code>kecurian</code> → <code>ke-cu-ri-an</code></td>
                     </tr>
                 </tbody>
             </table>

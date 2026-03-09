@@ -41,7 +41,7 @@
                     Home
                 </a>
                 <a href="#features" class="nav-link">Fitur</a>
-                <a href="#about" class="nav-link">
+                <a href="javascript:void(0)" id="aboutLink" class="nav-link">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -809,6 +809,37 @@
                 alert('Terjadi kesalahan saat memproses teks. Pastikan server Flask berjalan!');
             }
         }
+
+        // About modal handler
+        document.getElementById('aboutLink').addEventListener('click', () => {
+            Swal.fire({
+                title: 'Tentang Syllable Splitter',
+                html: `
+                    <div style="text-align: left; font-size: 0.95rem; line-height: 1.6;">
+                        <p style="margin-bottom: 1rem;">Aplikasi ini dikembangkan oleh:</p>
+                        <ul style="margin-bottom: 1rem; padding-left: 1.25rem; list-style-type: disc;">
+                            <li><strong>Ir. Gita Indah Marthasari, S.T., M.Kom.</strong></li>
+                            <li><strong>Prof. Daniel Oranova Siahaan, S.Kom., M.Sc., PD.Eng</strong></li>
+                            <li><strong>Prof. Dr. Ir. Diana Purwitasari, S.Kom., M.Sc</strong></li>
+                            <li><strong>Dr. Brian Rizqi Paradisiaca Darnoto, S.Kom., M.Kom</strong></li>
+                        </ul>
+                        
+                        <div style="background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 10px; border-left: 4px solid #2563eb; margin-bottom: 1rem;">
+                            <h4 style="margin-top: 0; color: #2563eb; font-family: 'Inter', sans-serif;">Apa itu SylBI?</h4>
+                            <p style="margin-bottom: 0;"><strong>SylBI</strong> (<em>Syllabification for Bahasa Indonesia</em>) adalah metode pemisahan suku kata hibrida yang menggabungkan analisis morfologi dengan aturan fonetik. SylBI mampu menangani kata berimbuhan secara akurat dan memproses peluluhan konsonan (seperti <em>memisah</em> menjadi <em>me-m-pi-sah</em>).</p>
+                        </div>
+
+                        <p>Dibuat dengan pedoman <strong>TBBI, KBBI, dan PUEBI</strong>. Jika terdapat kekurangan, kami memohon maaf dan Anda dapat menghubungi kami melalui email di <a href="mailto:daniel@if.its.ac.id" style="color: #2563eb; text-decoration: none; font-weight: 600;">daniel@if.its.ac.id</a>.</p>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#2563eb',
+                customClass: {
+                    popup: 'swal-wide'
+                }
+            });
+        });
 
         // Smooth scroll for nav links
         document.querySelectorAll('.nav-link').forEach(link => {
