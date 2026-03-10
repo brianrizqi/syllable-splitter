@@ -1,7 +1,7 @@
 import csv
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, List
 
 class SyllableValidationDB:
@@ -16,7 +16,7 @@ class SyllableValidationDB:
         """
         self.db_path = db_path
         self.sheet_name = sheet_name
-        self.fieldnames = ['word', 'method', 'system_result', 'validation_type', 'final_result', 'timestamp']
+        self.fieldnames = ['word', 'method', 'system_result', 'validation_type', 'final_result', 'ip', 'timestamp']
         self.is_readonly = False
         
         # Initialize Google Sheets if credentials exist
@@ -73,15 +73,18 @@ class SyllableValidationDB:
                 self.is_readonly = True
 
     def add_validation(self, word: str, method: str, system_result: str, 
-                       validation_type: str, final_result: str) -> bool:
+                       validation_type: str, final_result: str, ip: str = "") -> bool:
         """Add a new validation or update existing one."""
-        timestamp = datetime.now().isoformat()
+        # Use GMT+7 timestamp
+        tz_gmt7 = timezone(timedelta(hours=7))
+        timestamp = datetime.now(tz_gmt7).isoformat()
         new_record = {
             'word': word,
             'method': method,
             'system_result': system_result,
             'validation_type': validation_type,
             'final_result': final_result,
+            'ip': ip,
             'timestamp': timestamp
         }
 

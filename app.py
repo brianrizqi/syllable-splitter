@@ -330,13 +330,17 @@ def save_validation():
     if validation_type not in ['correct', 'corrected']:
         return jsonify({'error': 'Invalid validation type'}), 400
     
+    # Capture client IP
+    client_ip = request.remote_addr
+    
     # Save to database
     success = validation_db.add_validation(
         word=word,
         method=method,
         system_result=system_result,
         validation_type=validation_type,
-        final_result=final_result
+        final_result=final_result,
+        ip=client_ip
     )
     
     if success:
