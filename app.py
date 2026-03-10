@@ -48,6 +48,21 @@ except Exception as e:
 if initialization_errors:
     print(f"⚠ Warning: Some components failed to initialize:\n" + "\n".join(initialization_errors))
 
+def get_location_from_ip(ip: str):
+    """Fetch city and country from IP using ip-api.com (free, no key required)."""
+    if ip in ['127.0.0.1', 'localhost', '::1'] or not ip:
+        return "Local", "Local"
+    try:
+        import requests
+        response = requests.get(f"http://ip-api.com/json/{ip}", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('status') == 'success':
+                return data.get('city', 'Unknown'), data.get('country', 'Unknown')
+    except Exception as e:
+        print(f"Error fetching location mapping: {e}")
+    return "Unknown", "Unknown"
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -330,8 +345,13 @@ def save_validation():
     if validation_type not in ['correct', 'corrected']:
         return jsonify({'error': 'Invalid validation type'}), 400
     
-    # Capture client IP
+    # Capture client IP and location
     client_ip = request.remote_addr
+    # Handle X-Forwarded-For if behind a proxy like Vercel/Netlify
+    if request.headers.get('X-Forwarded-For'):
+        client_ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        
+    city, country = get_location_from_ip(client_ip)
     
     # Save to database
     success = validation_db.add_validation(
@@ -340,7 +360,9 @@ def save_validation():
         system_result=system_result,
         validation_type=validation_type,
         final_result=final_result,
-        ip=client_ip
+        ip=client_ip,
+        city=city,
+        country=country
     )
     
     if success:

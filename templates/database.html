@@ -290,6 +290,7 @@
                             <th>Tipe</th>
                             <th>Hasil Akhir</th>
                             <th>IP</th>
+                            <th>Lokasi</th>
                             <th>Waktu</th>
                         </tr>
                     </thead>
@@ -309,6 +310,7 @@
                             </td>
                             <td style="color: var(--primary-blue); font-weight: 600;">{{ row.final_result }}</td>
                             <td class="timestamp" style="font-family: monospace;">{{ row.ip }}</td>
+                            <td class="timestamp">{{ row.city }}, {{ row.country }}</td>
                             <td class="timestamp">{{ row.formatted_time }}</td>
                         </tr>
                         {% endfor %}
