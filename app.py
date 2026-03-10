@@ -360,9 +360,34 @@ def validation_stats():
 @app.route('/database')
 def view_database():
     records = validation_db.export_database()
+    
+    # Days and Months in Indonesian
+    days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+    months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+              "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    
+    formatted_records = []
+    for r in records:
+        try:
+            # Parse ISO timestamp
+            dt = datetime.fromisoformat(r.get('timestamp', ''))
+            
+            # Formatted time: l, d F Y H:i:s -> "Selasa, 10 Maret 2026 10:47:22"
+            day_name = days[dt.weekday()]
+            month_name = months[dt.month - 1]
+            formatted_time = f"{day_name}, {dt.day:02d} {month_name} {dt.year} {dt.strftime('%H:%M:%S')}"
+            
+            # Add raw date for JS filtering (YYYY-MM-DD)
+            r['formatted_time'] = formatted_time
+            r['raw_date'] = dt.strftime('%Y-%m-%d')
+        except (ValueError, TypeError):
+            r['formatted_time'] = r.get('timestamp', '')
+            r['raw_date'] = ''
+        formatted_records.append(r)
+        
     # Sort by timestamp descending
-    records.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-    return render_template('database.html', records=records)
+    formatted_records.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return render_template('database.html', records=formatted_records)
 
 # Export app for Vercel/Netlify serverless functions
 app_handle = app
