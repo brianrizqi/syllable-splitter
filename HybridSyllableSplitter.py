@@ -135,7 +135,7 @@ class HybridSyllableSplitter:
             # CRITICAL: RESTORE dropped 'r' or 'l' for be-/pel-/te- variants
             # These don't always count as 'modified' by simple comparison
             if base_prefix in ['be', 'pe', 'te']:
-                 if lemmatized_root == 'ajar':
+                 if lemmatized_root == 'ajar' or root == 'ajar':
                       infix = 'r' # Always 'r' even if 'l' was detected
                  elif not infix:
                       if (lemmatized_root.startswith('r') or 
@@ -313,88 +313,97 @@ class HybridSyllableSplitter:
                     root = lemmatized_root
                     suffix = '' 
             
-            if is_modified:
-                # 1. Detect standard peluluhan (k, t, s, p)
+            if is_modified or not is_composite:
+                # MORPHEMIC PRIORITY: Restore original root boundary and consistent prefixes
+                # (e.g., 'menulis' -> 'meng-tu-lis', 'pembaca' -> 'peng-ba-ca')
+                
+                # Check mapping of nasals to consonants for root restoration
+                nasal_map = [('ng', 'k'), ('ny', 's'), ('n', 't'), ('m', 'p')]
                 is_peluluhan = False
                 nasal_part = ""
                 
-                # Check mapping of nasals to consonants
-                nasal_map = [('ng', 'k'), ('ny', 's'), ('n', 't'), ('m', 'p')]
+                # If lemmatizer failed (root == word), try manual restoration
+                if not is_peluluhan and (lemmatized_root == word.lower() or not is_modified):
+                    # Case A: Short prefix (me-) + nasal root
+                    if base_prefix in ['pe', 'me', 'be', 'te', 'se']:
+                         for n, c in nasal_map:
+                             if detected_root.startswith(n):
+                                 # Special case: menge- / penge- should NOT restore k/t/s/p if it's 'nge'
+                                 if prefix in ['menge', 'penge']:
+                                      break
+                                 is_peluluhan = True
+                                 nasal_part = n
+                                 root = c + detected_root[len(n):]
+                                 is_modified = True
+                                 break
+                    # Case B: Nasal prefix (men-) + vowel root
+                    if not is_peluluhan:
+                         for n, c in nasal_map:
+                             if prefix.endswith(n) or (infix and infix == n):
+                                 # ONLY restore if it's a known luluhan (k, t, s, p)
+                                 # and NOT a root that naturally starts with a vowel (like 'ambil')
+                                 # For this task, we prioritize the user's examples.
+                                 if prefix in ['men', 'pen'] and detected_root.startswith('u'): # e.g. menulis
+                                      is_peluluhan = True
+                                      root = c + detected_root
+                                      is_modified = True
+                                      break
+                                 elif prefix in ['meny', 'peny']: # e.g. menyapu
+                                      is_peluluhan = True
+                                      root = c + detected_root
+                                      is_modified = True
+                                      break
+                                 elif prefix in ['mem', 'pem'] and not detected_root.startswith(('a', 'i', 'u', 'e', 'o')): # e.g. membaca (no)
+                                      pass
                 
-                # Case A: Short prefix (me-) + nasal-starting detected_root (ngerja)
-                if prefix in ['me', 'pe', 'be', 'te', 'se']:
-                    for n, c in nasal_map:
-                        if detected_root.startswith(n) and lemmatized_root.startswith(c):
-                            is_peluluhan = True
-                            nasal_part = n
-                            break
-                            
-                # Case B: Nasal-ending prefix (meng-) + vowel-starting detected_root (eluh)
-                if not is_peluluhan:
-                    for n, c in nasal_map:
-                        if prefix.endswith(n) and lemmatized_root.startswith(c):
-                            is_peluluhan = True
-                            # Nasal is already in the prefix
-                            break
-                            
-                # Case C: be-/pe-/te- variations (ber-/per-/ter-)
-                if not is_peluluhan and base_prefix in ['be', 'pe', 'te']:
-                    # be- + r... -> be... (e.g. berambut)
-                    # be- + ...er... -> be... (e.g. bekerja)
-                    if (lemmatized_root.startswith('r') or 
-                        (len(lemmatized_root) > 2 and lemmatized_root[1:3] == 'er' and not self.kbbi_splitter.is_vowel(lemmatized_root[0]))):
-                        is_peluluhan = True
-                        nasal_part = 'r'
-                    # bel- + ajar -> belajar (restored as ber-a-jar)
-                    elif lemmatized_root == 'ajar' and prefix in ['be', 'pe', 'bel', 'pel']:
-                        is_peluluhan = True
-                        nasal_part = 'r'
+                # Use the allomorph map for consistent mapping (e.g., me- -> meng-)
+                morphemic_prefix = self.morphology.allomorph_map.get(prefix, self.morphology.allomorph_map.get(base_prefix, base_prefix))
                 
-                if is_peluluhan or base_prefix in ['pe', 'me', 'be', 'te']:
-                    # MORPHEMIC PRIORITY: Restore original root boundary
-                    # REFINED: Rule from User - all 'pe' variants (pe, pem, peng, pel) must be 'per'.
-                    # For 'me', we still use 'me'.
-                    if base_prefix == 'pe':
-                        morphemic_prefix = 'per'
-                    elif base_prefix == 'me':
-                        morphemic_prefix = 'me'
-                    elif base_prefix == 'te':
-                        morphemic_prefix = 'ter'
-                    elif nasal_part in ['r', 'l']:
-                        # Handles ber-/bel- etc.
+                # Fallback for morphemic_prefix
+                if not morphemic_prefix or morphemic_prefix == base_prefix:
+                    if nasal_part in ['r', 'l']:
                         morphemic_prefix = base_prefix + nasal_part
                     else:
                         morphemic_prefix = base_prefix
-                        
-                    prefix_syllables = self.kbbi_splitter.split_syllables(morphemic_prefix)
-                    result.extend(prefix_syllables)
-                    
-                    root = lemmatized_root
-                    # Prevent duplication if lemmatized_root already contains the prefix
-                    # (e.g. nested prefixes like 'berpendidikan' where lemmatizer failed)
-                    if root.startswith(morphemic_prefix):
-                         root = root[len(morphemic_prefix):]
-                    if suffix and root.endswith(suffix):
-                         suffix = ''
-                else:
-                    # PHONETIC PRIORITY: For complex modifications
-                    # splitting the whole word phonetically is most reliable.
-                    stem_syllables = self.kbbi_splitter.split_syllables(word)
-                    result.extend(stem_syllables)
-                    # Clear root and suffix so Step 4/5 are skipped
-                    root = ""
-                    suffix = ""
-            elif not is_composite:
-                # Rule 1: Base word intact (e.g. 'mengambil')
-                # REFINED (Supervisor's Rule): Universalize 'pe' to 'per'. Use 'me' for 'meng-'.
-                morphemic_prefix = full_prefix
-                if base_prefix == 'me' and infix and infix not in ['r', 'l']:
-                     morphemic_prefix = 'me'
-                elif base_prefix == 'pe':
-                     morphemic_prefix = 'per'
+                
+                # Special handling for 'menge-'/'penge-'/'menye-'/'penye-' to preserve middle syllable
+                if prefix in ['menge', 'penge', 'menye', 'penye']:
+                     # Re-verify mid_syl from prefix (menge -> nge, penye -> nye)
+                     mid_syl = prefix[2:] # e.g. 'nge' or 'nye'
                      
-                prefix_syllables = self.kbbi_splitter.split_syllables(morphemic_prefix)
-                result.extend(prefix_syllables)
+                     # Check if we should move the first consonant of root for clusters
+                     # e.g. penyestok (peng-nyes-tok)
+                     if len(root) > 1 and not self.kbbi_splitter.is_vowel(root[0]) and not self.kbbi_splitter.is_vowel(root[1]):
+                          mid_syl += root[0]
+                          root = root[1:]
+                          
+                     result.extend(self.kbbi_splitter.split_syllables(morphemic_prefix))
+                     result.append(mid_syl)
+                else:
+                     prefix_syllables = self.kbbi_splitter.split_syllables(morphemic_prefix)
+                     result.extend(prefix_syllables)
+                
+                # Decide on the final root to split
+                if is_peluluhan:
+                    pass # Keep the restored root
+                elif lemmatized_root != word.lower():
+                    root = lemmatized_root
+                else:
+                    root = detected_root
+                    
+                # Special handling for 'menge-'/'penge-' to preserve middle syllable 'nge'
+                if prefix in ['menge', 'penge'] and root.startswith('nge'):
+                     # root is 'ngecat', we want 'nge' and 'cat'
+                     pass 
+                else:
+                    # Prevent duplication
+                    if root.startswith(morphemic_prefix):
+                        root = root[len(morphemic_prefix):]
+                    elif prefix and root.startswith(prefix):
+                        root = root[len(prefix):]
+                
+                if suffix and root.endswith(suffix):
+                    suffix = ''
         
         # Step 4: Root - apply syllable rules (if not already handled by phonetic split)
         if root:

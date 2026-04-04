@@ -16,8 +16,24 @@ class MorphologicalAnalyzer:
         # Indonesian prefixes (sorted by length for greedy matching)
         self.prefixes = [
             'memper', 'mempel', 'pember', 'pembel', 'penyer', 'penyel', 'diper', 'dipel',
-            'me', 'mem', 'men', 'meny', 'meng', 'pen', 'pem', 'peng', 'pe', 'ber', 'ter', 'di', 'ke', 'se', 'per', 'be', 'pel', 'te'
+            'menge', 'penye', 'penge', 'meng', 'peng', 'meny', 'peny', 'mem', 'pem', 'men', 'pen',
+            'ber', 'ter', 'per', 'bel', 'pel', 'me', 'pe', 'be', 'te', 'di', 'ke', 'se'
         ]
+        
+        # Allomorph mapping as per user instruction image
+        self.allomorph_map = {
+            # meng- group
+            'me': 'meng', 'mem': 'meng', 'men': 'meng', 'meny': 'meng', 'meng': 'meng', 'menge': 'meng',
+            # peng- group (pem, pen, peny, penge, penye)
+            'pe': 'per', 'pel': 'per', 'per': 'per', 
+            'pen': 'peng', 'pem': 'peng', 'peny': 'peng', 'penye': 'peng', 'penge': 'peng', 'peng': 'peng',
+            # ber- group
+            'be': 'ber', 'bel': 'ber', 'ber': 'ber',
+            # ter- group
+            'te': 'ter', 'ter': 'ter'
+        }
+        # Note: 'pe' can be an allomorph of 'per' (e.g., pesilat) or 'peng' (e.g., pelari)
+        # We default 'pe' to 'per' but the splitter can handle context.
         
         # Indonesian suffixes (including particles and possessives)
         self.suffixes = [
@@ -49,14 +65,18 @@ class MorphologicalAnalyzer:
             ('pe', 'kan'), ('pe', 'i'), ('pe', 'an'),
             ('pem', 'kan'), ('pem', 'i'), ('pem', 'an'),
             ('pen', 'kan'), ('pen', 'i'), ('pen', 'an'),
+            ('pent', 'kan'), ('pent', 'i'), ('pent', 'an'),
             ('peng', 'kan'), ('peng', 'i'), ('peng', 'an'),
             ('peny', 'kan'), ('peny', 'i'), ('peny', 'an'),
+            ('penye', 'kan'), ('penye', 'i'), ('penye', 'an'),
             # me- + -kan/-i (transitive verbs)
             ('me', 'kan'), ('me', 'i'),
             ('mem', 'kan'), ('mem', 'i'),
             ('men', 'kan'), ('men', 'i'),
+            ('ment', 'kan'), ('ment', 'i'),
             ('meng', 'kan'), ('meng', 'i'),
             ('meny', 'kan'), ('meny', 'i'),
+            ('menge', 'kan'), ('menge', 'i'), ('menge', 'an'),
             # di- + -kan/-i (passive verbs)
             ('di', 'kan'), ('di', 'i'),
             # ter- + -kan (accidental passive)
@@ -117,10 +137,18 @@ class MorphologicalAnalyzer:
         root = word.lower()
         
         # Step 1: Check for circumfixes first (most specific)
-        for pre, suf in self.circumfixes:
+        sorted_circumfixes = sorted(self.circumfixes, key=lambda x: len(x[0]) + len(x[1]), reverse=True)
+        for pre, suf in sorted_circumfixes:
             if (root.startswith(pre) and root.endswith(suf) and 
                 len(root) > len(pre) + len(suf)):
                 potential_root = root[len(pre):-len(suf)]
+                
+                # AMBIGUITY FIX: penye- / menye- followed by nasal (e.g. penyempurnaan)
+                if pre in ['penye', 'menye'] and potential_root.startswith(('m', 'n', 'ng', 'ny')):
+                     # Re-evaluate with the shorter prefix
+                     pre = pre[:-1] # 'peny' or 'meny'
+                     potential_root = root[len(pre):-len(suf)]
+                
                 if len(potential_root) >= 2:  # Root should be at least 2 chars
                     prefix = pre
                     suffix = suf
@@ -131,6 +159,14 @@ class MorphologicalAnalyzer:
         for pre in sorted(self.prefixes, key=len, reverse=True):
             if root.startswith(pre) and len(root) > len(pre):
                 potential_root = root[len(pre):]
+                # AMBIGUITY FIX: penye- / menye- followed by nasal (e.g. penyempurnaan)
+                # If prefix is 'penye' but root starts with 'm', 'n', etc.
+                # it's better to treat it as 'peny' + 'e...' (luluhan s)
+                if pre in ['penye', 'menye'] and potential_root.startswith(('m', 'n', 'ng', 'ny')):
+                     # Re-evaluate with the shorter prefix
+                     pre = pre[:-1] # 'peny' or 'meny'
+                     potential_root = root[len(pre):]
+                
                 if len(potential_root) >= 2:
                     prefix = pre
                     root = potential_root
@@ -242,14 +278,20 @@ class MorphologicalAnalyzer:
                   lemmatized_root = root_after_infix
         
         # 3. Special case for Suspect Prefix (e.g. "selidik" -> prefix "se" but root is "sidik")
-        # If we didn't find an infix yet, but lemmatizer says the word is a base word, 
-        # and we saw a prefix, try re-analyzing as a base word with infix.
-        if not internal_infix and prefix and lemmatized_root == original_word:
-             internal_infix, root_after_infix = self.analyze_internal_infix(original_word)
-             if internal_infix:
-                  lemmatized_root = root_after_infix
-                  prefix = '' # It's actually a base word with an infix
-                  detected_root = original_word
+        # If lemmatizer is available and says the word is a base word, or if no prefix was found,
+        # try re-analyzing as a base word with infix.
+        if not internal_infix and (not prefix or (self.lemmatizer and lemmatized_root == original_word)):
+             infix_cand, root_cand = self.analyze_internal_infix(original_word)
+             # Only accept if it's a known infixed base word pattern (not for words like 'pelajar')
+             if infix_cand:
+                  # For 'pelajar', infix_cand='el', root_cand='pajar'.
+                  # We only allow override if no prefix was found at all,
+                  # or if it's the 'se-' prefix which is often ambiguous (e.g. selidik vs se-lidik)
+                  if not prefix or (prefix == 'se' and len(root_cand) >= 3):
+                       internal_infix = infix_cand
+                       lemmatized_root = root_cand
+                       prefix = '' # It's actually a base word with an infix
+                       detected_root = original_word
         
         return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
     
