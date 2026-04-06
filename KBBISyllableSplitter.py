@@ -57,8 +57,21 @@ class KBBISyllableSplitter:
                     num_consonants = len(consonants_ahead)
                     
                     if num_consonants == 0:
-                        # VV pattern - check for diphthong
-                        if word[i:i+2] not in self.diphthongs:
+                        # VV pattern - check for diphthongs (ai, au, ei, oi)
+                        # They are diphthongs (single sound) usually at the end of base words.
+                        # Otherwise (in the middle, or between root/suffix), they are separate syllables.
+                        is_diphthong = False
+                        if word[i:i+2] in self.diphthongs:
+                            if i + 2 == len(word):
+                                is_diphthong = True
+                            # Loanwords with diphthongs in the middle (boikot, koboi, etc.)
+                            elif any(word.endswith(w) for w in ['boikot', 'koboi', 'sepoi', 'konvoi', 'survei']):
+                                # Only if the match is at the end or covers the current position
+                                part = word[i:]
+                                if any(part == w or part.startswith(w) for w in ['boi', 'poi', 'voi', 'vei']):
+                                     is_diphthong = True
+                         
+                        if not is_diphthong:
                             syllables.append(current)
                             current = ""
                     elif num_consonants == 1:

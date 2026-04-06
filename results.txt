@@ -1,0 +1,95 @@
+⚠ Warning: Failed to load Simplemma: No module named 'simplemma'
+Kata Uji             | Expected                       | Actual                         | Status
+------------------------------------------------------------------------------------------
+DEBUG: word=penyerta prefix=penyer base_prefix=penyer morphemic=peng.ser
+penyerta             | ['peng', 'ser', 'ta']          | ['peng', 'ser', 'ta']          | ✅ PASS
+DEBUG: word=pengetahuan prefix=peng base_prefix=pe morphemic=peng
+pengetahuan          | ['peng', 'ta', 'hu', 'an']     | ['peng', 'ke', 'ta', 'hu', 'an'] | ❌ FAIL
+DEBUG: word=pengecekan prefix=peng base_prefix=pe morphemic=peng
+pengecekan           | ['peng', 'cek', 'an']          | ['peng', 'ke', 'ce', 'kan']    | ❌ FAIL
+DEBUG: word=mengelak prefix=menge base_prefix=menge morphemic=meng
+mengelak             | ['meng', 'e', 'lak']           | ['meng', 'lak']                | ❌ FAIL
+DEBUG: word=mengemban prefix=menge base_prefix=menge morphemic=meng
+mengemban            | ['meng', 'em', 'ban']          | ['meng', 'mb', 'an']           | ❌ FAIL
+DEBUG: word=mengaji prefix=meng base_prefix=me morphemic=meng
+mengaji              | ['meng', 'ka', 'ji']           | ['meng', 'kaj', 'i']           | ❌ FAIL
+DEBUG: word=mengemuka prefix=meng base_prefix=me morphemic=meng
+mengemuka            | ['meng', 'ke', 'mu', 'ka']     | ['meng', 'ke', 'mu', 'ka']     | ✅ PASS
+DEBUG: word=mengesampingkan prefix=menge base_prefix=menge morphemic=meng
+mengesampingkan      | ['meng', 'ke', 'sam', 'ping', 'kan'] | ['meng', 'sam', 'ping', 'kan'] | ❌ FAIL
+DEBUG: word=mengaum prefix=meng base_prefix=me morphemic=meng
+mengaum              | ['meng', 'a', 'um']            | ['meng', 'kaum']               | ❌ FAIL
+DEBUG: word=menyatakan prefix=meny base_prefix=me morphemic=meng
+menyatakan           | ['meng', 'nya', 'ta', 'kan']   | ['meng', 'sa', 'ta', 'kan']    | ❌ FAIL
+DEBUG: word=menganga prefix=meng base_prefix=me morphemic=meng
+menganga             | ['meng', 'nga', 'nga']         | ['meng', 'ka', 'nga']          | ❌ FAIL
+DEBUG: word=menerawang prefix=men base_prefix=me morphemic=meng
+menerawang           | ['meng', 'te', 'ra', 'wang']   | ['meng', 'te', 'ra', 'wang']   | ✅ PASS
+DEBUG: word=menambat prefix=men base_prefix=me morphemic=meng
+menambat             | ['meng', 'tam', 'bat']         | ['meng', 'tam', 'bat']         | ✅ PASS
+DEBUG: word=membuat prefix=mem base_prefix=me morphemic=meng
+membuat              | ['meng', 'bu', 'at']           | ['meng', 'bu', 'at']           | ✅ PASS
+DEBUG: word=memvalidasi prefix=mem base_prefix=me morphemic=meng
+memvalidasi          | ['meng', 'va', 'li', 'da', 'si'] | ['meng', 'va', 'li', 'das', 'i'] | ❌ FAIL
+DEBUG: word=mempertinggi prefix=memper base_prefix=memper morphemic=meng.per
+mempertinggi         | ['meng', 'per', 'ting', 'gi']  | ['meng', 'per', 'tingg', 'i']  | ❌ FAIL
+DEBUG: word=mempertegas prefix=memper base_prefix=memper morphemic=meng.per
+mempertegas          | ['meng', 'per', 'te', 'gas']   | ['meng', 'per', 'te', 'gas']   | ✅ PASS
+DEBUG: word=memperdalam prefix=memper base_prefix=memper morphemic=meng.per
+memperdalam          | ['meng', 'per', 'da', 'lam']   | ['meng', 'per', 'da', 'lam']   | ✅ PASS
+DEBUG: word=mengebom prefix=menge base_prefix=menge morphemic=meng
+mengebom             | ['meng', 'bom']                | ['meng', 'bom']                | ✅ PASS
+DEBUG: word=mengecek prefix=menge base_prefix=menge morphemic=meng
+mengecek             | ['meng', 'cek']                | ['meng', 'cek']                | ✅ PASS
+DEBUG: word=mengepel prefix=menge base_prefix=menge morphemic=meng
+mengepel             | ['meng', 'pel']                | ['meng', 'pel']                | ✅ PASS
+DEBUG: word=mengerem prefix=menge base_prefix=menge morphemic=meng
+mengerem             | ['meng', 'rem']                | ['meng', 'rem']                | ✅ PASS
+DEBUG: word=mengetik prefix=menge base_prefix=menge morphemic=meng
+mengetik             | ['meng', 'ke', 'tik']          | ['meng', 'tik']                | ❌ FAIL
+DEBUG: word=mengeblok prefix=menge base_prefix=menge morphemic=meng
+mengeblok            | ['meng', 'blok']               | ['meng', 'blok']               | ✅ PASS
+DEBUG: word=mengedrop prefix=menge base_prefix=menge morphemic=meng
+mengedrop            | ['meng', 'drop']               | ['meng', 'drop']               | ✅ PASS
+DEBUG: word=mentransfusi prefix=ment base_prefix=ment morphemic=meng
+mentransfusi         | ['meng', 'trans', 'fu', 'si']  | ['meng', 'ran', 'sfus', 'i']   | ❌ FAIL
+DEBUG: word=mengkhitan prefix=meng base_prefix=me morphemic=meng
+mengkhitan           | ['meng', 'khi', 'tan']         | ['meng', 'khit', 'an']         | ❌ FAIL
+DEBUG: word=mengecek prefix=menge base_prefix=menge morphemic=meng
+mengecek-ngecek      | ['meng', 'cek', 'nge', 'cek']  | ['meng', 'cek', 'nge', 'cek']  | ✅ PASS
+DEBUG: word=dibeli prefix=di base_prefix=di morphemic=di
+dibeli               | ['di', 'be', 'li']             | ['di', 'bel', 'i']             | ❌ FAIL
+DEBUG: word=dibelakangi prefix=di base_prefix=di morphemic=di
+dibelakangi          | ['di', 'be', 'la', 'kang', 'i'] | ['di', 'ba', 'el', 'kang', 'i'] | ❌ FAIL
+DEBUG: word=terasa prefix=te base_prefix=te morphemic=ter
+terasa               | ['ter', 'ra', 'sa']            | ['ter', 'ra', 'sa']            | ✅ PASS
+DEBUG: word=teraba prefix=te base_prefix=te morphemic=ter
+teraba               | ['ter', 'ra', 'ba']            | ['ter', 'ra', 'ba']            | ✅ PASS
+DEBUG: word=tembakkan prefix= base_prefix= morphemic=
+tembakkan            | ['tem', 'bak', 'kan']          | ['tem', 'bak', 'kan']          | ✅ PASS
+DEBUG: word=tembakan prefix= base_prefix= morphemic=
+tembakan             | ['tem', 'bak', 'an']           | ['tem', 'ba', 'kan']           | ❌ FAIL
+DEBUG: word=tembaki prefix= base_prefix= morphemic=
+tembaki              | ['tem', 'bak', 'i']            | ['tem', 'bak', 'i']            | ✅ PASS
+DEBUG: word=memarang prefix=mem base_prefix=me morphemic=meng
+memarang             | ['meng', 'pa', 'rang']         | ['meng', 'pa', 'rang']         | ✅ PASS
+DEBUG: word=mengebor prefix=menge base_prefix=menge morphemic=meng
+mengebor             | ['meng', 'bor']                | ['meng', 'bor']                | ✅ PASS
+DEBUG: word=teramalkan prefix=te base_prefix=te morphemic=ter
+teramalkan           | ['ter', 'ra', 'mal', 'kan']    | ['ter', 'ra', 'mal', 'kan']    | ✅ PASS
+DEBUG: word=mementaskan prefix=mem base_prefix=me morphemic=meng
+mementaskan          | ['meng', 'pen', 'tas', 'kan']  | ['meng', 'pen', 'tas', 'kan']  | ✅ PASS
+DEBUG: word=mengejutkan prefix=menge base_prefix=menge morphemic=meng
+mengejutkan          | ['meng', 'ke', 'jut', 'kan']   | ['meng', 'jut', 'kan']         | ❌ FAIL
+DEBUG: word=mengepakkan prefix=menge base_prefix=menge morphemic=meng
+mengepakkan          | ['meng', 'ke', 'pak', 'kan']   | ['meng', 'pak', 'kan']         | ❌ FAIL
+DEBUG: word=mengepak prefix=menge base_prefix=menge morphemic=meng
+mengepak             | ['meng', 'pak']                | ['meng', 'pak']                | ✅ PASS
+DEBUG: word=mengentaskan prefix=menge base_prefix=menge morphemic=meng
+mengentaskan         | ['meng', 'en', 'tas', 'kan']   | ['meng', 'ntas', 'kan']        | ❌ FAIL
+DEBUG: word=pertahanan prefix=per base_prefix=pe morphemic=per
+pertahanan           | ['per', 'ta', 'han', 'an']     | ['per', 'ta', 'han', 'an']     | ✅ PASS
+DEBUG: word=mempertahankan prefix=memper base_prefix=memper morphemic=meng.per
+mempertahankan       | ['meng', 'per', 'ta', 'han', 'kan'] | ['meng', 'per', 'ta', 'han', 'kan'] | ✅ PASS
+------------------------------------------------------------------------------------------
+Passed: 25/45
