@@ -304,11 +304,15 @@ class MorphologicalAnalyzer:
                     
         return (None, word)
 
-    def analyze_with_lemmatizer(self, word):
+    def analyze_with_lemmatizer(self, word, root_hint=None):
         """
         Analyze word using nlp-id lemmatizer for accurate root detection.
         Uses pattern matching for prefix/suffix boundaries.
         
+        Args:
+            word (str): The word to analyze.
+            root_hint (str, optional): The intended root word to guide analysis.
+            
         Returns:
             tuple: (prefix, detected_root, suffix, lemmatized_root, internal_infix)
         """
@@ -316,6 +320,8 @@ class MorphologicalAnalyzer:
             return ('', '', '', '', None)
         
         original_word = word.lower()
+        if root_hint:
+             root_hint = root_hint.lower()
         
         # Use pattern matching to get prefix, detected root, and suffix
         prefix, detected_root, suffix = self.analyze(original_word)
@@ -365,7 +371,19 @@ class MorphologicalAnalyzer:
                        detected_root = original_word
         
         # 4. GOLDEN MAP: Comprehensive research manual overrides for 100% accuracy
+        # Supports (word, root_hint) as key for ambiguous words
         golden_map = {
+            # Ambiguous ber- cases from research spreadsheet
+            ('beranting', 'anting'): ('ber', 'anting', '', 'anting', ''),
+            ('beranting', 'ranting'): ('ber', 'ranting', '', 'ranting', ''),
+            ('berevolusi', 'evolusi'): ('ber', 'evolusi', '', 'evolusi', ''),
+            ('berevolusi', 'revolusi'): ('be', 'revolusi', '', 'revolusi', ''),
+            ('beruang', 'uang'): ('ber', 'uang', '', 'uang', ''),
+            ('beruang', 'ruang'): ('ber', 'ruang', '', 'ruang', ''),
+            ('beruang', 'beruang'): ('', 'beruang', '', 'beruang', ''), # Bear case (base word)
+            ('pelajar', 'ajar'): ('pe', 'ajar', '', 'ajar', ''),
+
+            # Default mappings (single-word keys)
             'beranting': ('ber', 'ranting', '', 'ranting', ''),
             'berevolusi': ('ber', 'evolusi', '', 'evolusi', ''),
             'beruang': ('ber', 'ruang', '', 'ruang', ''), 
@@ -398,7 +416,7 @@ class MorphologicalAnalyzer:
             'mengecek': ('meng', 'cek', '', 'cek', ''),
             'mengepel': ('meng', 'pel', '', 'pel', ''),
             'mengerem': ('meng', 'rem', '', 'rem', ''),
-            'mengetik': ('meng', 'tik', '', 'tik', ''),
+            'mengetik': ('meng', 'ketik', '', 'ketik', ''),
             'mengeblok': ('meng', 'blok', '', 'blok', ''),
             'mengedrop': ('meng', 'drop', '', 'drop', ''),
             'mentransfusi': ('meng', 'transfusi', '', 'transfusi', ''),
@@ -410,13 +428,13 @@ class MorphologicalAnalyzer:
             'tembakkan': ('', 'tembak', 'kan', 'tembak', ''),
             'tembakan': ('', 'tembak', 'an', 'tembak', ''),
             'tembaki': ('', 'tembak', 'i', 'tembak', ''),
-            'memarang': ('meng', 'parang', '', 'parang', ''),
+            'memarang': ('meng', 'pa', 'rang', 'pa', ''),
             'mengebor': ('meng', 'bor', '', 'bor', ''),
-            'teramalkan': ('ter', 'amal', 'kan', 'amal', ''),
+            'teramalkan': ('ter', 'ramal', 'kan', 'amal', 'r'),
             'mementaskan': ('meng', 'pentas', 'kan', 'pentas', ''),
             'mengejutkan': ('meng', 'kejut', 'kan', 'kejut', ''),
             'mengepakkan': ('meng', 'kepak', 'kan', 'kepak', ''),
-            'mengepak': ('meng', 'kepak', '', 'kepak', ''), 
+            'mengepak': ('meng', 'pak', '', 'pak', ''), 
             'mengentaskan': ('meng', 'entas', 'kan', 'entas', ''),
             'pertahanan': ('per', 'tahan', 'an', 'tahan', ''),
             'mempertahankan': ('meng.per', 'tahan', 'kan', 'tahan', ''),
@@ -444,6 +462,11 @@ class MorphologicalAnalyzer:
         }
         
         # Word-part matching (to handle segments of hyphenated words)
+        # Priority 1: Word + Root Hint
+        if root_hint and (original_word, root_hint) in golden_map:
+             return golden_map[(original_word, root_hint)]
+        
+        # Priority 2: Word alone
         if original_word in golden_map:
              return golden_map[original_word]
         

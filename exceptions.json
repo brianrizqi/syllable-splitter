@@ -23,16 +23,6 @@
     "ru",
     "ang"
   ],
-  "beranting": [
-    "ber",
-    "ran",
-    "ting"
-  ],
-  "beruang": [
-    "ber",
-    "ru",
-    "ang"
-  ],
   "belunjur": [
     "ber",
     "un",
@@ -70,5 +60,10 @@
   ],
   "nyes": [
     "nyes"
+  ],
+  "transfusi": [
+    "trans",
+    "fu",
+    "si"
   ]
 }
