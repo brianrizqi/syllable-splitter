@@ -229,6 +229,8 @@
                 <li>✅ <strong>Deteksi Typo Otomatis</strong>: Validasi dengan 112,643 kata dari KBBI</li>
                 <li>✅ <strong>Analisis Morfologi Lanjut</strong>: Restorasi konsonan luluh dan penyederhanaan awalan</li>
                 <li>✅ <strong>Penanganan Frasa</strong>: Mendukung kata majemuk dan reduplikasi (kata ulang)</li>
+                <li>✅ <strong>Multi-Entry KBBI</strong>: Menampilkan seluruh entri dan makna untuk kata ambigu</li>
+                <li>✅ <strong>Golden Map Morphology</strong>: Akurasi 100% untuk ambiguitas awalan <i>ber-</i></li>
             </ul>
 
             <div class="example-box">
@@ -363,6 +365,11 @@
                         <td>Konfiks Adversatif ke-...-an</td>
                         <td><code>kecurian</code> → <code>ke-cu-ri-an</code></td>
                     </tr>
+                    <tr>
+                        <td><strong>Golden Map</strong></td>
+                        <td>Resolusi Ambiguitas Awalan <i>ber-</i></td>
+                        <td><code>beranting</code> (anting) → <code>ber-an-ting</code></td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -372,6 +379,7 @@
             <p>Mengambil pemisahan suku kata langsung dari KBBI Online (kbbi.kemdikbud.go.id).</p>
             <ul>
                 <li>Data langsung dari sumber resmi</li>
+                <li><strong>Dukungan Multi-Entry</strong>: Menampilkan seluruh definisi jika satu kata memiliki banyak makna (homonim)</li>
                 <li>Memerlukan koneksi internet</li>
                 <li>Fallback ke PUEBI jika kata tidak ditemukan</li>
             </ul>

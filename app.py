@@ -108,24 +108,42 @@ def split_text():
                 from_db_any = True
         
         # 2. If not found in DB or bypassed, use algorithms
+        kbbi_info = []
         if syllables is None:
             if method == 'kbbi':
-                syllables = kbbi_scraper.get_syllables(word)
-                if syllables is None:
+                kbbi_info = kbbi_scraper.get_word_info(word)
+                if kbbi_info:
+                    syllables = kbbi_info[0]['syllables']
+                else:
                     syllables = splitter_puebi.split_syllables(word)
             elif method == 'sylbi':
-                # SylBI Fallback Logic:
-                # If word has morphological affixes or infixes, use SylBI (Hybrid) rules
-                # If word is a base word (no affixes/infixes), follow KBBI rules (scraper)
-                prefix, root, suffix = splitter_sylbi.morphology.analyze(word)
-                internal_infix, _ = splitter_sylbi.morphology.analyze_internal_infix(word.lower())
+                # Always try KBBI first to get all possible meanings and structures
+                kbbi_info = kbbi_scraper.get_word_info(word)
                 
-                if not prefix and not suffix and not internal_infix:
-                    # No affixes or infixes detected, try KBBI online first
-                    syllables = kbbi_scraper.get_syllables(word)
-                
-                # If it has affixes/infixes OR KBBI online failed for base word
-                if syllables is None:
+                if kbbi_info:
+                    # Improve entries by re-splitting them morphologically using extracted root hints
+                    for entry in kbbi_info:
+                        header = entry.get('header', '')
+                        root_hint = None
+                        
+                        # Extract root hint from KBBI header
+                        if ' » ' in header:
+                            root_hint = header.split(' » ')[0].split('(')[0].strip()
+                        elif '/' in header:
+                            # If it's a base word (like 'beruang' bear), hint is the word itself
+                            root_hint = word
+                            
+                        # Re-calculate syllables using SylBI with the specific root hint
+                        if root_hint:
+                            # Use syllable splitting logic with hint
+                            entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
+                            entry['root_hint'] = root_hint # Save for UI debug
+                            
+                    # Use the first entry's improved syllables as the base result
+                    syllables = kbbi_info[0]['syllables']
+                else:
+                    # SylBI Fallback Logic:
+                    # If not in KBBI online, use algorithms
                     syllables = splitter_sylbi.split_syllables(word)
             else:
                 syllables = splitter_puebi.split_syllables(word)
@@ -133,7 +151,8 @@ def split_text():
         results.append({
             'word': word,
             'syllables': syllables,
-            'from_db': from_db
+            'from_db': from_db,
+            'entries': kbbi_info
         })
     
     return jsonify({

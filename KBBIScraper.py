@@ -16,13 +16,28 @@ class KBBIScraper:
     
     def get_syllables(self, word):
         """
-        Get syllables for a word from KBBI.
+        Get syllables for a word from KBBI (Backward compatibility).
         
         Args:
             word (str): The word to look up
             
         Returns:
-            list: List of syllables, or None if not found
+            list: List of syllables from the first entry, or None if not found
+        """
+        results = self.get_word_info(word)
+        if results:
+            return results[0]['syllables']
+        return None
+
+    def get_word_info(self, word):
+        """
+        Get full word information from KBBI including multiple entries and meanings.
+        
+        Args:
+            word (str): The word to look up
+            
+        Returns:
+            list: List of dictionaries containing entries with syllables and meanings.
         """
         try:
             # Make request to KBBI
@@ -30,38 +45,93 @@ class KBBIScraper:
             response = requests.get(url, headers=self.headers, timeout=5)
             
             if response.status_code != 200:
-                return None
+                return []
             
             # Parse HTML
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Find the syllable information
-            # KBBI displays syllables in format like "pem.bel.a.jar.an"
-            # Look for the main entry heading
-            entry = soup.find('h2')
+            # Find all entries (h2)
+            entries = soup.find_all('h2')
             
-            if not entry:
-                return None
+            if not entries:
+                return []
             
-            # Get the text, inserting a space between elements to prevent merging words
-            # (e.g., prevent "a.ir" and "bentuk tidak baku" becoming "a.irbentuk")
-            entry_text = entry.get_text(" ", strip=True)
+            results = []
+            for entry in entries:
+                # Get the text, inserting a space between elements to prevent merging words
+                entry_text = entry.get_text(" ", strip=True)
+                
+                # Extract syllables (format: "ajar (1) » pem.bel.a.jar.an")
+                syllable_match = re.search(r'([A-Za-z]+(?:\.[A-Za-z]+)+)', entry_text)
+                
+                if syllable_match:
+                    syllable_string = syllable_match.group(1)
+                    syllables = syllable_string.split('.')
+                else:
+                    # Fallback: if no dots, check if it's a valid single syllable word
+                    # Remove "»" and things before it
+                    parts = re.split(r'[»/]', entry_text)
+                    potential_word = parts[-1].split('(')[0].strip()
+                    if potential_word and potential_word.isalpha():
+                        syllables = [potential_word]
+                    else:
+                        continue # Skip entries without clear syllable info
+                
+                # Find meanings associated with this entry
+                meanings = []
+                
+                # Iterate siblings until next h2
+                sibling = entry.find_next_sibling()
+                while sibling and sibling.name not in ['h2', 'hr']:
+                    # Look for lists (ol or ul) containing meanings
+                    if sibling.name in ['ol', 'ul', 'div']:
+                        # KBBI uses ol for multiple meanings, ul for single meanings
+                        items = sibling.find_all('li')
+                        if not items and sibling.name == 'li':
+                            items = [sibling]
+                        
+                        for item in items:
+                            # Category (red font)
+                            cat_el = item.find('font', color='red')
+                            category = cat_el.get_text(strip=True) if cat_el else ""
+                            
+                            # Label (green font, e.g., ki, ark)
+                            label_el = item.find('font', color='green')
+                            label = label_el.get_text(strip=True) if label_el else ""
+                            
+                            # Clean the definition text
+                            # We want the text minus categories/labels and "→ Tesaurus" links
+                            definition_text = item.get_text(" ", strip=True)
+                            
+                            # Advanced cleaning: remove category and label strings if they exist at the start
+                            if category and definition_text.startswith(category):
+                                definition_text = definition_text[len(category):].strip()
+                            if label and definition_text.startswith(label):
+                                definition_text = definition_text[len(label):].strip()
+                            
+                            # Remove the "→ Tesaurus" text and symbols
+                            definition_text = re.sub(r'→\s*Tesaurus', '', definition_text).strip()
+                            
+                            if definition_text:
+                                meanings.append({
+                                    'category': category,
+                                    'label': label,
+                                    'definition': definition_text
+                                })
+                    
+                    sibling = sibling.find_next_sibling()
+                
+                results.append({
+                    'syllables': syllables,
+                    'meanings': meanings,
+                    'header': entry_text
+                })
             
-            # Extract syllables (format: "ajar (1) » pem.bel.a.jar.an")
-            # or sometimes just "pem.bel.a.jar.an"
-            syllable_match = re.search(r'([A-Za-z]+(?:\.[A-Za-z]+)+)', entry_text)
-            
-            if syllable_match:
-                syllable_string = syllable_match.group(1)
-                # Split by dots to get individual syllables
-                syllables = syllable_string.split('.')
-                return syllables
-            
-            return None
+            return results
             
         except Exception as e:
             print(f"Error scraping KBBI for '{word}': {str(e)}")
-            return None
+            return []
 
 if __name__ == '__main__':
     import argparse
@@ -121,12 +191,20 @@ if __name__ == '__main__':
             print()
     
     scraper = KBBIScraper()
-    print(f"Mencari '{args.string}' di KBBI online...")
-    syllables = scraper.get_syllables(args.string)
+    print(f"Mencari '{args.string}' di KBBI online...\n")
+    entries = scraper.get_word_info(args.string)
     
-    if syllables:
-        print(f"Result: {syllables}")
-        print(f"Joined: {'-'.join(syllables)}")
+    if entries:
+        for idx, entry in enumerate(entries):
+            print(f"Entry #{idx + 1}: {entry['header']}")
+            print(f"Syllables: {'-'.join(entry['syllables'])}")
+            if entry['meanings']:
+                print("Meanings:")
+                for m_idx, m in enumerate(entry['meanings']):
+                    cat = f"({m['category']}) " if m['category'] else ""
+                    label = f"[{m['label']}] " if m['label'] else ""
+                    print(f"  {m_idx + 1}. {cat}{label}{m['definition']}")
+            print("-" * 40)
     else:
         print(f"Kata '{args.string}' tidak ditemukan di KBBI atau terjadi error.")
 

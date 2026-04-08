@@ -375,18 +375,18 @@ class MorphologicalAnalyzer:
         golden_map = {
             # Ambiguous ber- cases from research spreadsheet
             ('beranting', 'anting'): ('ber', 'anting', '', 'anting', ''),
-            ('beranting', 'ranting'): ('ber', 'ranting', '', 'ranting', ''),
+            ('beranting', 'ranting'): ('be', 'ranting', '', 'ranting', ''),
             ('berevolusi', 'evolusi'): ('ber', 'evolusi', '', 'evolusi', ''),
             ('berevolusi', 'revolusi'): ('be', 'revolusi', '', 'revolusi', ''),
             ('beruang', 'uang'): ('ber', 'uang', '', 'uang', ''),
-            ('beruang', 'ruang'): ('ber', 'ruang', '', 'ruang', ''),
+            ('beruang', 'ruang'): ('be', 'ruang', '', 'ruang', ''),
             ('beruang', 'beruang'): ('', 'beruang', '', 'beruang', ''), # Bear case (base word)
             ('pelajar', 'ajar'): ('pe', 'ajar', '', 'ajar', ''),
 
             # Default mappings (single-word keys)
-            'beranting': ('ber', 'ranting', '', 'ranting', ''),
+            'beranting': ('ber', 'anting', '', 'anting', ''),
             'berevolusi': ('ber', 'evolusi', '', 'evolusi', ''),
-            'beruang': ('ber', 'ruang', '', 'ruang', ''), 
+            'beruang': ('ber', 'uang', '', 'uang', ''), 
             'belunjur': ('ber', 'un', 'jur', 'un', 'el'),
             'beleter': ('ber', 'leter', '', 'leter', ''),
             'belagu': ('ber', 'lagu', '', 'lagu', ''),

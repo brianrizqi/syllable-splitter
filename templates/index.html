@@ -746,55 +746,102 @@
                     let html = '';
 
                     data.results.forEach(item => {
-                        const syllablesJoined = item.syllables.join('-');
-                        html += `
-                            <div class="word-result" data-word="${item.word}" data-method="${data.method}" data-syllables="${syllablesJoined}">
-                                <div class="word-result-header">
-                                    <span class="original-word">${item.word}</span>
-                                    ${item.from_db ? `
-                                        <div class="db-notice">
-                                            <span class="db-badge">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
-                                                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
-                                                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
-                                                </svg>
-                                                Hasil dari Database
-                                            </span>
-                                            <button class="btn-text-only" onclick="processText('${text}', true)">
-                                                Lihat pengerjaan secara rules
-                                            </button>
+                        // If we have multiple entries from KBBI
+                        if (item.entries && item.entries.length > 1) {
+                            html += `
+                                <div class="multiple-entries-notice">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                    Ditemukan ${item.entries.length} entri kata untuk "${item.word}" di KBBI
+                                </div>
+                            `;
+                        }
+
+                        // Process each entry (if multiple) or the single result
+                        const displayEntries = (item.entries && item.entries.length > 0) ? item.entries : [{ syllables: item.syllables, meanings: [] }];
+
+                        displayEntries.forEach((entry, entryIdx) => {
+                            const syllablesJoined = entry.syllables.join('-');
+                            const entryLabel = (item.entries && item.entries.length > 1) ? `Entri #${entryIdx + 1}` : '';
+                            
+                            html += `
+                                <div class="word-result" data-word="${item.word}" data-method="${data.method}" data-syllables="${syllablesJoined}">
+                                    <div class="word-result-header">
+                                        <div style="display: flex; flex-direction: column;">
+                                            ${entryLabel ? `<span class="entry-header-text">${entryLabel}</span>` : ''}
+                                            <span class="original-word">${item.word} ${entry.header && entry.header.includes('/') ? `<small style="color: var(--text-muted); font-weight: 400; font-size: 0.8rem;">${entry.header.split(' ').pop()}</small>` : ''}</span>
                                         </div>
-                                    ` : `
-                                        <span class="rules-badge">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="16 18 22 12 16 6"></polyline>
-                                                <polyline points="8 6 2 12 8 18"></polyline>
+                                        ${item.from_db ? `
+                                            <div class="db-notice">
+                                                <span class="db-badge">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                                                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                                                        <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+                                                    </svg>
+                                                    Database
+                                                </span>
+                                                <button class="btn-text-only" onclick="processText('${text}', true)">
+                                                    Lihat Rules
+                                                </button>
+                                            </div>
+                                        ` : `
+                                            <span class="rules-badge">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                                </svg>
+                                                Pengerjaan Rules
+                                            </span>
+                                        `}
+                                    </div>
+                                    <div class="syllables">
+                                        ${entry.syllables.map(syl => `<span class="syllable">${syl}</span>`).join('')}
+                                    </div>
+                                    
+                                    ${entry.meanings && entry.meanings.length > 0 ? `
+                                        <div class="kbbi-meanings">
+                                            <h4>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                                </svg>
+                                                Makna (KBBI)
+                                            </h4>
+                                            <div class="meanings-list">
+                                                ${entry.meanings.map((m, mIdx) => `
+                                                    <div class="meaning-item">
+                                                        ${entry.meanings.length > 1 ? `<span class="meaning-number">${mIdx + 1}.</span>` : ''}
+                                                        ${m.category ? `<span class="meaning-category">${m.category}</span>` : ''}
+                                                        ${m.label ? `<span class="meaning-label">${m.label}</span>` : ''}
+                                                        <span>${m.definition}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <div class="validation-buttons">
+                                        <button class="btn-correct" onclick="handleCorrectValidation('${item.word}', '${data.method}', '${syllablesJoined}')">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
                                             </svg>
-                                            Pengerjaan Rules
-                                        </span>
-                                    `}
+                                            Sesuai
+                                        </button>
+                                        <button class="btn-correction" onclick="showCorrectionModal('${item.word}', '${data.method}', '${syllablesJoined}')">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                            Koreksi
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="syllables">
-                                    ${item.syllables.map(syl => `<span class="syllable">${syl}</span>`).join('')}
-                                </div>
-                                <div class="validation-buttons">
-                                    <button class="btn-correct" onclick="handleCorrectValidation('${item.word}', '${data.method}', '${syllablesJoined}')">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                        </svg>
-                                        Sudah Sesuai
-                                    </button>
-                                    <button class="btn-correction" onclick="showCorrectionModal('${item.word}', '${data.method}', '${syllablesJoined}')">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                        Koreksi
-                                    </button>
-                                </div>
-                            </div>
-                        `;
+                            `;
+                        });
                     });
 
                     resultContent.innerHTML = html;
