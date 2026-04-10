@@ -71,47 +71,55 @@ class HybridSyllableSplitter:
         nasal_map = [('ny', 's'), ('ng', 'k'), ('n', 't'), ('m', 'p')]
         is_peluluhan = False
         
-        # Check if we have a special override that already specifies a stable root
-        # (e.g. for words like 'nganga', 'nyata', 'elak' - we don't want automated restoration)
+        # Determine the working root
+        root = detected_root
+        
+        # If we have a lemmatized root from root_hint or dictionary, prioritize it
+        if lemmatized_root and lemmatized_root != word.lower() and lemmatized_root != detected_root:
+             root = lemmatized_root
+             is_peluluhan = True
+        
+        # Check if we should apply heuristics (when lemmatizer doesn't help or no root_hint)
         has_stable_override = (root_hint is not None or (lemmatized_root == detected_root and lemmatized_root != "" and lemmatized_root != word.lower()))
         
-        # Case A: Elided k, p, t, s restoration (Heuristics when lemmatizer missing)
-        if not has_stable_override and detected_root and detected_root[0] in 'aiueo':
-            knows_elided = False
-            if lemmatized_root != detected_root and lemmatized_root != "":
-                # Root was modified, use the lemmatized version
-                root = lemmatized_root
-                is_peluluhan = True
-                knows_elided = True
+        if not is_peluluhan and not has_stable_override and detected_root and detected_root[0] in 'aiueo':
+            # Heuristics for k,p,t,s restoration
+            if prefix in ['meng', 'peng'] and detected_root.startswith(('ahu', 'ambat', 'arik', 'uat', 'ukur', 'okang', 'ompor')):
+                 root = 't' + detected_root if detected_root.startswith('ahu') else 'k' + detected_root
+                 is_peluluhan = True
+            elif prefix in ['mem', 'pem'] and detected_root.startswith(('in', 'as', 'ut')):
+                 root = 'p' + detected_root
+                 is_peluluhan = True
+            elif prefix in ['men', 'pen'] and detected_root.startswith(('ab', 'ar', 'ul')):
+                 root = 't' + detected_root
+                 is_peluluhan = True
+            elif prefix in ['meny', 'peny'] and detected_root.startswith(('ebut', 'ata', 'ert', 'esal', 'ayur', 'isir', 'isir')):
+                 root = 's' + detected_root
+                 is_peluluhan = True
             
-            if not knows_elided:
-                # Common patterns without lemmatizer: meng/peng + vowel
-                # Restoration of 't' for 'pengetahuan' (root 'tahu')
-                if prefix in ['meng', 'peng'] and detected_root.startswith(('ahu', 'ambat', 'arik')):
-                     root = 't' + detected_root
-                     is_peluluhan = True
-                elif prefix in ['meng', 'peng'] and detected_root.startswith(('ar', 'er', 'it')):
-                     root = 'k' + detected_root
-                     is_peluluhan = True
-                elif prefix in ['mem', 'pem'] and detected_root.startswith(('in', 'as', 'ut')):
-                     root = 'p' + detected_root
-                     is_peluluhan = True
-                elif prefix in ['men', 'pen'] and detected_root.startswith(('ab', 'ar', 'ul')):
-                     root = 't' + detected_root
-                     is_peluluhan = True
-                elif prefix in ['meny', 'peny'] and detected_root.startswith(('ebut', 'ata', 'ert')):
-                     root = 's' + detected_root
-                     is_peluluhan = True
+            # Case A2: General Nasal Restoration based on prefix category
+            if not is_peluluhan:
+                 if prefix in ['meng', 'peng'] and not detected_root.startswith(('aum', 'alam')):
+                      root = 'k' + detected_root
+                      is_peluluhan = True
+                 elif prefix in ['mem', 'pem']:
+                      root = 'p' + detected_root
+                      is_peluluhan = True
+                 elif prefix in ['men', 'pen']:
+                      root = 't' + detected_root
+                      is_peluluhan = True
+                 elif prefix in ['meny', 'peny']:
+                      root = 's' + detected_root
+                      is_peluluhan = True
         
         # Case B: Nasal substitution (me-p -> mem, me-t -> men etc)
-        # Skip if override already provides the correct morphemic root form (like 'nganga')
-        if not has_stable_override and not is_peluluhan and (prefix in ['me', 'pe', 'men', 'pen', 'mem', 'pem', 'meng', 'peng', 'meny', 'peny']):
+        if not is_peluluhan and not has_stable_override and (prefix in ['me', 'pe', 'men', 'pen', 'mem', 'pem', 'meng', 'peng', 'meny', 'peny']):
             for n, c in nasal_map:
                 if detected_root.startswith(n):
-                     if prefix not in ['menge', 'penge']: # penge- prefix doesn't substitute nasals
-                         is_peluluhan = True
-                         root = c + detected_root[len(n):]
-                         break
+                     if prefix not in ['menge', 'penge']:
+                          is_peluluhan = True
+                          root = c + detected_root[len(n):]
+                          break
                          
         # Step 4: Morphemic Prefix Output
         morphemic_prefix = ""
@@ -135,13 +143,19 @@ class HybridSyllableSplitter:
              
         # Guard against root duplication if prefix already at head of root string
         if not is_shared_repeat:
-             if prefix and root.startswith(prefix):
-                  root = root[len(prefix):]
-             elif morphemic_prefix and root.startswith(morphemic_prefix.replace('.', '')):
-                  root = root[len(morphemic_prefix.replace('.', '')):]
-             elif prefix and prefix in ['me', 'pe'] and root.startswith(('ng', 'ny', 'n', 'm')):
-                  # Handle nasal allomorphs (e.g. meng-tu-lis)
-                  pass # Root already restored to correct form
+             # Only strip if the remaining part is still a valid syllable/word structure
+             # and if it's not a root that naturally starts with those letters (like 'merah' with 'me-')
+             if prefix and root.startswith(prefix) and len(root) > len(prefix) and root[len(prefix)] in 'aiueo':
+                  # e.g. "ber-ranting" (if analyzer somehow gave prefix 'ber' and root 'ranting')
+                  # but for "me-merah", root is "merah", prefix is "me", root[2] is 'r' (consonant)
+                  # wait, if root[len(prefix)] is a vowel, it might be a duplication.
+                  # Let's be more specific: block stripping for common roots.
+                  if not root in ['merah', 'perah', 'lepas', 'lelas', 'rasa']:
+                       root = root[len(prefix):]
+             elif morphemic_prefix and root.startswith(morphemic_prefix.replace('.', '')) and len(root) > len(morphemic_prefix.replace('.', '')):
+                  mp_clean = morphemic_prefix.replace('.', '')
+                  if not root in ['merah', 'perah', 'lepas', 'lelas', 'rasa'] and root[len(mp_clean)] in 'aiueo':
+                       root = root[len(mp_clean):]
         
         # Step 6: Root Syllables (Phonetic Splitting)
         if root:

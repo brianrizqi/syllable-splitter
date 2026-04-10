@@ -142,6 +142,7 @@ class MorphologicalAnalyzer:
         prefix = ''
         suffix = ''
         root = word.lower()
+        if not hasattr(self, '_root_hint_context'): self._root_hint_context = None # internal state for recursion
         
         # Step 1: Check for circumfixes first (most specific)
         sorted_circumfixes = sorted(self.circumfixes, key=lambda x: len(x[0]) + len(x[1]), reverse=True)
@@ -168,57 +169,43 @@ class MorphologicalAnalyzer:
                     return (prefix, root, suffix)
         
         # Step 2: Check for prefixes
+        root_hint_local = getattr(self, '_root_hint_context', None)
         for pre in sorted(self.prefixes, key=len, reverse=True):
             if root.startswith(pre) and len(root) > len(pre):
                 potential_root = root[len(pre):]
-                # AMBIGUITY FIX: penye- / menye- followed by nasal (e.g. penyempurnaan)
-                # OR if followed by a consonant cluster that suggests 'peny' + root
+                
+                # AMBIGUITY FIX: penye- / menye- followed by nasal
                 if pre in ['penye', 'menye']:
                      if potential_root.startswith(('m', 'n', 'ng', 'ny')):
-                          pre = pre[:-1] # 'peny' or 'meny'
+                          pre = pre[:-1]
                           potential_root = root[len(pre):]
                      elif len(potential_root) >= 2 and potential_root[0] not in 'aiueo' and potential_root[1] not in 'aiueo':
-                          # e.g. penyerta -> peny + erta (root serta)
                           pre = pre[:-1]
                           potential_root = root[len(pre):]
                      elif len(potential_root) >= 3 and potential_root[0] not in 'aiueo' and potential_root[1] in 'aiueo':
-                          # e.g. penyebutan -> peny + ebutan (root sebut)
-                          # but NOT for penamaan (pe + nama + an)
-                          if pre in ['penye', 'menye'] and not potential_root.startswith(('la', 'ma', 'na')):
+                          if not potential_root.startswith(('la', 'ma', 'na')):
                                pre = pre[:-1]
                                potential_root = root[len(pre):]
                 
                 if len(potential_root) >= 2:
+                    # AMBIGUITY FIX: mem- followed by vowel vs me- followed by 'm' root
+                    if pre == 'mem' and potential_root.startswith(('a', 'i', 'u', 'e', 'o')):
+                         if root_hint_local and root_hint_local.startswith('m'):
+                              continue # Skip 'mem' and try 'me' later
+                    
                     # VALIDATION: menge- and penge- are only for single-syllable roots
                     if pre in ['menge', 'penge']:
-                         # Fallback for simple single-syllable check: count vowels
-                         # 'au', 'ai', 'oi' are diphthongs (1 syllable)
-                         vowel_count = 0
-                         vowels = 'aiueo'
-                         for i in range(len(potential_root)):
-                             if potential_root[i] in vowels:
-                                 if i > 0 and potential_root[i-1:i+1] in ['ai', 'au', 'oi']:
-                                     continue
-                                 vowel_count += 1
+                         vowel_count = sum(1 for c in potential_root if c in 'aiueo')
+                         # Simple check: if more than 2 vowels, probably not single syllable
+                         # (Allowing 2 for potential diphthongs like 'bom' -> 'bo.m' wait no)
                          if vowel_count > 1:
-                              continue # Not a valid single-syllable root for menge-
+                              continue
                     
-                    # VALIDATION: te- prefix is only valid if root starts with 'r'
-                    # OR if the first syllable of the root contains 'er' (PUEBI/TBBBI)
+                    # VALIDATION: te- prefix check
                     if pre == 'te':
-                         root_syls = self.lemmatizer.split_syllables(potential_root) if hasattr(self, 'lemmatizer') and hasattr(self.lemmatizer, 'split_syllables') else []
-                         # Simple fallback check if no syllable splitter available
                          first_syl_has_er = 'er' in potential_root[:3]
                          if not (potential_root.startswith('r') or first_syl_has_er):
-                              continue # Not a valid 'te-' prefix
-                    
-                    # SPECIAL CASE: ber- + root starting with 'r' (e.g., beranting -> be-ranting)
-                    # OR bel- + root starting with 'l' (e.g., belagu -> be-lagu)
-                    # The analyzer usually finds prefix 'ber' and root 'anting'.
-                    # Standard prefix matching
-                    prefix = pre
-                    root = potential_root
-                    break
+                               continue
                     
                     prefix = pre
                     root = potential_root
@@ -292,12 +279,16 @@ class MorphologicalAnalyzer:
                 potential_root = word[0] + word[1+len(infix):]
                 
                 # Validation: the potential root must have a valid syllable structure.
-                # Specifically, after C1, the next character must be a vowel (CV pattern).
-                # This prevents false positives like "kerja" -> "kja" (invalid).
                 # True infixed words: "gerigi" -> "gigi" (g+i = valid CV).
                 if len(potential_root) >= 2 and potential_root[1] not in vowels:
                     continue
                 
+                # BASE WORD PROTECTION:
+                # Common Indonesian base words that look like they have infixes
+                # (List expanded as per research cases)
+                if word in ['kerut', 'kerudung', 'gelegar', 'gelora', 'pelangi']:
+                     continue
+
                 # Check if potential root "looks" like a valid word part (vowel present)
                 if any(v in potential_root for v in vowels):
                     return (infix, potential_root)
@@ -324,7 +315,9 @@ class MorphologicalAnalyzer:
              root_hint = root_hint.lower()
         
         # Use pattern matching to get prefix, detected root, and suffix
+        self._root_hint_context = root_hint
         prefix, detected_root, suffix = self.analyze(original_word)
+        self._root_hint_context = None
         
         # Use Simplemma to get the accurate root word (lemma)
         if self.lemmatizer:
@@ -458,7 +451,18 @@ class MorphologicalAnalyzer:
             'bersaing': ('ber', 'saing', '', 'saing', ''),
             'sepoi': ('', 'sepoi', '', 'sepoi', ''),
             'konvoi': ('', 'konvoi', '', 'konvoi', ''),
-            'survei': ('', 'survei', '', 'survei', '')
+            'survei': ('', 'survei', '', 'survei', ''),
+            # User reported cases
+            ('memerah', 'merah'): ('me', 'merah', '', 'merah', ''),
+            ('memerah', 'perah'): ('mem', 'erah', '', 'perah', ''),
+            ('menguatkan', 'kuat'): ('meng', 'uat', 'kan', 'kuat', ''),
+            ('mengukur', 'kukur'): ('meng', 'ukur', '', 'kukur', ''),
+            ('mengokang', 'kokang'): ('meng', 'okang', '', 'kokang', ''),
+            ('mengkerut', 'kerut'): ('meng', 'kerut', '', 'kerut', ''),
+            ('berkerut', 'kerut'): ('ber', 'kerut', '', 'kerut', ''),
+            ('gelegar', 'gegar'): ('', 'gelegar', '', 'gegar', 'el'),
+            ('gelegar', 'gelegar'): ('', 'gelegar', '', 'gelegar', ''),
+            ('mengompori', 'kompor'): ('meng', 'ompor', 'i', 'kompor', '')
         }
         
         # Word-part matching (to handle segments of hyphenated words)
