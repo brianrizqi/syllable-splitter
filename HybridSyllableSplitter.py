@@ -125,6 +125,9 @@ class HybridSyllableSplitter:
         morphemic_prefix = ""
         if prefix:
              morphemic_prefix = self.morphology.allomorph_map.get(prefix, prefix)
+             if prefix == 'pe':
+                  if root.startswith('r') or root in ['serta', 'kerja', 'ajar']:
+                       morphemic_prefix = 'per'
              if '.' in morphemic_prefix:
                   for p in morphemic_prefix.split('.'): result.append(p)
              else:

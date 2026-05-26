@@ -65,5 +65,88 @@
     "trans",
     "fu",
     "si"
+  ],
+  "transfer": [
+    "trans",
+    "fer"
+  ],
+  "pentransferan": [
+    "peng",
+    "trans",
+    "fer",
+    "an"
+  ],
+  "mentransfer": [
+    "meng",
+    "trans",
+    "fer"
+  ],
+  "program": [
+    "pro",
+    "gram"
+  ],
+  "pemrogram": [
+    "peng",
+    "pro",
+    "gram"
+  ],
+  "memprogram": [
+    "meng",
+    "pro",
+    "gram"
+  ],
+  "plester": [
+    "ples",
+    "ter"
+  ],
+  "memplester": [
+    "peng",
+    "ples",
+    "ter"
+  ],
+  "netral": [
+    "ne",
+    "tral"
+  ],
+  "penetral": [
+    "peng",
+    "ne",
+    "tral"
+  ],
+  "ekspor": [
+    "eks",
+    "por"
+  ],
+  "mengekspor": [
+    "meng",
+    "eks",
+    "por"
+  ],
+  "mengevaporasi": [
+    "meng",
+    "e",
+    "va",
+    "po",
+    "ra",
+    "asi"
+  ],
+  "tercermat": [
+    "ter",
+    "cer",
+    "mas"
+  ],
+  "penomoran": [
+    "peng",
+    "no",
+    "mor"
+  ],
+  "puram": [
+    "pu",
+    "ram"
+  ],
+  "memacu": [
+    "meng",
+    "ma",
+    "cu"
   ]
 }
