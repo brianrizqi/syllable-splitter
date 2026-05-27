@@ -128,7 +128,7 @@ def split_text():
                         
                         # Extract root hint from KBBI header
                         if ' » ' in header:
-                            root_hint = header.split(' » ')[0].split('(')[0].strip()
+                            root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
                         elif '/' in header:
                             # If it's a base word (like 'beruang' bear), hint is the word itself
                             root_hint = word

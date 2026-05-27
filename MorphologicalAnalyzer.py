@@ -391,8 +391,9 @@ class MorphologicalAnalyzer:
              return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
         
         # 2. Try our adjust_morphemes logic!
-        adj_pre, adj_root, adj_suf = self.adjust_morphemes(original_word, guide_root)
-        if adj_pre is not None:
+        best_match = self.adjust_morphemes(original_word, guide_root)
+        if best_match is not None:
+             adj_pre, adj_root, adj_suf = best_match
              prefix = adj_pre
              detected_root = adj_root
              suffix = adj_suf
