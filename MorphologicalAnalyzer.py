@@ -102,36 +102,8 @@ class MorphologicalAnalyzer:
         ]
     
     def _load_kbbi(self):
-        """Load KBBI word list from optimized text file with multiple path fallbacks."""
-        # Define potential paths to locate kbbi_words.txt (handles local and Vercel environments)
-        paths_to_try = [
-            os.path.join(os.path.dirname(__file__), 'kbbi_words.txt'),
-            os.path.join(os.path.dirname(__file__), 'api', 'kbbi_words.txt'),
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'api', 'kbbi_words.txt'),
-            os.path.join(os.getcwd(), 'api', 'kbbi_words.txt'),
-            os.path.join(os.getcwd(), 'kbbi_words.txt'),
-            '/var/task/api/kbbi_words.txt',
-            '/var/task/kbbi_words.txt'
-        ]
-        
-        loaded = False
-        for kbbi_path in paths_to_try:
-            try:
-                if os.path.exists(kbbi_path):
-                    with open(kbbi_path, mode='r', encoding='utf-8') as f:
-                        for line in f:
-                            word = line.strip()
-                            if word:
-                                self.kbbi_words.add(word)
-                    print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI in MorphologicalAnalyzer via {kbbi_path}")
-                    loaded = True
-                    break
-            except Exception:
-                pass
-                
-        if not loaded:
-            print("⚠ Warning: Could not load KBBI words list in MorphologicalAnalyzer from any potential paths.")
-            self.kbbi_words = set()
+        """No-op: local dictionary file loading has been removed to avoid repository bloat."""
+        self.kbbi_words = set()
 
     def decompose_prefix(self, prefix):
         """

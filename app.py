@@ -254,12 +254,38 @@ def upload_csv():
             if validation:
                 syllables = validation['final_result'].split('-')
             else:
+                import time
                 if method == 'kbbi':
+                    time.sleep(0.15) # Safe rate-limiting delay
                     syllables = kbbi_scraper.get_syllables(word)
                     if syllables is None:
                         syllables = splitter_puebi.split_syllables(word)
                 elif method == 'sylbi':
-                    syllables = splitter_sylbi.split_syllables(word)
+                    time.sleep(0.15) # Safe rate-limiting delay
+                    # Always try KBBI first to get all possible meanings and structures
+                    kbbi_info = kbbi_scraper.get_word_info(word)
+                    
+                    if kbbi_info:
+                        # Improve entries by re-splitting them morphologically using extracted root hints
+                        for entry in kbbi_info:
+                            header = entry.get('header', '')
+                            root_hint = None
+                            
+                            # Extract root hint from KBBI header
+                            if ' » ' in header:
+                                root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
+                            elif '/' in header:
+                                # If it's a base word, hint is the word itself
+                                root_hint = word
+                                
+                            # Re-calculate syllables using SylBI with the specific root hint
+                            if root_hint:
+                                entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
+                                
+                        # Use the first entry's improved syllables as the base result
+                        syllables = kbbi_info[0]['syllables']
+                    else:
+                        syllables = splitter_sylbi.split_syllables(word)
                 else:
                     syllables = splitter_puebi.split_syllables(word)
             
