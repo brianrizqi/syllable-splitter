@@ -220,16 +220,21 @@ def upload_csv():
     try:
         # Read CSV file
         stream = io.StringIO(file.stream.read().decode('utf-8'), newline=None)
-        csv_reader = csv.DictReader(stream)
+        rows = list(csv.DictReader(stream))
+        
+        # Enforce max 100 words limit
+        if len(rows) > 100:
+            return jsonify({'error': 'Jumlah baris/kata dalam CSV melebihi batas maksimum (Maksimal 100 kata per unggahan)'}), 400
         
         # Check if required columns exist
-        if 'word' not in csv_reader.fieldnames:
+        # Note: DictReader fieldnames might not be populated if rows is empty, but we can verify from the list
+        if not rows or 'word' not in rows[0].keys():
             return jsonify({'error': 'CSV must have a "word" column'}), 400
         
         results = []
         spell_check_enabled = request.form.get('spell_check', 'true').lower() == 'true'
         
-        for row in csv_reader:
+        for row in rows:
             word = row.get('word', '').strip()
             method = row.get('method', 'sylbi').strip().lower()
             

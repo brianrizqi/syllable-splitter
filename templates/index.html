@@ -369,7 +369,17 @@
                                 </svg>
                                 <p class="dropzone-text">Drag & drop CSV file here or <span
                                         class="dropzone-link">browse</span></p>
-                                <p class="dropzone-hint">Format: word,method (max 16MB)</p>
+                                <p class="dropzone-hint">Format: word,method (Maksimal 100 kata per unggahan)</p>
+                            </div>
+
+                            <!-- Premium CSV Warning Note -->
+                            <div style="background: rgba(245, 158, 11, 0.05); border: 1.5px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 12px 16px; margin: 1.25rem 0; font-size: 0.85rem; color: #b45309; line-height: 1.5;">
+                                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                    <span style="font-size: 1.1rem; line-height: 1;">⚠️</span>
+                                    <div>
+                                        <strong>Catatan Penting:</strong> Pembatasan maksimal <strong>100 baris/kata</strong> per upload dilakukan untuk menjaga stabilitas server. Proses ini akan memeriksa kata satu per satu secara real-time ke online KBBI dengan jeda aman 150ms agar koneksi tidak terblokir, sehingga membutuhkan beberapa saat untuk selesai.
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Progress Bar -->
@@ -982,11 +992,45 @@
             formData.append('file', file);
             // formData.append('spell_check', spellCheckEnabled.checked ? 'true' : 'false');
 
-            // Show progress
+            // Show Premium Glassmorphic Loader
+            Swal.fire({
+                title: 'Memproses CSV...',
+                html: `
+                    <div style="text-align: center; padding: 10px 0;">
+                        <div class="premium-loader-container">
+                            <div class="premium-spinner"></div>
+                        </div>
+                        <p style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                            Menganalisis morfologi & memilah suku kata secara real-time
+                        </p>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                            Sedang memproses pemisahan kata secara akurat menggunakan metode online <strong>KBBI / SylBI</strong>.
+                        </p>
+                        <div style="background: rgba(59, 130, 246, 0.05); border: 1.5px solid rgba(59, 130, 246, 0.15); border-radius: 14px; padding: 14px 18px; text-align: left; font-size: 0.85rem; color: var(--primary-blue); line-height: 1.5; display: flex; gap: 10px; align-items: flex-start;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0; margin-top: 1px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <div>
+                                Menggunakan batch aman dengan jeda <strong>150ms per kata</strong> agar koneksi server tetap stabil dan tidak terblokir oleh KBBI. Mohon tunggu...
+                            </div>
+                        </div>
+                    </div>
+                `,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'premium-swal-popup'
+                }
+            });
+
+            // Show progress in the background UI as well
             csvProgress.style.display = 'block';
             csvResults.style.display = 'none';
             csvProgressBar.style.width = '0%';
-            csvProgressText.textContent = 'Uploading...';
+            csvProgressText.textContent = 'Uploading & Processing...';
 
             try {
                 const response = await fetch('/upload-csv', {
@@ -1008,14 +1052,16 @@
                 // Store results
                 batchResults = data.results;
 
-                // Display results
+                // Close Loader & Display results
                 setTimeout(() => {
+                    Swal.close();
                     csvProgress.style.display = 'none';
                     displayBatchResults(data.results);
                 }, 500);
 
             } catch (error) {
                 console.error('Error:', error);
+                Swal.close();
                 csvProgress.style.display = 'none';
                 await Swal.fire({
                     title: 'Error',
