@@ -1,9 +1,16 @@
 # Morphological Analyzer for Indonesian Language
 # Detects prefixes, suffixes, and circumfixes
 
+import csv
+import os
+
 class MorphologicalAnalyzer:
     
     def __init__(self):
+        # Load KBBI word list for resolving morphotactic ambiguity
+        self.kbbi_words = set()
+        self._load_kbbi()
+
         # Initialize Simplemma for accurate root detection (lightweight)
         # It uses a dictionary-based approach to find the true lemma/base word.
         try:
@@ -94,6 +101,36 @@ class MorphologicalAnalyzer:
             ('se', 'nya')
         ]
     
+    def _load_kbbi(self):
+        """Load KBBI word list from CSV file using built-in csv module."""
+        try:
+            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_v.csv')
+            
+            with open(kbbi_path, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                word_col = None
+                if reader.fieldnames:
+                    if 'nama' in reader.fieldnames:
+                        word_col = 'nama'
+                    elif 'lema' in reader.fieldnames:
+                        word_col = 'lema'
+                    elif 'word' in reader.fieldnames:
+                        word_col = 'word'
+                    else:
+                        word_col = reader.fieldnames[0]
+                
+                if word_col:
+                    for row in reader:
+                        word = row[word_col]
+                        if word:
+                            self.kbbi_words.add(word.lower().replace('.', '').strip())
+            
+            print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI in MorphologicalAnalyzer")
+            
+        except Exception as e:
+            print(f"⚠ Warning: Could not load KBBI CSV in MorphologicalAnalyzer: {e}")
+            self.kbbi_words = set()
+
     def decompose_prefix(self, prefix):
         """
         Decompose a prefix into base prefix and infix.
@@ -143,6 +180,7 @@ class MorphologicalAnalyzer:
         suffix = ''
         root = word.lower()
         if not hasattr(self, '_root_hint_context'): self._root_hint_context = None # internal state for recursion
+        root_hint_local = getattr(self, '_root_hint_context', None)
         
         # Step 1: Check for circumfixes first (most specific)
         sorted_circumfixes = sorted(self.circumfixes, key=lambda x: len(x[0]) + len(x[1]), reverse=True)
@@ -157,11 +195,57 @@ class MorphologicalAnalyzer:
                      pre = pre[:-1] # 'peny' or 'meny'
                      potential_root = root[len(pre):-len(suf)]
                 
+                # Guard against false circumfixes when the suffix actually belongs to the root word (e.g. memutasi -> me-mutasi, not me-mutas-i)
+                if hasattr(self, 'kbbi_words') and self.kbbi_words:
+                     if potential_root + suf in self.kbbi_words:
+                          continue
+                          
+                # Guard against false me- / pe- circumfixes when the nasal is actually part of the prefix (e.g. mendaki -> men-daki, not me-ndak-i)
+                if pre in ['me', 'pe'] and potential_root and potential_root[0] in ['m', 'n', 'g', 'y']:
+                     slice_idx = 2 if potential_root.startswith(('ng', 'ny')) else 1
+                     if len(potential_root) > slice_idx:
+                          restored_chars = [''] # '' represents stripping the nasal (e.g. ndak -> dak)
+                          if potential_root.startswith('n'): restored_chars.extend(['t', 'd'])
+                          elif potential_root.startswith('m'): restored_chars.extend(['p', 'b'])
+                          elif potential_root.startswith('ng'): restored_chars.extend(['k', 'g'])
+                          elif potential_root.startswith('ny'): restored_chars.extend(['s', 'c', 'j'])
+                          
+                          has_better_root = False
+                          for rc in restored_chars:
+                               restored_root = rc + potential_root[slice_idx:] + suf
+                               if hasattr(self, 'kbbi_words') and self.kbbi_words and restored_root in self.kbbi_words:
+                                    has_better_root = True
+                                    break
+                          if has_better_root:
+                               continue
+
                 if len(potential_root) >= 2:
                     # SPECIAL CASE: per-an with shared 'r' (e.g. perendahan -> pe-rendah-an or peringan -> pe-ringan)
                     # We skip here to let the prefix loop below handle it with the shared-r logic
                     if pre in ['per', 'ber', 'ter'] and potential_root[0] in 'aiueo' and root[len(pre)-1] == pre[-1]:
                          continue
+                    
+                    # AMBIGUITY FIX: Nasal prefixes followed by vowel vs me-/pe- followed by nasal root (e.g. memulai -> me-mula-i, memutasi -> me-mutasi)
+                    nasal_prefix_map = {
+                        'mem': ['m', 'p'], 'pem': ['m', 'p'],
+                        'men': ['n', 't'], 'pen': ['n', 't'],
+                        'meng': ['ng', 'k'], 'peng': ['ng', 'k'],
+                        'meny': ['ny', 's'], 'peny': ['ny', 's']
+                    }
+                    if pre in nasal_prefix_map and potential_root.startswith(('a', 'i', 'u', 'e', 'o')):
+                         is_ambiguous = False
+                         if root_hint_local:
+                              for c in nasal_prefix_map[pre]:
+                                   if root_hint_local.startswith(c):
+                                        is_ambiguous = True
+                                        break
+                         if not is_ambiguous and hasattr(self, 'kbbi_words') and self.kbbi_words:
+                              for c in nasal_prefix_map[pre]:
+                                   if (c + potential_root + suf) in self.kbbi_words:
+                                        is_ambiguous = True
+                                        break
+                         if is_ambiguous:
+                              continue
                     
                     prefix = pre
                     suffix = suf
@@ -188,10 +272,27 @@ class MorphologicalAnalyzer:
                                potential_root = root[len(pre):]
                 
                 if len(potential_root) >= 2:
-                    # AMBIGUITY FIX: mem- followed by vowel vs me- followed by 'm' root
-                    if pre == 'mem' and potential_root.startswith(('a', 'i', 'u', 'e', 'o')):
-                         if root_hint_local and root_hint_local.startswith('m'):
-                              continue # Skip 'mem' and try 'me' later
+                    # AMBIGUITY FIX: Nasal prefixes followed by vowel vs me-/pe- followed by nasal root (e.g., meminta -> me-minta, pemakan -> pe-makan)
+                    nasal_prefix_map = {
+                        'mem': ['m', 'p'], 'pem': ['m', 'p'],
+                        'men': ['n', 't'], 'pen': ['n', 't'],
+                        'meng': ['ng', 'k'], 'peng': ['ng', 'k'],
+                        'meny': ['ny', 's'], 'peny': ['ny', 's']
+                    }
+                    if pre in nasal_prefix_map and potential_root.startswith(('a', 'i', 'u', 'e', 'o')):
+                         is_ambiguous = False
+                         if root_hint_local:
+                              for c in nasal_prefix_map[pre]:
+                                   if root_hint_local.startswith(c):
+                                        is_ambiguous = True
+                                        break
+                         if not is_ambiguous and hasattr(self, 'kbbi_words') and self.kbbi_words:
+                              for c in nasal_prefix_map[pre]:
+                                   if (c + potential_root) in self.kbbi_words:
+                                        is_ambiguous = True
+                                        break
+                         if is_ambiguous:
+                              continue # Skip and try shorter/other prefix later
                     
                     # VALIDATION: menge- and penge- are only for single-syllable roots
                     if pre in ['menge', 'penge']:
@@ -212,6 +313,9 @@ class MorphologicalAnalyzer:
                     break
         
         # Step 3: Check for suffixes
+        if hasattr(self, 'kbbi_words') and self.kbbi_words and root in self.kbbi_words:
+             return (prefix, root, suffix)
+             
         for suf in sorted(self.suffixes, key=len, reverse=True):
             if root.endswith(suf) and len(root) > len(suf):
                 potential_root = root[:-len(suf)]
@@ -391,7 +495,9 @@ class MorphologicalAnalyzer:
              return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
         
         # 2. Try our adjust_morphemes logic!
-        best_match = self.adjust_morphemes(original_word, guide_root)
+        best_match = None
+        if guide_root and guide_root != original_word:
+             best_match = self.adjust_morphemes(original_word, guide_root)
         if best_match is not None:
              adj_pre, adj_root, adj_suf = best_match
              prefix = adj_pre

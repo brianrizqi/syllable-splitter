@@ -80,7 +80,9 @@ class HybridSyllableSplitter:
              is_peluluhan = True
         
         # Check if we should apply heuristics (when lemmatizer doesn't help or no root_hint)
-        has_stable_override = (root_hint is not None or (lemmatized_root == detected_root and lemmatized_root != "" and lemmatized_root != word.lower()))
+        has_stable_override = (root_hint is not None or 
+                               (lemmatized_root == detected_root and lemmatized_root != "" and lemmatized_root != word.lower()) or
+                               (hasattr(self.morphology, 'kbbi_words') and self.morphology.kbbi_words and detected_root.lower() in self.morphology.kbbi_words))
         
         if not is_peluluhan and not has_stable_override and detected_root and detected_root[0] in 'aiueo':
             # Heuristics for k,p,t,s restoration

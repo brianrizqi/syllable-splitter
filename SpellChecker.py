@@ -43,14 +43,14 @@ class IndonesianSpellChecker:
                     for row in reader:
                         word = row[word_col]
                         if word:
-                            self.kbbi_words.add(word.lower().strip())
+                            self.kbbi_words.add(word.lower().replace('.', '').strip())
                 else:
                     # Fallback to first column if no known header is found
                     first_col = reader.fieldnames[0]
                     for row in reader:
                         word = row[first_col]
                         if word:
-                            self.kbbi_words.add(word.lower().strip())
+                            self.kbbi_words.add(word.lower().replace('.', '').strip())
             
             print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI")
             

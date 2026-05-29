@@ -250,14 +250,18 @@ def upload_csv():
                     errors = spell_errors
             
             # Process syllable splitting
-            if method == 'kbbi':
-                syllables = kbbi_scraper.get_syllables(word)
-                if syllables is None:
-                    syllables = splitter_puebi.split_syllables(word)
-            elif method == 'sylbi':
-                syllables = splitter_sylbi.split_syllables(word)
+            validation = validation_db.check_word_exists(word, method)
+            if validation:
+                syllables = validation['final_result'].split('-')
             else:
-                syllables = splitter_puebi.split_syllables(word)
+                if method == 'kbbi':
+                    syllables = kbbi_scraper.get_syllables(word)
+                    if syllables is None:
+                        syllables = splitter_puebi.split_syllables(word)
+                elif method == 'sylbi':
+                    syllables = splitter_sylbi.split_syllables(word)
+                else:
+                    syllables = splitter_puebi.split_syllables(word)
             
             results.append({
                 'word': word,
