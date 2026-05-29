@@ -23,39 +23,17 @@ class IndonesianSpellChecker:
         }
     
     def _load_kbbi(self):
-        """Load KBBI word list from CSV file using built-in csv module."""
+        """Load KBBI word list from optimized text file."""
         try:
-            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_v.csv')
-            
+            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_words.txt')
             with open(kbbi_path, mode='r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                # From looking at the CSV head, 'nama' seems to be the word column
-                # Supporting multiple possible column names for robustness
-                word_col = None
-                if 'nama' in reader.fieldnames:
-                    word_col = 'nama'
-                elif 'lema' in reader.fieldnames:
-                    word_col = 'lema'
-                elif 'word' in reader.fieldnames:
-                    word_col = 'word'
-                
-                if word_col:
-                    for row in reader:
-                        word = row[word_col]
-                        if word:
-                            self.kbbi_words.add(word.lower().replace('.', '').strip())
-                else:
-                    # Fallback to first column if no known header is found
-                    first_col = reader.fieldnames[0]
-                    for row in reader:
-                        word = row[first_col]
-                        if word:
-                            self.kbbi_words.add(word.lower().replace('.', '').strip())
-            
+                for line in f:
+                    word = line.strip()
+                    if word:
+                        self.kbbi_words.add(word)
             print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI")
-            
         except Exception as e:
-            print(f"⚠ Warning: Could not load KBBI CSV: {e}")
+            print(f"⚠ Warning: Could not load KBBI words list: {e}")
             print("  Spell checker will use pattern-based detection only")
             self.kbbi_words = set()
     

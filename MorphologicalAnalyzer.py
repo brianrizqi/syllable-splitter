@@ -102,33 +102,17 @@ class MorphologicalAnalyzer:
         ]
     
     def _load_kbbi(self):
-        """Load KBBI word list from CSV file using built-in csv module."""
+        """Load KBBI word list from optimized text file."""
         try:
-            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_v.csv')
-            
+            kbbi_path = os.path.join(os.path.dirname(__file__), 'kbbi_words.txt')
             with open(kbbi_path, mode='r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                word_col = None
-                if reader.fieldnames:
-                    if 'nama' in reader.fieldnames:
-                        word_col = 'nama'
-                    elif 'lema' in reader.fieldnames:
-                        word_col = 'lema'
-                    elif 'word' in reader.fieldnames:
-                        word_col = 'word'
-                    else:
-                        word_col = reader.fieldnames[0]
-                
-                if word_col:
-                    for row in reader:
-                        word = row[word_col]
-                        if word:
-                            self.kbbi_words.add(word.lower().replace('.', '').strip())
-            
+                for line in f:
+                    word = line.strip()
+                    if word:
+                        self.kbbi_words.add(word)
             print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI in MorphologicalAnalyzer")
-            
         except Exception as e:
-            print(f"⚠ Warning: Could not load KBBI CSV in MorphologicalAnalyzer: {e}")
+            print(f"⚠ Warning: Could not load KBBI words list in MorphologicalAnalyzer: {e}")
             self.kbbi_words = set()
 
     def decompose_prefix(self, prefix):
