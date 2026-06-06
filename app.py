@@ -98,54 +98,72 @@ def split_text():
     for word in words:
         syllables = None
         from_db = False
-        
-        # 1. Check database first (if not bypassed)
-        if not bypass_db:
-            validation = validation_db.check_word_exists(word, method)
-            if validation:
-                syllables = validation['final_result'].split('-')
-                from_db = True
-                from_db_any = True
-        
-        # 2. If not found in DB or bypassed, use algorithms
         kbbi_info = []
-        if syllables is None:
-            if method == 'kbbi':
-                kbbi_info = kbbi_scraper.get_word_info(word)
-                if kbbi_info:
-                    syllables = kbbi_info[0]['syllables']
-                else:
-                    syllables = splitter_puebi.split_syllables(word)
-            elif method == 'sylbi':
-                # Always try KBBI first to get all possible meanings and structures
-                kbbi_info = kbbi_scraper.get_word_info(word)
+        
+        if method == 'kbbi':
+            # 1. Try KBBI online first
+            kbbi_info = kbbi_scraper.get_word_info(word)
+            if kbbi_info:
+                syllables = kbbi_info[0]['syllables']
+            
+            # 2. Fallback to database check
+            if syllables is None and not bypass_db:
+                validation = validation_db.check_word_exists(word, method)
+                if validation:
+                    syllables = validation['final_result'].split('-')
+                    from_db = True
+                    from_db_any = True
+            
+            # 3. Final fallback to PUEBI algorithm
+            if syllables is None:
+                syllables = splitter_puebi.split_syllables(word)
                 
-                if kbbi_info:
-                    # Improve entries by re-splitting them morphologically using extracted root hints
-                    for entry in kbbi_info:
-                        header = entry.get('header', '')
-                        root_hint = None
+        elif method == 'sylbi':
+            # 1. Try KBBI online first to get meanings, structures, and root hints
+            kbbi_info = kbbi_scraper.get_word_info(word)
+            
+            if kbbi_info:
+                # Improve entries by re-splitting them morphologically using extracted root hints
+                for entry in kbbi_info:
+                    header = entry.get('header', '')
+                    root_hint = None
+                    
+                    # Extract root hint from KBBI header
+                    if ' » ' in header:
+                        root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
+                    elif '/' in header:
+                        root_hint = word
                         
-                        # Extract root hint from KBBI header
-                        if ' » ' in header:
-                            root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
-                        elif '/' in header:
-                            # If it's a base word (like 'beruang' bear), hint is the word itself
-                            root_hint = word
-                            
-                        # Re-calculate syllables using SylBI with the specific root hint
-                        if root_hint:
-                            # Use syllable splitting logic with hint
-                            entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
-                            entry['root_hint'] = root_hint # Save for UI debug
-                            
-                    # Use the first entry's improved syllables as the base result
-                    syllables = kbbi_info[0]['syllables']
-                else:
-                    # SylBI Fallback Logic:
-                    # If not in KBBI online, use algorithms
-                    syllables = splitter_sylbi.split_syllables(word)
-            else:
+                    # Re-calculate syllables using SylBI with the specific root hint
+                    if root_hint:
+                        entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
+                        entry['root_hint'] = root_hint # Save for UI debug
+                        
+                syllables = kbbi_info[0]['syllables']
+            
+            # 2. Fallback to database check
+            if syllables is None and not bypass_db:
+                validation = validation_db.check_word_exists(word, method)
+                if validation:
+                    syllables = validation['final_result'].split('-')
+                    from_db = True
+                    from_db_any = True
+            
+            # 3. Final fallback to SylBI algorithm
+            if syllables is None:
+                syllables = splitter_sylbi.split_syllables(word)
+                
+        else:  # PUEBI
+            # 1. For PUEBI, check database first if not bypassed (no online component)
+            if not bypass_db:
+                validation = validation_db.check_word_exists(word, method)
+                if validation:
+                    syllables = validation['final_result'].split('-')
+                    from_db = True
+                    from_db_any = True
+            
+            # 2. Fallback to PUEBI algorithm
+            if syllables is None:
                 syllables = splitter_puebi.split_syllables(word)
         
         results.append({
@@ -255,43 +273,65 @@ def upload_csv():
                     errors = spell_errors
             
             # Process syllable splitting
-            validation = validation_db.check_word_exists(word, method)
-            if validation:
-                syllables = validation['final_result'].split('-')
-            else:
-                import time
-                if method == 'kbbi':
-                    time.sleep(0.15) # Safe rate-limiting delay
-                    syllables = kbbi_scraper.get_syllables(word)
-                    if syllables is None:
-                        syllables = splitter_puebi.split_syllables(word)
-                elif method == 'sylbi':
-                    time.sleep(0.15) # Safe rate-limiting delay
-                    # Always try KBBI first to get all possible meanings and structures
-                    kbbi_info = kbbi_scraper.get_word_info(word)
+            syllables = None
+            
+            import time
+            if method == 'kbbi':
+                # 1. Try KBBI online first
+                time.sleep(0.15)  # Safe rate-limiting delay
+                syllables = kbbi_scraper.get_syllables(word)
+                
+                # 2. Fallback to database check
+                if syllables is None:
+                    validation = validation_db.check_word_exists(word, method)
+                    if validation:
+                        syllables = validation['final_result'].split('-')
+                
+                # 3. Final fallback to PUEBI algorithm
+                if syllables is None:
+                    syllables = splitter_puebi.split_syllables(word)
                     
-                    if kbbi_info:
-                        # Improve entries by re-splitting them morphologically using extracted root hints
-                        for entry in kbbi_info:
-                            header = entry.get('header', '')
-                            root_hint = None
+            elif method == 'sylbi':
+                # 1. Try KBBI online first to get meanings, structures, and root hints
+                time.sleep(0.15)  # Safe rate-limiting delay
+                kbbi_info = kbbi_scraper.get_word_info(word)
+                
+                if kbbi_info:
+                    # Improve entries by re-splitting them morphologically using extracted root hints
+                    for entry in kbbi_info:
+                        header = entry.get('header', '')
+                        root_hint = None
+                        
+                        # Extract root hint from KBBI header
+                        if ' » ' in header:
+                            root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
+                        elif '/' in header:
+                            root_hint = word
                             
-                            # Extract root hint from KBBI header
-                            if ' » ' in header:
-                                root_hint = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
-                            elif '/' in header:
-                                # If it's a base word, hint is the word itself
-                                root_hint = word
-                                
-                            # Re-calculate syllables using SylBI with the specific root hint
-                            if root_hint:
-                                entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
-                                
-                        # Use the first entry's improved syllables as the base result
-                        syllables = kbbi_info[0]['syllables']
-                    else:
-                        syllables = splitter_sylbi.split_syllables(word)
-                else:
+                        # Re-calculate syllables using SylBI with the specific root hint
+                        if root_hint:
+                            entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
+                            
+                    syllables = kbbi_info[0]['syllables']
+                
+                # 2. Fallback to database check
+                if syllables is None:
+                    validation = validation_db.check_word_exists(word, method)
+                    if validation:
+                        syllables = validation['final_result'].split('-')
+                
+                # 3. Final fallback to SylBI algorithm
+                if syllables is None:
+                    syllables = splitter_sylbi.split_syllables(word)
+                    
+            else:  # PUEBI
+                # 1. For PUEBI, check database first (no online component)
+                validation = validation_db.check_word_exists(word, method)
+                if validation:
+                    syllables = validation['final_result'].split('-')
+                
+                # 2. Fallback to PUEBI algorithm
+                if syllables is None:
                     syllables = splitter_puebi.split_syllables(word)
             
             results.append({
