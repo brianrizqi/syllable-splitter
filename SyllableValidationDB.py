@@ -18,6 +18,8 @@ class SyllableValidationDB:
         self.sheet_name = sheet_name
         self.fieldnames = ['word', 'method', 'system_result', 'validation_type', 'final_result', 'ip', 'city', 'country', 'timestamp']
         self.is_readonly = False
+        self._records_cache = None
+        self._cache_timestamp = None
         
         # Initialize Google Sheets if credentials exist
         self.gc = None
@@ -72,6 +74,42 @@ class SyllableValidationDB:
                 print(f"⚠ Warning: Local database is read-only or inaccessible: {e}")
                 self.is_readonly = True
 
+    def _get_records(self) -> List[Dict]:
+        """Get all records, using cache if available and valid."""
+        now = datetime.now()
+        if self._records_cache is not None and self._cache_timestamp is not None:
+            if (now - self._cache_timestamp).total_seconds() < 60:  # 60 seconds TTL
+                return self._records_cache
+
+        # Fetch new records from Google Sheets
+        if self.sheet:
+            try:
+                records = self.sheet.get_all_records()
+                self._records_cache = records
+                self._cache_timestamp = now
+                return records
+            except Exception as e:
+                print(f"Error fetching from Google Sheets: {e}")
+                if self._records_cache is not None:
+                    return self._records_cache
+        
+        # Fallback to local CSV
+        try:
+            records = []
+            if os.path.exists(self.db_path):
+                with open(self.db_path, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        records.append(row)
+            self._records_cache = records
+            self._cache_timestamp = now
+            return records
+        except Exception as e:
+            print(f"Error reading local CSV database: {e}")
+            if self._records_cache is not None:
+                return self._records_cache
+            return []
+
     def add_validation(self, word: str, method: str, system_result: str, 
                        validation_type: str, final_result: str, 
                        ip: str = "", city: str = "", country: str = "") -> bool:
@@ -95,6 +133,9 @@ class SyllableValidationDB:
         if self.sheet:
             try:
                 self.sheet.append_row([new_record[f] for f in self.fieldnames])
+                # Invalidate cache
+                self._records_cache = None
+                self._cache_timestamp = None
                 return True
             except Exception as e:
                 print(f"Error saving to Google Sheets: {e}")
@@ -124,6 +165,10 @@ class SyllableValidationDB:
                 writer = csv.DictWriter(f, fieldnames=self.fieldnames)
                 writer.writeheader()
                 writer.writerows(records)
+            
+            # Invalidate cache
+            self._records_cache = None
+            self._cache_timestamp = None
             return True
         except Exception as e:
             print(f"Error saving local validation: {e}")
@@ -131,48 +176,21 @@ class SyllableValidationDB:
 
     def check_word_exists(self, word: str, method: str = None) -> Optional[Dict]:
         """Check if a word has been validated before."""
-        # 1. Check Google Sheets
-        if self.sheet:
-            try:
-                all_records = self.sheet.get_all_records()
-                validations = [r for r in all_records if r['word'].lower() == word.lower()]
-                if method:
-                    validations = [v for v in validations if v['method'] == method]
-                return validations[-1] if validations else None
-            except Exception as e:
-                print(f"Error checking Google Sheets: {e}")
-
-        # 2. Check local CSV
         try:
-            with open(self.db_path, 'r', newline='', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                validations = []
-                for row in reader:
-                    if row['word'].lower() == word.lower():
-                        if method is None or row['method'] == method:
-                            validations.append(row)
-                return validations[-1] if validations else None
+            records = self._get_records()
+            validations = []
+            for row in records:
+                if row.get('word', '').lower() == word.lower():
+                    if method is None or row.get('method') == method:
+                        validations.append(row)
+            return validations[-1] if validations else None
         except Exception as e:
+            print(f"Error checking word existence: {e}")
             return None
 
     def export_database(self) -> List[Dict]:
         """Export entire database."""
-        if self.sheet:
-            try:
-                return self.sheet.get_all_records()
-            except Exception as e:
-                print(f"Error exporting Google Sheets: {e}")
-                return []
-        
-        try:
-            records = []
-            with open(self.db_path, 'r', newline='', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    records.append(row)
-            return records
-        except Exception as e:
-            return []
+        return self._get_records()
 
     def get_statistics(self) -> Dict:
         """Get database statistics."""
