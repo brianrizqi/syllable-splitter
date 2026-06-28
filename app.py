@@ -48,6 +48,32 @@ except Exception as e:
 if initialization_errors:
     print(f"⚠ Warning: Some components failed to initialize:\n" + "\n".join(initialization_errors))
 
+
+def learn_kbbi_words(word, kbbi_info=None):
+    """Teach the offline analyzer & spell-checker words confirmed to exist in live KBBI.
+
+    This is the self-learning loop: every successful live KBBI lookup grows the local
+    disambiguation dictionary (both the looked-up word and the root extracted from the
+    KBBI header), so new KBBI entries are reflected offline without re-scraping, and the
+    root-word guard keeps freshly confirmed base words whole on the next request.
+    """
+    try:
+        learned = [word]
+        for entry in (kbbi_info or []):
+            header = entry.get('header', '')
+            if ' » ' in header:
+                root = header.split(' » ')[0].split('(')[0].strip().rstrip(' 0123456789')
+                if root:
+                    learned.append(root)
+        if 'splitter_sylbi' in globals() and splitter_sylbi is not None:
+            splitter_sylbi.morphology.learn_word(*learned)
+        if 'spell_checker' in globals() and spell_checker is not None:
+            for w in learned:
+                if w:
+                    spell_checker.kbbi_words.add(w.strip().lower())
+    except Exception:
+        pass
+
 def get_location_from_ip(ip: str):
     """Fetch city and country from IP using ip-api.com (free, no key required)."""
     if ip in ['127.0.0.1', 'localhost', '::1'] or not ip:
@@ -105,6 +131,7 @@ def split_text():
             kbbi_info = kbbi_scraper.get_word_info(word)
             if kbbi_info:
                 syllables = kbbi_info[0]['syllables']
+                learn_kbbi_words(word, kbbi_info)
             
             # 2. Fallback to database check
             if syllables is None and not bypass_db:
@@ -138,8 +165,9 @@ def split_text():
                     if root_hint:
                         entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
                         entry['root_hint'] = root_hint # Save for UI debug
-                        
+
                 syllables = kbbi_info[0]['syllables']
+                learn_kbbi_words(word, kbbi_info)
             
             # 2. Fallback to database check
             if syllables is None and not bypass_db:
@@ -280,7 +308,9 @@ def upload_csv():
                 # 1. Try KBBI online first
                 time.sleep(0.15)  # Safe rate-limiting delay
                 syllables = kbbi_scraper.get_syllables(word)
-                
+                if syllables is not None:
+                    learn_kbbi_words(word)
+
                 # 2. Fallback to database check
                 if syllables is None:
                     validation = validation_db.check_word_exists(word, method)
@@ -311,8 +341,9 @@ def upload_csv():
                         # Re-calculate syllables using SylBI with the specific root hint
                         if root_hint:
                             entry['syllables'] = splitter_sylbi.split_syllables(word, root_hint=root_hint)
-                            
+
                     syllables = kbbi_info[0]['syllables']
+                    learn_kbbi_words(word, kbbi_info)
                 
                 # 2. Fallback to database check
                 if syllables is None:
