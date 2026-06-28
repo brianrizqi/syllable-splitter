@@ -125,8 +125,10 @@ def split_text():
     if not text:
         return jsonify({'error': 'No text provided'}), 400
     
-    # Split by whitespace and punctuation
-    words = re.findall(r'\b[\w]+\b', text)
+    # Split by whitespace and punctuation, but keep intra-word hyphens together so
+    # reduplications stay one token (e.g. "anak-anak", "memontang-mantingkan").
+    # A hyphen only joins when flanked by word characters (no surrounding spaces).
+    words = re.findall(r'\b\w+(?:-\w+)*\b', text)
     
     results = []
     from_db_any = False
