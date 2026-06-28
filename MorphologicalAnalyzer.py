@@ -414,7 +414,15 @@ class MorphologicalAnalyzer:
         """
         if len(word) < 5:  # Minimum length for C1 + Infix + C2 + V + C3 (e.g. g + er + igi)
             return (None, word)
-            
+
+        # DICTIONARY GUARD: a word that is itself a known KBBI headword is a base word,
+        # not an infix-derived form. This stops the infix detector from scrambling real
+        # roots once a prefix has been stripped, e.g. geleng (in menggelengkan) -> geng+el,
+        # leleng, remet, etc. Genuinely infixed entries that need the infix shown
+        # (telunjuk, kinerja, kelupas) are handled earlier by the golden_map override.
+        if hasattr(self, 'kbbi_words') and self.kbbi_words and word.lower() in self.kbbi_words:
+            return (None, word)
+
         vowels = 'aiueo'
         # Regular consonants mapping for root reconstruction if needed
         # (Though usually it's just C1 + rest)

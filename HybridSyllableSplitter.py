@@ -74,8 +74,15 @@ class HybridSyllableSplitter:
         # Determine the working root
         root = detected_root
         
-        # If we have a lemmatized root from root_hint or dictionary, prioritize it
-        if lemmatized_root and lemmatized_root != word.lower() and lemmatized_root != detected_root:
+        # If we have a lemmatized root from root_hint or dictionary, prioritize it.
+        # Guard: only trust the lemma when it is a peluluhan-level reduction of the
+        # detected root (differs by ~1 leading consonant). When the lemmatizer collapses
+        # several stacked affixes at once (berkelanjutan -> "lanjut", berkepentingan ->
+        # "penting") the lengths diverge a lot; trusting it would drop the ke-/-an
+        # material the analyzer correctly kept, so we keep the detected root instead.
+        if (lemmatized_root and lemmatized_root != word.lower()
+                and lemmatized_root != detected_root
+                and (root_hint is not None or abs(len(detected_root) - len(lemmatized_root)) <= 2)):
              root = lemmatized_root
              is_peluluhan = True
         
