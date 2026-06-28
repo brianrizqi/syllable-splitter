@@ -37,9 +37,19 @@ class HybridSyllableSplitter:
             return []
             
         import re
+
+        # Affixed reduplication (e.g. memontang-mantingkan, root "pontang-panting"):
+        # the prefix/suffix span the whole hyphenated word, so we must NOT split on the
+        # hyphen first. When KBBI gives a hyphenated root hint we reconstruct it as
+        # prefix + reduplication-base + suffix using that hint.
+        if root_hint and '-' in root_hint and '-' in word and ' ' not in word:
+            redup = self._split_affixed_reduplication(word, root_hint)
+            if redup is not None:
+                return redup
+
         # Tokenize by space and hyphen, preserving the delimiters
         parts = re.split(r'([ \-])', word)
-        
+
         result = []
         for part in parts:
             if not part:
@@ -53,7 +63,63 @@ class HybridSyllableSplitter:
             else:
                 # Process the individual word/morpheme
                 result.extend(self._split_single_word(part, root_hint=root_hint))
-                
+
+        return result
+
+    def _morphemic_prefix_tokens(self, prefix, root):
+        """Return the canonical (archphoneme) prefix tokens for output, e.g.
+        'mem'/'men' -> ['meng'], 'memper' -> ['meng', 'per']. `root` disambiguates
+        the 'pe' allomorph (per- vs peng-)."""
+        if not prefix:
+            return []
+        morphemic_prefix = self.morphology.allomorph_map.get(prefix, prefix)
+        if prefix == 'pe' and (root.startswith('r') or root in ['serta', 'kerja', 'ajar']):
+            morphemic_prefix = 'per'
+        return morphemic_prefix.split('.') if '.' in morphemic_prefix else [morphemic_prefix]
+
+    def _split_affixed_reduplication(self, word, root_hint):
+        """Split an affixed reduplication using the hyphenated KBBI root hint.
+
+        Example: word="memontang-mantingkan", root_hint="pontang-panting"
+            -> prefix me- (meng), base pontang-panting, suffix -kan
+            -> ['meng','pon','tang','pan','ting','kan']
+
+        The prefix is detected on the first element and the suffix on the last
+        element (each analysed against its matching root-hint part), while the
+        reduplication base from the hint provides the restored root to syllabify.
+        Returns None if the word and hint can't be aligned, so the caller falls
+        back to generic per-part handling.
+        """
+        word_parts = word.split('-')
+        hint_parts = root_hint.split('-')
+        if len(word_parts) != len(hint_parts) or len(word_parts) < 2:
+            return None
+
+        # Prefix carried by the first element (vs its root-hint part).
+        first_pre, _, _, _, _ = self.morphology.analyze_with_lemmatizer(
+            word_parts[0], root_hint=hint_parts[0])
+        # Suffix carried by the last element (vs its root-hint part).
+        _, _, last_suf, _, _ = self.morphology.analyze_with_lemmatizer(
+            word_parts[-1], root_hint=hint_parts[-1])
+
+        # Require evidence that this really is an affixed form; otherwise bail so the
+        # generic path handles plain reduplications (e.g. anak-anak, sayur-mayur).
+        if not first_pre and not last_suf:
+            return None
+
+        result = []
+        result.extend(self._morphemic_prefix_tokens(first_pre, hint_parts[0]))
+        # Restored reduplication base: syllabify each hint part in order.
+        for hp in hint_parts:
+            if hp in self.exceptions:
+                result.extend(self.exceptions[hp])
+            else:
+                result.extend(self.kbbi_splitter.split_syllables(hp))
+        if last_suf:
+            if len(last_suf) <= 3:
+                result.append(last_suf)
+            else:
+                result.extend(self.kbbi_splitter.split_syllables(last_suf))
         return result
 
     def _split_single_word(self, word, root_hint=None):
@@ -133,14 +199,9 @@ class HybridSyllableSplitter:
         # Step 4: Morphemic Prefix Output
         morphemic_prefix = ""
         if prefix:
-             morphemic_prefix = self.morphology.allomorph_map.get(prefix, prefix)
-             if prefix == 'pe':
-                  if root.startswith('r') or root in ['serta', 'kerja', 'ajar']:
-                       morphemic_prefix = 'per'
-             if '.' in morphemic_prefix:
-                  for p in morphemic_prefix.split('.'): result.append(p)
-             else:
-                  result.append(morphemic_prefix)
+             prefix_tokens = self._morphemic_prefix_tokens(prefix, root)
+             morphemic_prefix = '.'.join(prefix_tokens)
+             result.extend(prefix_tokens)
         
         # Step 5: Root character deduplication (Shared Consonant Rule)
         # Standard: ber- + ranting -> ber.ran.ting (repeats character)
