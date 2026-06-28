@@ -95,9 +95,19 @@ def index():
 
 @app.route('/health')
 def health():
+    # Diagnostic: confirm the offline KBBI disambiguation dictionary actually loaded
+    # (e.g. that kbbi_words.txt was bundled into the serverless deployment). A count of
+    # 0 means the offline fallback is degraded even though the live KBBI path still works.
+    kbbi_dict_size = 0
+    try:
+        if 'splitter_sylbi' in globals() and splitter_sylbi is not None:
+            kbbi_dict_size = len(splitter_sylbi.morphology.kbbi_words)
+    except Exception:
+        pass
     return jsonify({
         'status': 'ok' if not initialization_errors else 'partial_failure',
         'errors': initialization_errors,
+        'kbbi_dict_size': kbbi_dict_size,
         'timestamp': datetime.now().isoformat()
     })
 
