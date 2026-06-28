@@ -3,6 +3,37 @@
 
 import csv
 import os
+import tempfile
+
+
+def get_learned_cache_path():
+    """Path to the self-learning word cache.
+
+    New words discovered via the live KBBI lookup are appended here so the offline
+    disambiguation dictionary keeps growing without re-scraping. Defaults to a path
+    writable on every host (including read-only serverless filesystems, where only
+    the temp dir is writable). Override with the KBBI_LEARNED_PATH env var.
+    """
+    override = os.environ.get('KBBI_LEARNED_PATH')
+    if override:
+        return override
+    return os.path.join(tempfile.gettempdir(), 'kbbi_learned.txt')
+
+
+def load_learned_words():
+    """Load the set of self-learned words from the cache file (best effort)."""
+    words = set()
+    try:
+        path = get_learned_cache_path()
+        if os.path.exists(path):
+            with open(path, mode='r', encoding='utf-8') as f:
+                for line in f:
+                    w = line.strip().lower()
+                    if w:
+                        words.add(w)
+    except Exception:
+        pass
+    return words
 
 class MorphologicalAnalyzer:
     
@@ -102,8 +133,62 @@ class MorphologicalAnalyzer:
         ]
     
     def _load_kbbi(self):
-        """No-op: local dictionary file loading has been removed to avoid repository bloat."""
-        self.kbbi_words = set()
+        """Load KBBI word list from optimized text file with multiple path fallbacks."""
+        # Define potential paths to locate kbbi_words.txt (handles local and Vercel environments)
+        paths_to_try = [
+            os.path.join(os.path.dirname(__file__), 'kbbi_words.txt'),
+            os.path.join(os.path.dirname(__file__), 'api', 'kbbi_words.txt'),
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'api', 'kbbi_words.txt'),
+            os.path.join(os.getcwd(), 'api', 'kbbi_words.txt'),
+            os.path.join(os.getcwd(), 'kbbi_words.txt'),
+            '/var/task/api/kbbi_words.txt',
+            '/var/task/kbbi_words.txt'
+        ]
+
+        loaded = False
+        for kbbi_path in paths_to_try:
+            try:
+                if os.path.exists(kbbi_path):
+                    with open(kbbi_path, mode='r', encoding='utf-8') as f:
+                        for line in f:
+                            word = line.strip().lower()
+                            if word:
+                                self.kbbi_words.add(word)
+                    print(f"✓ Loaded {len(self.kbbi_words)} words from KBBI in MorphologicalAnalyzer via {kbbi_path}")
+                    loaded = True
+                    break
+            except Exception:
+                pass
+
+        if not loaded:
+            print("⚠ Warning: Could not load KBBI words list in MorphologicalAnalyzer from any potential paths.")
+
+        # Merge in any self-learned words discovered from previous live KBBI lookups.
+        self.kbbi_words |= load_learned_words()
+
+    def learn_word(self, *words):
+        """Register words discovered via the live KBBI lookup into the in-memory
+        dictionary and append new ones to the self-learning cache. This keeps the
+        offline disambiguation dictionary fresh without re-scraping all of KBBI.
+        Derived forms are harmless to the root-word guard (the lemmatizer still
+        decomposes them), while newly added base words improve disambiguation.
+        """
+        new_words = []
+        for word in words:
+            if not word:
+                continue
+            w = word.strip().lower()
+            if w and w not in self.kbbi_words:
+                self.kbbi_words.add(w)
+                new_words.append(w)
+        if new_words:
+            try:
+                with open(get_learned_cache_path(), mode='a', encoding='utf-8') as f:
+                    for w in new_words:
+                        f.write(w + '\n')
+            except Exception:
+                pass  # In-memory learning still works even if the cache isn't writable.
+        return new_words
 
     def decompose_prefix(self, prefix):
         """
@@ -329,7 +414,15 @@ class MorphologicalAnalyzer:
         """
         if len(word) < 5:  # Minimum length for C1 + Infix + C2 + V + C3 (e.g. g + er + igi)
             return (None, word)
-            
+
+        # DICTIONARY GUARD: a word that is itself a known KBBI headword is a base word,
+        # not an infix-derived form. This stops the infix detector from scrambling real
+        # roots once a prefix has been stripped, e.g. geleng (in menggelengkan) -> geng+el,
+        # leleng, remet, etc. Genuinely infixed entries that need the infix shown
+        # (telunjuk, kinerja, kelupas) are handled earlier by the golden_map override.
+        if hasattr(self, 'kbbi_words') and self.kbbi_words and word.lower() in self.kbbi_words:
+            return (None, word)
+
         vowels = 'aiueo'
         # Regular consonants mapping for root reconstruction if needed
         # (Though usually it's just C1 + rest)
@@ -480,7 +573,7 @@ class MorphologicalAnalyzer:
              lemmatized_root = guide_root
              internal_infix = None
              return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
-        
+
         # Fallback to naive analyze
         self._root_hint_context = root_hint
         prefix, detected_root, suffix = self.analyze(original_word)
@@ -629,7 +722,37 @@ class MorphologicalAnalyzer:
         # Priority 2: Word alone
         if original_word in golden_map:
              return golden_map[original_word]
-        
+
+        # ROOT-WORD GUARD: If the lemmatizer found no derivation (guide_root is the
+        # word itself), no manual override applied, and no internal infix was detected,
+        # but the whole word IS a known KBBI headword, decide whether naive analyze()
+        # produced a *trustworthy* decomposition or a spurious one (a false affix split
+        # of a base word). It runs last so golden_map / infix analyses take precedence.
+        if (self.kbbi_words and not internal_infix
+                and original_word in self.kbbi_words
+                and (not guide_root or guide_root == original_word)):
+             root_is_solid = False
+             if (prefix or suffix) and detected_root:
+                  # Trust the split only when the leftover root is itself a known word of
+                  # >= 2 syllables (>= 2 vowels) -- strong evidence of real derivation
+                  # (belajar->ajar, bekerja->kerja, pesilat->silat, teperdaya->perdaya).
+                  # Single-syllable leftovers signal a false split of a base word and are
+                  # rejected (pencet->pen+cet, penyu->pen+yu, perang->per+ang/rang,
+                  # perak->per+ak, meja->me+ja), as are roots absent from the dictionary
+                  # (modifikasi->modifikas+i, arteri->arter+i).
+                  cand = detected_root
+                  # Shared-consonant restoration for per-/ber-/ter-/pel-/bel- where the
+                  # root's leading r/l was absorbed into the prefix (peramah -> per+ramah,
+                  # perajah -> per+rajah). Safe because 1-syllable leftovers like perang's
+                  # "rang" are still rejected by the vowel-count test below.
+                  if prefix and prefix[-1] in ('r', 'l') and (prefix[-1] + detected_root) in self.kbbi_words:
+                       cand = prefix[-1] + detected_root
+                  if sum(1 for ch in cand if ch in 'aiueo') >= 2 and cand in self.kbbi_words:
+                       root_is_solid = True
+                       detected_root = cand
+             if not root_is_solid:
+                  return ('', original_word, '', original_word, None)
+
         return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
     
     def _reconstruct_morphemes(self, word, root):
