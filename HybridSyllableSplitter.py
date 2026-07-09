@@ -232,7 +232,20 @@ class HybridSyllableSplitter:
         
         # Step 6: Root Syllables (Phonetic Splitting)
         if root:
-            if root in self.exceptions:
+            # PUEBI (kata turunan): pemenggalan dilakukan di antara bentuk dasar dan unsur
+            # pembentuknya. Bila bentuk dasar TIDAK berubah, base dibiarkan UTUH (ber-jalan,
+            # meng-bantu, makan-an, ke-kuat-an, ber-main). Bila bentuk dasar BERUBAH karena
+            # peluluhan, base dipenggal seperti kata dasar (meng-ku-at-kan, meng-tu-tup).
+            # "Berubah" dideteksi andal: apakah bentuk dasar kanonik masih muncul utuh di
+            # kata permukaan ('bantu' ada di 'membantu' -> tetap; 'kuat' tidak ada di
+            # 'menguatkan' -> berubah). Cek ini diprioritaskan di atas exception diftong
+            # agar base yang tidak berubah tidak ikut terpenggal (main -> ber-main, bukan
+            # ber-ma-in).
+            has_affix = bool(prefix) or bool(suffix)
+            base_unchanged = root.lower() in word.lower()
+            if has_affix and base_unchanged and not internal_infix:
+                result.append(root)
+            elif root in self.exceptions:
                 result.extend(self.exceptions[root])
             elif internal_infix:
                 # Infix Rule: RootSyl1 + Infix + RootSylRemaining
@@ -253,9 +266,11 @@ class HybridSyllableSplitter:
                     root_syllables = self.kbbi_splitter.split_syllables(root)
                     if root_syllables: result.extend(root_syllables)
             else:
+                # Bentuk dasar berubah (peluluhan) atau kata dasar tanpa imbuhan: penggal
+                # seperti kata dasar.
                 root_syllables = self.kbbi_splitter.split_syllables(root)
                 if root_syllables: result.extend(root_syllables)
-        
+
         # Step 7: Suffix Syllables
         if suffix:
             if len(suffix) <= 3:
