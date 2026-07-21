@@ -370,7 +370,24 @@ class MorphologicalAnalyzer:
                     prefix = pre
                     root = potential_root
                     break
-        
+
+        # Step 2b: Stacked affixes. After the outer prefix is removed the remainder may
+        # itself still be a derived form (berkehidupan -> ber + [ke + hidup + an]).
+        # Because that remainder is often a valid KBBI headword ("kehidupan"), the suffix
+        # guard in Step 3 would stop early and the hidup|an boundary would be lost
+        # (ber-ke-hi-du-pan). Decompose one more level, but only when the inner root is
+        # itself a real KBBI word, so we never invent a segmentation.
+        # The compound prefix uses the existing dotted notation (cf. 'meng.per'), which
+        # the splitter emits as separate morphemes.
+        if prefix and not suffix and self.kbbi_words and len(root) >= 6:
+            for pre2, suf2 in [('ke', 'an'), ('peng', 'an'), ('peny', 'an'), ('pem', 'an'),
+                               ('pen', 'an'), ('per', 'an'), ('pe', 'an'), ('ber', 'an')]:
+                if (root.startswith(pre2) and root.endswith(suf2)
+                        and len(root) > len(pre2) + len(suf2) + 2):
+                    inner = root[len(pre2):-len(suf2)]
+                    if len(inner) >= 3 and inner in self.kbbi_words:
+                        return (prefix + '.' + pre2, inner, suf2)
+
         # Step 3: Check for suffixes
         if hasattr(self, 'kbbi_words') and self.kbbi_words and root in self.kbbi_words:
              return (prefix, root, suffix)

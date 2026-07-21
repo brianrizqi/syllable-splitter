@@ -214,20 +214,27 @@ class HybridSyllableSplitter:
         elif prefix in ['ter'] and root.startswith('r'): # e.g. terasa -> ter.ra.sa
              is_shared_repeat = True
              
-        # Guard against root duplication if prefix already at head of root string
-        if not is_shared_repeat:
+        # Guard against root duplication if prefix already at head of root string.
+        # IMPORTANT: never strip when the root is itself a real KBBI word. A genuine
+        # double prefix leaves a valid base that must be kept intact:
+        #   ter + teror  -> ter-te-ror (NOT ter-or)
+        #   ber + beres  -> ber-be-res (NOT ber-es)
+        #   ber + berita -> ber-be-ri-ta (NOT ber-i-ta)
+        # The old hardcoded list (merah, perah, ...) only patched a few of these; the
+        # dictionary check generalises it (kept as fallback when no dictionary loaded).
+        _kbbi = getattr(self.morphology, 'kbbi_words', None)
+        root_is_real_word = bool(_kbbi) and root.lower() in _kbbi
+        _legacy_block = ['merah', 'perah', 'lepas', 'lelas', 'rasa']
+        if not is_shared_repeat and not root_is_real_word:
              # Only strip if the remaining part is still a valid syllable/word structure
              # and if it's not a root that naturally starts with those letters (like 'merah' with 'me-')
              if prefix and root.startswith(prefix) and len(root) > len(prefix) and root[len(prefix)] in 'aiueo':
                   # e.g. "ber-ranting" (if analyzer somehow gave prefix 'ber' and root 'ranting')
-                  # but for "me-merah", root is "merah", prefix is "me", root[2] is 'r' (consonant)
-                  # wait, if root[len(prefix)] is a vowel, it might be a duplication.
-                  # Let's be more specific: block stripping for common roots.
-                  if not root in ['merah', 'perah', 'lepas', 'lelas', 'rasa']:
+                  if not root in _legacy_block:
                        root = root[len(prefix):]
              elif morphemic_prefix and root.startswith(morphemic_prefix.replace('.', '')) and len(root) > len(morphemic_prefix.replace('.', '')):
                   mp_clean = morphemic_prefix.replace('.', '')
-                  if not root in ['merah', 'perah', 'lepas', 'lelas', 'rasa'] and root[len(mp_clean)] in 'aiueo':
+                  if not root in _legacy_block and root[len(mp_clean)] in 'aiueo':
                        root = root[len(mp_clean):]
         
         # Step 6: Root Syllables (Phonetic Splitting)
