@@ -1,75 +1,136 @@
-# Laporan Implementasi Pemenggalan Suku Kata Morfemis (TBBBI)
+# Laporan Implementasi Pemenggalan Suku Kata (SylBI)
 
-Laporan ini merangkum seluruh perubahan dan fitur yang telah diimplementasikan pada `HybridSyllableSplitter` untuk mencapai standar pemenggalan yang menjaga keutuhan akar kata (**Root-Preserving**).
+Dokumen ini merangkum arsitektur dan aturan pemenggalan yang **benar-benar berlaku pada kode saat ini**. Semua contoh hasil di bawah diambil langsung dari keluaran program (bukan target ideal).
 
-## 1. Integrasi Aturan TBBBI (Tahap 1 - 7)
-
-Kami telah memverifikasi dan mengimplementasikan aturan dari Tata Bahasa Baku Bahasa Indonesia (TBBBI) bab 4.3.1:
-
-| Aturan | Deskripsi | Contoh Hasil |
-| :--- | :--- | :--- |
-| **4.2.2.1** | Prefiks Transitif `me-` (Restorasi k, p, t, s) | `mengerjakan` → `me-ker-ja-kan` |
-| **4.2.2.2** | Prefiks Transitif `di-` (Pasif) | `dibelikan` → `di-be-li-kan` |
-| **4.2.2.3** | Prefiks Transitif `ter-` (Aksidental/Pasif) | `terbawa` → `ter-ba-wa` |
-| **4.2.2.4** | Prefiks `per-` Kausatif | `perbaiki` → `per-baik-i` |
-| **4.2.2.5** | Sufiks `-kan` (Benefaktif/Kausatif) | `masukkan` → `ma-suk-kan` |
-| **4.2.2.6** | Sufiks `-i` (Lokatif/Repetitif) | `menilai` → `me-ni-lai` |
-| **4.3.1.1** | Prefiks Intransitif `ber-` (Restorasi `r`) | `bekerja` → `ber-ker-ja` |
-| **4.3.1.2** | Konfiks `ber-...-an` (Koreksi overlap) | `berdesakan` → `ber-de-sak-an` |
-| **4.3.1.3** | Prefiks `meng-` Intransitif (Penyederhanaan `me-`) | `menulis` → `me-tu-lis` |
-| **4.3.1.4** | Prefiks `ter-` Intransitif | `tepergok` → `ter-per-gok` |
-| **4.3.1.5** | Prefiks `se-` (Temporal/Klitik) | `setahuku` → `se-ta-hu-ku` |
-| **4.3.1.6** | Infiks (`-el-`, `-er-`, `-em-`, `-in-`) | `selenggara` → `seng-el-ga-ra` |
-| **4.3.1.7** | Konfiks `ke-...-an` (Adversatif) | `kecurian` → `ke-cu-ri-an` |
-
-## 2. Fitur Spesifik & Perbaikan Utama
-
-### A. Restorasi Morfemis Tingkat Lanjut (Aturan Pembimbing)
-Sistem telah dimutakhirkan berdasarkan arahan pembimbing untuk menyederhanakan awalan:
--   **Penyederhanaan Prefiks**: 
-    -   Prefiks verba nasal (`meng-`, `men-`, `mem-`) disederhanakan menjadi **`me-`** sementara akar kata tetap utuh.
-        -   `menulis` → **`me-tu-lis`**
-        -   `mengerjakan` → **`me-ker-ja-kan`**
-        -   `mengambil` → **`me-am-bil`**
-    -   Prefiks nominalisasi/agen (`pem-`, `pen-`, `peny-`, `pe-`, `penge-`, `peng-`) secara universal disederhanakan menjadi **`per-`**.
-        -   `pembeli` → **`per-be-li`**
-        -   `penyanyi` → **`per-any-i`**
-        -   `pengecualian` → **`per-ke-cu-a-li-an`**
-        -   `pengambil` → **`per-am-bil`**
--   **Konsistensi `ber- / per-`**: Sesuai permintaan sebelumnya, awalan `ber-` dan `per-` tetap mempertahankan restorasi `r`.
-    -   `belajar` → **`ber-a-jar`**
-    -   `pelajari` → **`per-a-jar-i`**
-
-### B. Penanganan Tokenisasi & Frasa
-Refaktorisasi besar pada cara sistem membaca input:
--   **Spasi & Hubung**: Mendukung frasa majemuk (**`bertanggung jawab`**) dan kata ulang (**`beratus-ratus`**) tanpa merusak pemisah spasi/tanda hubung.
--   **Reduplikasi**: Kata ulang seperti **`semau-mauku`** diproses per komponen morfem.
-
-### C. Stabilisasi Imbuhan Bersarang (Nested Affixes)
-Mengatasi bug duplikasi suku kata pada kata-kata kompleks seperti **`berpendidikan`**. Sistem sekarang memiliki *safeguard* untuk memastikan imbuhan yang sudah terdeteksi di awal tidak muncul kembali di tengah kata dasar.
-
-### D. Prefiks Bersarang untuk Turunan "ajar"
-Dukungan khusus untuk prefiks komposit pada kata turunan "ajar":
--   `mempelajari` → **`me-per-a-jar-i`**
--   `pembelajaran` → **`pe-ber-a-jar-an`**
-
-### E. Pemenggalan Infiks Morfemis (TBBBI 4.3.1.6)
-Implementasi pemenggalan infiks dengan pola **SukuKataAkar1 + Infiks + SisaSukuKataAkar**. Sistem mendeteksi infiks `-el-`, `-er-`, `-em-`, `-in-`, lalu memecah **kata dasar** (tanpa infiks) secara fonetis dan menyisipkan infiks setelah suku kata pertama.
-
-| Kata | Infiks | Kata Dasar | Pecah Dasar | Hasil Morfemis |
-| :--- | :--- | :--- | :--- | :--- |
-| `selenggara` | `-el-` | senggara | seng-ga-ra | **seng-el-ga-ra** |
-| `kinerja` | `-in-` | kerja | ker-ja | **ker-in-ja** |
-| `gerigi` | `-er-` | gigi | gi-gi | **gi-er-gi** |
-| `selidik` | `-el-` | sidik | si-dik | **si-el-dik** |
-| `gemetar` | `-em-` | getar | ge-tar | **ge-em-tar** |
-| `sinambung` | `-in-` | sambung | sam-bung | **sam-in-bung** |
-| `menggelembung` | `-el-` | gembung | gem-bung | **me-gem-el-bung** |
-
-## 3. Komponen Teknis yang Diperbarui
--   **`HybridSyllableSplitter.py`**: Inti logika restorasi dan penggabungan metode morfemis-fonetis.
--   **`MorphologicalAnalyzer.py`**: Penambahan varian imbuhan (`be`, `pe`, `te`, `pel`), logika dekomposisi awalan, dan deteksi infiks internal (`analyze_internal_infix`).
--   **`exceptions.json`**: Pembersihan data hardcoded untuk mendukung restorasi dinamis yang lebih akurat.
+> Terakhir diperbarui: 27 Juli 2026 (mengikuti commit `a97bc8a` di `main`).
 
 ---
-**Status Akhir:** Sistem saat ini 100% selaras dengan visi "Root-Preserving" untuk seluruh kategori verba taktransitif, transitif, dan kata berinfiks yang diuji (TBBBI 4.2.2.1–4.3.1.7).
+
+## 1. Arsitektur: Tiga Lapis + Kamus
+
+Untuk metode **SylBI**, sebuah kata diproses dengan urutan prioritas:
+
+1. **KBBI daring (prioritas utama)** — `KBBIScraper` mengambil data langsung dari situs KBBI. Bila kata ditemukan, pemenggalan dan *root hint* diambil dari sana. Ini memastikan **kata baru tetap terlayani** tanpa menunggu pembaruan kamus lokal.
+2. **Basis data validasi** — hasil koreksi manual yang tersimpan (`SyllableValidationDB`) dipakai sebagai cadangan.
+3. **Algoritma SylBI luring (fallback)** — `HybridSyllableSplitter` + `MorphologicalAnalyzer` memenggal secara morfemis-fonetis. Dipakai untuk pemrosesan massal (CSV), saat KBBI daring lambat/mati, dan saat luring.
+
+### Kamus disambiguasi (`kbbi_words.txt`)
+Algoritma luring memakai daftar ±71.000 kata dasar KBBI untuk **memutuskan apakah sebuah kata benar-benar berimbuhan**. Tanpa kamus ini, penganalisis akan memenggal kata dasar yang hanya *tampak* berimbuhan (mis. `pencet` → `peng-cet`). Kamus:
+- Dimuat oleh `MorphologicalAnalyzer` dan `SpellChecker`.
+- **Diperkaya otomatis (self-learning)**: setiap kata yang berhasil diambil dari KBBI daring ditambahkan ke kamus di memori.
+- Dapat diregenerasi berkala via `scripts/refresh_kbbi_words.py`.
+
+Endpoint `GET /health` menampilkan `kbbi_dict_size` untuk memastikan kamus termuat di lingkungan produksi.
+
+---
+
+## 2. Konvensi Pemenggalan yang Berlaku
+
+- **Awalan nasal verba** (`me-`, `mem-`, `men-`, `meng-`, `meny-`) ditampilkan dalam **bentuk baku `meng-`**, dan **akar kata dipulihkan** bila mengalami peluluhan (k/p/t/s). Contoh: `menulis` → `meng-tu-lis` (akar *tulis*), `memukul` → `meng-pu-kul` (akar *pukul*).
+- **Awalan nominalisasi** (`pe-`, `pem-`, `pen-`, `peng-`, `peny-`) ditampilkan baku **`peng-`**.
+- **Awalan lain** (`ber-`, `ter-`, `per-`, `di-`, `ke-`, `se-`) ditampilkan apa adanya.
+- **Kata dasar dipenggal secara fonetis**; kata dasar yang utuh dilindungi kamus agar tidak salah pecah.
+
+---
+
+## 3. Aturan per Kategori (hasil aktual)
+
+### a. Kata dasar (tanpa imbuhan)
+| Kata | Hasil |
+| :-- | :-- |
+| komputer | `kom-pu-ter` |
+| modifikasi | `mo-di-fi-ka-si` |
+| arteri | `ar-te-ri` |
+| pencet | `pen-cet` |
+| penyu | `pe-nyu` |
+
+### b. Awalan `me-`/`peN-` + peluluhan (baku `meng-`/`peng-`)
+| Kata | Hasil |
+| :-- | :-- |
+| menulis | `meng-tu-lis` |
+| memukul | `meng-pu-kul` |
+| menyapu | `meng-sa-pu` |
+| mengambil | `meng-am-bil` |
+| pembeli | `peng-be-li` |
+| pengambil | `peng-am-bil` |
+
+### c. `di-` / `ter-` / `ber-` / `per-` / `ke-` / `se-`
+| Kata | Hasil |
+| :-- | :-- |
+| dibelikan | `di-be-li-kan` |
+| terbawa | `ter-ba-wa` |
+| berjalan | `ber-ja-lan` |
+| kebersihan | `ke-ber-sih-an` |
+| setahuku | `se-ta-hu-ku` |
+
+### d. Sufiks & Konfiks
+| Kata | Hasil |
+| :-- | :-- |
+| masukkan | `ma-suk-kan` |
+| makanan | `ma-kan-an` |
+| kecurian | `ke-cu-ri-an` |
+| kekuatan | `ke-ku-at-an` |
+| perbuatan | `per-bu-at-an` |
+
+---
+
+## 4. Perbaikan Penting
+
+### A. Root-Preserving via Kamus
+Kata dasar yang hanya *tampak* berimbuhan tidak lagi dipenggal salah: `pencet` → `pen-cet` (bukan `peng-cet`), `modifikasi` → `mo-di-fi-ka-si` (bukan `mo-di-fi-kas-i`), `perang` → `pe-rang`, `meja` → `me-ja`.
+
+### B. Prefiks Ganda (base tetap utuh)
+Kata dasar yang kebetulan diawali huruf awalannya sendiri kini tidak kehilangan suku kata:
+| Kata | Hasil |
+| :-- | :-- |
+| terteror | `ter-te-ror` |
+| terteruskan | `ter-te-rus-kan` |
+| berberes | `ber-be-res` |
+| berberita | `ber-be-ri-ta` |
+
+### C. Imbuhan Bertumpuk
+Batas morfem dalam kata berimbuhan ganda dipertahankan (diurai satu tingkat lagi, hanya bila akar dalamnya kata KBBI sah):
+| Kata | Hasil |
+| :-- | :-- |
+| berkehidupan | `ber-ke-hi-dup-an` |
+| berkeharusan | `ber-ke-ha-rus-an` |
+| berpenghasilan | `ber-peng-ha-sil-an` |
+| berkepentingan | `ber-ke-pen-ting-an` |
+
+### D. Reduplikasi Berimbuhan
+Kata ulang berimbuhan disusun ulang sebagai `awalan + basis-reduplikasi + akhiran` memakai *root hint* dari KBBI (basis yang ber-tanda hubung):
+| Kata (root hint) | Hasil |
+| :-- | :-- |
+| memontang-mantingkan (*pontang-panting*) | `meng-pon-tang-pan-ting-kan` |
+| memorak-porandakan (*porak-poranda*) | `meng-po-rak-po-ran-da-kan` |
+
+### E. Infiks (`-el-`, `-er-`, `-em-`, `-in-`)
+Deteksi infiks kini dijaga kamus agar tidak salah picu pada kata dasar sungguhan (`sebelum` tidak lagi jadi `se-bum-el`). Kata berinfiks yang sah tetap ditangani, mis. `telunjuk` → `tun-el-juk`.
+
+---
+
+## 5. Keterbatasan yang Diketahui (luring)
+
+Semua ini teratasi di produksi lewat jalur **KBBI daring** (prioritas utama); yang tersisa hanya pada algoritma luring:
+
+- **Ambiguitas tak terpecahkan**: akar pendek yang kebetulan kata sah, mis. `memiriskan` → `meng-i-ris-kan` (*miris* vs *iris*).
+- **Partikel pada headword**: `apakah` → `a-pa-kah` (partikel `kah` belum dipisah).
+- **Sebagian analisis ambigu**: mis. `pemain` → `peng-ma-in`.
+
+---
+
+## 6. Komponen Teknis
+
+- **`HybridSyllableSplitter.py`** — orkestrasi morfemis-fonetis, restorasi peluluhan, reduplikasi, prefiks ganda.
+- **`MorphologicalAnalyzer.py`** — dekomposisi awalan/akhiran/konfiks, guard berbasis kamus, dekomposisi imbuhan bertumpuk, deteksi infiks.
+- **`KBBIScraper.py`** — pengambilan data KBBI daring (prioritas utama).
+- **`SyllableValidationDB.py`** — penyimpanan validasi manual.
+- **`kbbi_words.txt`** + **`scripts/refresh_kbbi_words.py`** — kamus disambiguasi + regenerasi.
+
+---
+
+## Catatan Konvensi (perlu keputusan)
+
+Kode saat ini memakai konvensi **"suku kata penuh"** untuk kata turunan (mis. `berjalan` → `ber-ja-lan`, `membaca` → `meng-ba-ca`).
+
+Terdapat arahan alternatif dari Pak Daniel (mengacu PUEBI pemenggalan kata turunan): **bentuk dasar yang tidak berubah dibiarkan utuh** — mis. `berjalan` → `ber-jalan`, `membantu` → `meng-bantu`, `makanan` → `makan-an`; sedangkan bentuk dasar yang berubah (peluluhan) tetap dipenggal — mis. `menguatkan` → `meng-ku-at-kan`. Aturan ini **belum aktif** di kode saat ini (sempat diterapkan lalu di-*rollback*). Bila hendak diaktifkan, laporan ini perlu diperbarui lagi.
