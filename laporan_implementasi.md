@@ -129,8 +129,8 @@ Semua ini teratasi di produksi lewat jalur **KBBI daring** (prioritas utama); ya
 
 ---
 
-## Catatan Konvensi (perlu keputusan)
+## Catatan Konvensi
 
-Kode saat ini memakai konvensi **"suku kata penuh"** untuk kata turunan (mis. `berjalan` → `ber-ja-lan`, `membaca` → `meng-ba-ca`).
+Konvensi yang **aktif** untuk kata turunan adalah **"suku kata penuh"**: bentuk dasar tetap dipenggal menjadi suku kata, mis. `berjalan` → `ber-ja-lan`, `membaca` → `meng-ba-ca`, `makanan` → `ma-kan-an`.
 
-Terdapat arahan alternatif dari Pak Daniel (mengacu PUEBI pemenggalan kata turunan): **bentuk dasar yang tidak berubah dibiarkan utuh** — mis. `berjalan` → `ber-jalan`, `membantu` → `meng-bantu`, `makanan` → `makan-an`; sedangkan bentuk dasar yang berubah (peluluhan) tetap dipenggal — mis. `menguatkan` → `meng-ku-at-kan`. Aturan ini **belum aktif** di kode saat ini (sempat diterapkan lalu di-*rollback*). Bila hendak diaktifkan, laporan ini perlu diperbarui lagi.
+Sebagai catatan riwayat: pernah dicoba aturan alternatif (PUEBI pemenggalan kata turunan — bentuk dasar yang tidak berubah dibiarkan utuh, mis. `ber-jalan`, `makan-an`), namun kemudian di-*rollback* sehingga **tidak dipakai**. Laporan ini konsisten dengan kode yang berjalan sekarang.
