@@ -366,7 +366,19 @@ class MorphologicalAnalyzer:
                          first_syl_has_er = 'er' in potential_root[:3]
                          if not (potential_root.startswith('r') or first_syl_has_er):
                                continue
-                    
+
+                    # VALIDATION: bare me-/pe-/be- before an r-initial remainder.
+                    # The nasal/agentive prefixes meN-/peN- never surface as bare
+                    # "me"/"pe" before a root that begins with "r"; such words are
+                    # base words whose stem starts with "mer"/"per"/"ber" (e.g.
+                    # merana, merabun, merbabu, merbromin). Stripping "me" here would
+                    # wrongly yield meng-ra-na / meng-rba-bu. Only allow it when a
+                    # root_hint explicitly says the root starts with "r" (true derived
+                    # form); otherwise keep the word intact.
+                    if pre in ['me', 'pe', 'be'] and potential_root.startswith('r'):
+                         if not (root_hint_local and root_hint_local.startswith('r')):
+                               continue
+
                     prefix = pre
                     root = potential_root
                     break
@@ -476,6 +488,23 @@ class MorphologicalAnalyzer:
                 # (List expanded as per research cases)
                 if word in ['kerut', 'kerudung', 'gelegar', 'gelora', 'pelangi']:
                      continue
+
+                # DICTIONARY GUARD: an infix is only real when the reconstructed stem
+                # is itself a KBBI word (gerigi -> gigi, telunjuk -> tunjuk). Without
+                # this, the detector invents infixes on base words that merely contain
+                # -er-/-el-/-em-, e.g. merabun -> "mabun" (not a word) -> ma-er-bun, or
+                # merau -> "mau" -> mau-er. When a dictionary is loaded, require the
+                # reconstructed stem to be in it.
+                if hasattr(self, 'kbbi_words') and self.kbbi_words:
+                    if potential_root.lower() not in self.kbbi_words:
+                         continue
+                    # The material after the infix must begin with a consonant, as in a
+                    # true C+infix+C... stem (ge+r+igi, te+l+unjuk). When it starts with
+                    # a vowel the split is spurious: merau -> m|er|au ("mau"),
+                    # merai -> m|er|ai ("mai"). Reject those.
+                    after_infix = word[1+len(infix):]
+                    if after_infix and after_infix[0] in vowels:
+                         continue
 
                 # Check if potential root "looks" like a valid word part (vowel present)
                 if any(v in potential_root for v in vowels):
