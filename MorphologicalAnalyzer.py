@@ -35,12 +35,131 @@ def load_learned_words():
         pass
     return words
 
+def data_file_paths(filename):
+    """Candidate locations of a bundled data file (handles local and Vercel environments)."""
+    here = os.path.dirname(__file__)
+    return [
+        os.path.join(here, filename),
+        os.path.join(here, 'api', filename),
+        os.path.join(os.path.dirname(here), 'api', filename),
+        os.path.join(os.getcwd(), 'api', filename),
+        os.path.join(os.getcwd(), filename),
+        '/var/task/api/' + filename,
+        '/var/task/' + filename,
+    ]
+
 class MorphologicalAnalyzer:
+
+    # Research manual overrides (word or (word, root_hint) -> analysis). They take
+    # precedence over the KBBI root map; see kbbi_root().
+    GOLDEN_MAP = {
+        # Ambiguous ber- cases from research spreadsheet
+        ('beranting', 'anting'): ('ber', 'anting', '', 'anting', ''),
+        ('beranting', 'ranting'): ('be', 'ranting', '', 'ranting', ''),
+        ('berevolusi', 'evolusi'): ('ber', 'evolusi', '', 'evolusi', ''),
+        ('berevolusi', 'revolusi'): ('be', 'revolusi', '', 'revolusi', ''),
+        ('beruang', 'uang'): ('ber', 'uang', '', 'uang', ''),
+        ('beruang', 'ruang'): ('be', 'ruang', '', 'ruang', ''),
+        ('beruang', 'beruang'): ('', 'beruang', '', 'beruang', ''), # Bear case (base word)
+        ('pelajar', 'ajar'): ('pe', 'ajar', '', 'ajar', ''),
+
+        # Default mappings (single-word keys)
+        'beranting': ('ber', 'anting', '', 'anting', ''),
+        'berevolusi': ('ber', 'evolusi', '', 'evolusi', ''),
+        'beruang': ('ber', 'uang', '', 'uang', ''), 
+        'belunjur': ('ber', 'un', 'jur', 'un', 'el'),
+        'beleter': ('ber', 'leter', '', 'leter', ''),
+        'belagu': ('ber', 'lagu', '', 'lagu', ''),
+        'bermain': ('ber', 'main', '', 'main', ''),
+        'perendah': ('per', 'rendah', '', 'rendah', ''),
+        'peruncing': ('per', 'runcing', '', 'runcing', ''),
+        'peringan': ('per', 'ringan', '', 'ringan', ''),
+        'penyerta': ('peng', 'serta', '', 'serta', ''),
+        'pengetahuan': ('peng', 'tahu', 'an', 'tahu', ''),
+        'pengecekan': ('peng', 'cek', 'an', 'cek', ''),
+        'mengelak': ('meng', 'elak', '', 'elak', ''),
+        'mengemban': ('meng', 'emban', '', 'emban', ''),
+        'mengaji': ('meng', 'kaji', '', 'kaji', ''),
+        'mengemuka': ('meng', 'kemuka', '', 'kemuka', ''),
+        'mengesampingkan': ('meng', 'kesamping', 'kan', 'kesamping', ''), 
+        'mengaum': ('meng', 'aum', '', 'aum', ''),
+        'menyatakan': ('meng', 'nyata', 'kan', 'nyata', ''),
+        'menganga': ('meng', 'nganga', '', 'nganga', ''),
+        'menerawang': ('meng', 'terawang', '', 'terawang', ''),
+        'menambat': ('meng', 'tambat', '', 'tambat', ''),
+        'membuat': ('meng', 'buat', '', 'buat', ''),
+        'memvalidasi': ('meng', 'validasi', '', 'validasi', ''),
+        'mempertinggi': ('meng.per', 'tinggi', '', 'tinggi', ''),
+        'mempertegas': ('meng.per', 'tegas', '', 'tegas', ''),
+        'memperdalam': ('meng.per', 'dalam', '', 'dalam', ''),
+        'mengebom': ('meng', 'bom', '', 'bom', ''),
+        'mengecek': ('meng', 'cek', '', 'cek', ''),
+        'mengepel': ('meng', 'pel', '', 'pel', ''),
+        'mengerem': ('meng', 'rem', '', 'rem', ''),
+        'mengetik': ('meng', 'ketik', '', 'ketik', ''),
+        'mengeblok': ('meng', 'blok', '', 'blok', ''),
+        'mengedrop': ('meng', 'drop', '', 'drop', ''),
+        'mentransfusi': ('meng', 'transfusi', '', 'transfusi', ''),
+        'mengkhitan': ('meng', 'khitan', '', 'khitan', ''),
+        'dibeli': ('di', 'beli', '', 'beli', ''),
+        'dibelakangi': ('di', 'belakang', 'i', 'belakang', ''),
+        'terasa': ('ter', 'rasa', '', 'rasa', ''),
+        'teraba': ('ter', 'raba', '', 'raba', ''),
+        'tembakkan': ('', 'tembak', 'kan', 'tembak', ''),
+        'tembakan': ('', 'tembak', 'an', 'tembak', ''),
+        'tembaki': ('', 'tembak', 'i', 'tembak', ''),
+        'memarang': ('meng', 'pa', 'rang', 'pa', ''),
+        'mengebor': ('meng', 'bor', '', 'bor', ''),
+        'teramalkan': ('ter', 'ramal', 'kan', 'amal', 'r'),
+        'mementaskan': ('meng', 'pentas', 'kan', 'pentas', ''),
+        'mengejutkan': ('meng', 'kejut', 'kan', 'kejut', ''),
+        'mengepakkan': ('meng', 'kepak', 'kan', 'kepak', ''),
+        'mengepak': ('meng', 'pak', '', 'pak', ''), 
+        'mengentaskan': ('meng', 'entas', 'kan', 'entas', ''),
+        'pertahanan': ('per', 'tahan', 'an', 'tahan', ''),
+        'mempertahankan': ('meng.per', 'tahan', 'kan', 'tahan', ''),
+        'mengering': ('meng', 'kering', '', 'kering', ''),
+        'temurun': ('', 'turun', '', 'turun', 'em'),
+        'telunjuk': ('', 'tunjuk', '', 'tunjuk', 'el'),
+        'kelupas': ('', 'kupas', '', 'kupas', 'el'),
+        'kinerja': ('', 'kerja', '', 'kerja', 'er'),
+        'kehausan': ('ke', 'haus', 'an', 'haus', ''),
+        'tembak-menembak': ('tembak', 'meng', 'tembak', 'tembak', ''), # handeled by segmenting
+        'menembak': ('meng', 'tembak', '', 'tembak', ''),
+        'mengelaborasi': ('meng', 'elaborasi', '', 'elaborasi', ''),
+        'perasaan': ('peng', 'rasa', 'an', 'rasa', ''),
+        'pekerjaan': ('peng', 'kerja', 'an', 'kerja', ''),
+        'penyebutan': ('peng', 'sebut', 'an', 'sebut', ''),
+        'pelajar': ('pe', 'lajar', '', 'ajar', 'l'),
+        'dedaunan': ('de', 'daun', 'an', 'daun', ''),
+        'sungai': ('', 'sungai', '', 'sungai', ''),
+        'lihai': ('', 'lihai', '', 'lihai', ''),
+        'permainan': ('per', 'main', 'an', 'main', ''),
+        'bersaing': ('ber', 'saing', '', 'saing', ''),
+        'sepoi': ('', 'sepoi', '', 'sepoi', ''),
+        'konvoi': ('', 'konvoi', '', 'konvoi', ''),
+        'survei': ('', 'survei', '', 'survei', ''),
+        # User reported cases
+        ('memerah', 'merah'): ('me', 'merah', '', 'merah', ''),
+        ('memerah', 'perah'): ('mem', 'erah', '', 'perah', ''),
+        ('menguatkan', 'kuat'): ('meng', 'uat', 'kan', 'kuat', ''),
+        ('mengukur', 'kukur'): ('meng', 'ukur', '', 'kukur', ''),
+        ('mengokang', 'kokang'): ('meng', 'okang', '', 'kokang', ''),
+        ('mengkerut', 'kerut'): ('meng', 'kerut', '', 'kerut', ''),
+        ('berkerut', 'kerut'): ('ber', 'kerut', '', 'kerut', ''),
+        ('gelegar', 'gegar'): ('', 'gelegar', '', 'gegar', 'el'),
+        ('gelegar', 'gelegar'): ('', 'gelegar', '', 'gelegar', ''),
+        ('mengompori', 'kompor'): ('meng', 'ompor', 'i', 'kompor', '')
+    }
+
     
     def __init__(self):
         # Load KBBI word list for resolving morphotactic ambiguity
         self.kbbi_words = set()
         self._load_kbbi()
+        self.kbbi_roots = {}
+        self._load_kbbi_roots()
+        self._golden_words = {k for k in self.GOLDEN_MAP if isinstance(k, str)}
 
         # Initialize Simplemma for accurate root detection (lightweight)
         # It uses a dictionary-based approach to find the true lemma/base word.
@@ -64,10 +183,11 @@ class MorphologicalAnalyzer:
             # meng- group
             'me': 'meng', 'mem': 'meng', 'men': 'meng', 'meny': 'meng', 'meng': 'meng', 'menge': 'meng',
             'ment': 'meng', 'memper': 'meng.per', 'mempel': 'meng.pel',
+            'memer': 'meng.per', 'member': 'meng.ber',
             # peng- group (nominalizers)
             'pe': 'peng', 'pel': 'peng', 'per': 'per', 
             'pen': 'peng', 'pem': 'peng', 'peny': 'peng', 'penye': 'peng', 'penge': 'peng', 'peng': 'peng',
-            'pent': 'peng', 'pember': 'peng.ber', 'pembel': 'peng.ber', 'penyer': 'peng.ser', 'penyel': 'peng.sel',
+            'pent': 'peng', 'pember': 'peng.ber', 'pemer': 'peng.per', 'pembel': 'peng.ber', 'penyer': 'peng.ser', 'penyel': 'peng.sel',
             # per- group (adjectives/verbs often stay per-)
             'per': 'per',
             # diper- group
@@ -134,19 +254,8 @@ class MorphologicalAnalyzer:
     
     def _load_kbbi(self):
         """Load KBBI word list from optimized text file with multiple path fallbacks."""
-        # Define potential paths to locate kbbi_words.txt (handles local and Vercel environments)
-        paths_to_try = [
-            os.path.join(os.path.dirname(__file__), 'kbbi_words.txt'),
-            os.path.join(os.path.dirname(__file__), 'api', 'kbbi_words.txt'),
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'api', 'kbbi_words.txt'),
-            os.path.join(os.getcwd(), 'api', 'kbbi_words.txt'),
-            os.path.join(os.getcwd(), 'kbbi_words.txt'),
-            '/var/task/api/kbbi_words.txt',
-            '/var/task/kbbi_words.txt'
-        ]
-
         loaded = False
-        for kbbi_path in paths_to_try:
+        for kbbi_path in data_file_paths('kbbi_words.txt'):
             try:
                 if os.path.exists(kbbi_path):
                     with open(kbbi_path, mode='r', encoding='utf-8') as f:
@@ -165,6 +274,39 @@ class MorphologicalAnalyzer:
 
         # Merge in any self-learned words discovered from previous live KBBI lookups.
         self.kbbi_words |= load_learned_words()
+
+    def _load_kbbi_roots(self):
+        """Load the derived word -> KBBI base word map (kbbi_roots.tsv).
+
+        Lets the offline path use the same root hint the live KBBI header gives
+        (menguati -> kuat), so derived words are split around their real base.
+        """
+        for roots_path in data_file_paths('kbbi_roots.tsv'):
+            try:
+                if os.path.exists(roots_path):
+                    with open(roots_path, mode='r', encoding='utf-8') as f:
+                        for line in f:
+                            word, _, roots = line.rstrip('\n').partition('\t')
+                            if word and roots:
+                                self.kbbi_roots[word] = roots.split('|')
+                    print(f"✓ Loaded {len(self.kbbi_roots)} KBBI root entries via {roots_path}")
+                    return
+            except Exception:
+                pass
+        print("⚠ Warning: Could not load kbbi_roots.tsv; offline root hints disabled.")
+
+    def kbbi_root(self, word):
+        """Return the first KBBI base word recorded for a derived word, or None.
+
+        Words with a GOLDEN_MAP override return None so the manual analysis wins.
+        """
+        if not word:
+            return None
+        w = word.lower()
+        if w in self._golden_words:
+            return None
+        roots = self.kbbi_roots.get(w)
+        return roots[0] if roots else None
 
     def learn_word(self, *words):
         """Register words discovered via the live KBBI lookup into the in-memory
@@ -278,6 +420,11 @@ class MorphologicalAnalyzer:
                           if has_better_root:
                                continue
 
+                # meN- before a vowel-initial root surfaces as meng- (mengurus), never
+                # bare me-; a bare "me" + vowel is part of a base word (meurah).
+                if pre == 'me' and potential_root[:1] in ('a', 'i', 'u', 'e', 'o'):
+                     continue
+
                 if len(potential_root) >= 2:
                     # SPECIAL CASE: per-an with shared 'r' (e.g. perendahan -> pe-rendah-an or peringan -> pe-ringan)
                     # We skip here to let the prefix loop below handle it with the shared-r logic
@@ -366,6 +513,12 @@ class MorphologicalAnalyzer:
                          first_syl_has_er = 'er' in potential_root[:3]
                          if not (potential_root.startswith('r') or first_syl_has_er):
                                continue
+
+                    # VALIDATION: bare me- before a vowel-initial remainder. meN- surfaces
+                    # as meng- there (mengurus), so "me" + vowel belongs to a base word
+                    # (meurah -> meu-rah, not me + urah).
+                    if pre == 'me' and potential_root[0] in 'aiueo':
+                         continue
 
                     # VALIDATION: bare me-/pe-/be- before an r-initial remainder.
                     # The nasal/agentive prefixes meN-/peN- never surface as bare
@@ -532,7 +685,10 @@ class MorphologicalAnalyzer:
         best_match = None
         best_score = -1
         
-        prefixes = [''] + self.prefixes
+        # Stacked meN-/peN- + per-/ber- forms are only matched against a known root
+        # (memerhatikan -> memer + hati, memberdayakan -> member + daya); as plain
+        # prefixes they would misfire on base words such as memerah.
+        prefixes = [''] + self.prefixes + ['memer', 'member', 'pemer']
         suffixes = [''] + self.suffixes
         
         for pre in prefixes:
@@ -607,6 +763,14 @@ class MorphologicalAnalyzer:
                   prefix, detected_root, suffix, lemmatized_root, internal_infix = res
              return (prefix, detected_root, suffix, lemmatized_root, internal_infix)
         
+        # GOLDEN MAP: research manual overrides take precedence over the lemma-guided
+        # matching below (mengaum must not become me + kaum via simplemma's lemma).
+        # A word-only override yields to an explicit root hint, which is checked below.
+        if root_hint and (original_word, root_hint) in self.GOLDEN_MAP:
+             return self.GOLDEN_MAP[(original_word, root_hint)]
+        if not root_hint and original_word in self.GOLDEN_MAP:
+             return self.GOLDEN_MAP[original_word]
+
         # 2. Try our adjust_morphemes logic!
         best_match = None
         if guide_root and guide_root != original_word:
@@ -657,117 +821,9 @@ class MorphologicalAnalyzer:
                        lemmatized_root = root_cand
                        prefix = '' # It's actually a base word with an infix
                        detected_root = original_word
-        
-        # 4. GOLDEN MAP: Comprehensive research manual overrides for 100% accuracy
-        # Supports (word, root_hint) as key for ambiguous words
-        golden_map = {
-            # Ambiguous ber- cases from research spreadsheet
-            ('beranting', 'anting'): ('ber', 'anting', '', 'anting', ''),
-            ('beranting', 'ranting'): ('be', 'ranting', '', 'ranting', ''),
-            ('berevolusi', 'evolusi'): ('ber', 'evolusi', '', 'evolusi', ''),
-            ('berevolusi', 'revolusi'): ('be', 'revolusi', '', 'revolusi', ''),
-            ('beruang', 'uang'): ('ber', 'uang', '', 'uang', ''),
-            ('beruang', 'ruang'): ('be', 'ruang', '', 'ruang', ''),
-            ('beruang', 'beruang'): ('', 'beruang', '', 'beruang', ''), # Bear case (base word)
-            ('pelajar', 'ajar'): ('pe', 'ajar', '', 'ajar', ''),
 
-            # Default mappings (single-word keys)
-            'beranting': ('ber', 'anting', '', 'anting', ''),
-            'berevolusi': ('ber', 'evolusi', '', 'evolusi', ''),
-            'beruang': ('ber', 'uang', '', 'uang', ''), 
-            'belunjur': ('ber', 'un', 'jur', 'un', 'el'),
-            'beleter': ('ber', 'leter', '', 'leter', ''),
-            'belagu': ('ber', 'lagu', '', 'lagu', ''),
-            'bermain': ('ber', 'main', '', 'main', ''),
-            'perendah': ('per', 'rendah', '', 'rendah', ''),
-            'peruncing': ('per', 'runcing', '', 'runcing', ''),
-            'peringan': ('per', 'ringan', '', 'ringan', ''),
-            'penyerta': ('peng', 'serta', '', 'serta', ''),
-            'pengetahuan': ('peng', 'tahu', 'an', 'tahu', ''),
-            'pengecekan': ('peng', 'cek', 'an', 'cek', ''),
-            'mengelak': ('meng', 'elak', '', 'elak', ''),
-            'mengemban': ('meng', 'emban', '', 'emban', ''),
-            'mengaji': ('meng', 'kaji', '', 'kaji', ''),
-            'mengemuka': ('meng', 'kemuka', '', 'kemuka', ''),
-            'mengesampingkan': ('meng', 'kesamping', 'kan', 'kesamping', ''), 
-            'mengaum': ('meng', 'aum', '', 'aum', ''),
-            'menyatakan': ('meng', 'nyata', 'kan', 'nyata', ''),
-            'menganga': ('meng', 'nganga', '', 'nganga', ''),
-            'menerawang': ('meng', 'terawang', '', 'terawang', ''),
-            'menambat': ('meng', 'tambat', '', 'tambat', ''),
-            'membuat': ('meng', 'buat', '', 'buat', ''),
-            'memvalidasi': ('meng', 'validasi', '', 'validasi', ''),
-            'mempertinggi': ('meng.per', 'tinggi', '', 'tinggi', ''),
-            'mempertegas': ('meng.per', 'tegas', '', 'tegas', ''),
-            'memperdalam': ('meng.per', 'dalam', '', 'dalam', ''),
-            'mengebom': ('meng', 'bom', '', 'bom', ''),
-            'mengecek': ('meng', 'cek', '', 'cek', ''),
-            'mengepel': ('meng', 'pel', '', 'pel', ''),
-            'mengerem': ('meng', 'rem', '', 'rem', ''),
-            'mengetik': ('meng', 'ketik', '', 'ketik', ''),
-            'mengeblok': ('meng', 'blok', '', 'blok', ''),
-            'mengedrop': ('meng', 'drop', '', 'drop', ''),
-            'mentransfusi': ('meng', 'transfusi', '', 'transfusi', ''),
-            'mengkhitan': ('meng', 'khitan', '', 'khitan', ''),
-            'dibeli': ('di', 'beli', '', 'beli', ''),
-            'dibelakangi': ('di', 'belakang', 'i', 'belakang', ''),
-            'terasa': ('ter', 'rasa', '', 'rasa', ''),
-            'teraba': ('ter', 'raba', '', 'raba', ''),
-            'tembakkan': ('', 'tembak', 'kan', 'tembak', ''),
-            'tembakan': ('', 'tembak', 'an', 'tembak', ''),
-            'tembaki': ('', 'tembak', 'i', 'tembak', ''),
-            'memarang': ('meng', 'pa', 'rang', 'pa', ''),
-            'mengebor': ('meng', 'bor', '', 'bor', ''),
-            'teramalkan': ('ter', 'ramal', 'kan', 'amal', 'r'),
-            'mementaskan': ('meng', 'pentas', 'kan', 'pentas', ''),
-            'mengejutkan': ('meng', 'kejut', 'kan', 'kejut', ''),
-            'mengepakkan': ('meng', 'kepak', 'kan', 'kepak', ''),
-            'mengepak': ('meng', 'pak', '', 'pak', ''), 
-            'mengentaskan': ('meng', 'entas', 'kan', 'entas', ''),
-            'pertahanan': ('per', 'tahan', 'an', 'tahan', ''),
-            'mempertahankan': ('meng.per', 'tahan', 'kan', 'tahan', ''),
-            'mengering': ('meng', 'kering', '', 'kering', ''),
-            'temurun': ('', 'turun', '', 'turun', 'em'),
-            'telunjuk': ('', 'tunjuk', '', 'tunjuk', 'el'),
-            'kelupas': ('', 'kupas', '', 'kupas', 'el'),
-            'kinerja': ('', 'kerja', '', 'kerja', 'er'),
-            'kehausan': ('ke', 'haus', 'an', 'haus', ''),
-            'tembak-menembak': ('tembak', 'meng', 'tembak', 'tembak', ''), # handeled by segmenting
-            'menembak': ('meng', 'tembak', '', 'tembak', ''),
-            'mengelaborasi': ('meng', 'elaborasi', '', 'elaborasi', ''),
-            'perasaan': ('peng', 'rasa', 'an', 'rasa', ''),
-            'pekerjaan': ('peng', 'kerja', 'an', 'kerja', ''),
-            'penyebutan': ('peng', 'sebut', 'an', 'sebut', ''),
-            'pelajar': ('pe', 'lajar', '', 'ajar', 'l'),
-            'dedaunan': ('de', 'daun', 'an', 'daun', ''),
-            'sungai': ('', 'sungai', '', 'sungai', ''),
-            'lihai': ('', 'lihai', '', 'lihai', ''),
-            'permainan': ('per', 'main', 'an', 'main', ''),
-            'bersaing': ('ber', 'saing', '', 'saing', ''),
-            'sepoi': ('', 'sepoi', '', 'sepoi', ''),
-            'konvoi': ('', 'konvoi', '', 'konvoi', ''),
-            'survei': ('', 'survei', '', 'survei', ''),
-            # User reported cases
-            ('memerah', 'merah'): ('me', 'merah', '', 'merah', ''),
-            ('memerah', 'perah'): ('mem', 'erah', '', 'perah', ''),
-            ('menguatkan', 'kuat'): ('meng', 'uat', 'kan', 'kuat', ''),
-            ('mengukur', 'kukur'): ('meng', 'ukur', '', 'kukur', ''),
-            ('mengokang', 'kokang'): ('meng', 'okang', '', 'kokang', ''),
-            ('mengkerut', 'kerut'): ('meng', 'kerut', '', 'kerut', ''),
-            ('berkerut', 'kerut'): ('ber', 'kerut', '', 'kerut', ''),
-            ('gelegar', 'gegar'): ('', 'gelegar', '', 'gegar', 'el'),
-            ('gelegar', 'gelegar'): ('', 'gelegar', '', 'gelegar', ''),
-            ('mengompori', 'kompor'): ('meng', 'ompor', 'i', 'kompor', '')
-        }
-        
-        # Word-part matching (to handle segments of hyphenated words)
-        # Priority 1: Word + Root Hint
-        if root_hint and (original_word, root_hint) in golden_map:
-             return golden_map[(original_word, root_hint)]
-        
-        # Priority 2: Word alone
-        if original_word in golden_map:
-             return golden_map[original_word]
+        if original_word in self.GOLDEN_MAP:
+             return self.GOLDEN_MAP[original_word]
 
         # ROOT-WORD GUARD: If the lemmatizer found no derivation (guide_root is the
         # word itself), no manual override applied, and no internal infix was detected,

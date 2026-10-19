@@ -2,7 +2,7 @@
 
 Dokumen ini merangkum arsitektur dan aturan pemenggalan yang **benar-benar berlaku pada kode saat ini**. Semua contoh hasil di bawah diambil langsung dari keluaran program (bukan target ideal).
 
-> Terakhir diperbarui: 27 Juli 2026 (mengikuti commit `a97bc8a` di `main`).
+> Terakhir diperbarui: 19 Oktober 2026.
 
 ---
 
@@ -19,6 +19,12 @@ Algoritma luring memakai daftar ±71.000 kata dasar KBBI untuk **memutuskan apak
 - Dimuat oleh `MorphologicalAnalyzer` dan `SpellChecker`.
 - **Diperkaya otomatis (self-learning)**: setiap kata yang berhasil diambil dari KBBI daring ditambahkan ke kamus di memori.
 - Dapat diregenerasi berkala via `scripts/refresh_kbbi_words.py`.
+
+### Peta kata dasar (`kbbi_roots.tsv`)
+`kbbi_words.txt` memuat kata dasar **dan** kata turunan, sehingga tidak bisa membedakan keduanya. Untuk itu dipakai peta ±26.700 kata turunan → kata dasar, dibangun dari kolom `kata_dasar` data KBBI (`scripts/build_kbbi_roots.py`). Bila KBBI daring tidak memberi hasil, kata dasar dari peta ini dipakai sebagai *root hint*, sehingga hasil luring sama dengan hasil jalur daring (mis. `menguati` → *kuat* → `meng-ku-at-i`).
+- Kata yang di KBBI sekaligus kata dasar dan kata turunan (mis. `mereka` "pronomina" vs *me-* + *reka*) tidak dimasukkan, agar tetap ditangani seperti sebelumnya.
+- Bila KBBI mencatat lebih dari satu kata dasar, dipakai yang pertama (sama dengan jalur daring), mis. `mengemaskan` → *emas* → `meng-e-mas-kan`.
+- *Golden map* (koreksi manual peneliti) tetap didahulukan di atas peta ini.
 
 Endpoint `GET /health` menampilkan `kbbi_dict_size` untuk memastikan kamus termuat di lingkungan produksi.
 
@@ -107,6 +113,27 @@ Kata ulang berimbuhan disusun ulang sebagai `awalan + basis-reduplikasi + akhira
 ### E. Infiks (`-el-`, `-er-`, `-em-`, `-in-`)
 Deteksi infiks kini dijaga kamus agar tidak salah picu pada kata dasar sungguhan (`sebelum` tidak lagi jadi `se-bum-el`). Kata berinfiks yang sah tetap ditangani, mis. `telunjuk` → `tun-el-juk`.
 
+### F. Kata Turunan saat KBBI Daring Tidak Tersedia
+Sebelumnya, kata turunan yang tercantum di `kbbi_words.txt` dianggap kata dasar oleh jalur luring, sehingga awalan tidak dipisah dan konsonan luluh tidak dipulihkan. Dengan peta kata dasar, hasilnya kini mengikuti kata dasar KBBI:
+| Kata | Sebelum | Sesudah |
+| :-- | :-- | :-- |
+| menguati | `me-ngu-a-ti` | `meng-ku-at-i` |
+| menyerepi | `me-nye-re-pi` | `meng-se-rep-i` |
+| mengamuskan | `me-nga-mus-kan` | `meng-ka-mus-kan` |
+| memurukkan | `meng-u-ruk-kan` | `meng-pu-ruk-kan` |
+| mengerakali | `me-nge-ra-ka-li` | `meng-ke-ra-kal-i` |
+
+Perbaikan terkait:
+- **Imbuhan bertumpuk dengan *root hint***: `memberdayakan` → `meng-ber-da-ya-kan` (sebelumnya `ber` hilang), `memerhatikan` → `meng-per-ha-ti-kan`, `ketidakadilan` → `ke-ti-da-ka-dil-an`.
+- **Dwipurwa** tidak lagi dibaca sebagai awalan `ter-`/`ber-`/`peng-`: `tetua` → `te-tu-a`, `beberapa` → `be-be-ra-pa`, `pepatah` → `pe-pa-tah`.
+
+### G. Penyesuaian dengan EYD Edisi V (2022)
+Rujukan ejaan kini **EYD Edisi V** (Keputusan Kepala Badan Bahasa No. 0424/I/BS.00.01/2022), yang menggantikan PUEBI. Aturan pemenggalan kata dasarnya sama dengan PUEBI 2016, kecuali dua hal yang kini ditangani:
+- **Monoftong *eu* tidak dipenggal**: `seudati` → `seu-da-ti`, `cileuncang` → `ci-leun-cang`, `geulis` → `geu-lis`. Karena *eu* hanya monoftong bila dilafalkan [ə], aturan mengikuti pemenggalan KBBI untuk 34 kata yang bersangkutan (`eu_monophthong.json`, dibangun oleh `scripts/build_eu_monophthong.py`); kata lain tetap dipenggal `e-u` (`e-u-fe-mis-me`, `ke-u-ang-an`).
+- **Diftong di tengah kata** sebelum satu konsonan + vokal tidak lagi dipenggal pada splitter gaya KBBI (dipakai SylBI): `saudara` → `sau-da-ra`, `kaidah` → `kai-dah`, `audit` → `au-dit`. Kesesuaian dengan pemenggalan KBBI untuk kata dasar naik dari 92,42% menjadi 92,74%.
+
+Perbaikan terkait: awalan *me-* tanpa nasal tidak lagi dikenali di depan kata dasar berawal vokal (`meurah` → `meu-rah`, `meander` → `me-an-der`), karena *meN-* di depan vokal selalu menjadi *meng-*.
+
 ---
 
 ## 5. Keterbatasan yang Diketahui (luring)
@@ -116,6 +143,8 @@ Semua ini teratasi di produksi lewat jalur **KBBI daring** (prioritas utama); ya
 - **Ambiguitas tak terpecahkan**: akar pendek yang kebetulan kata sah, mis. `memiriskan` → `meng-i-ris-kan` (*miris* vs *iris*).
 - **Partikel pada headword**: `apakah` → `a-pa-kah` (partikel `kah` belum dipisah).
 - **Sebagian analisis ambigu**: mis. `pemain` → `peng-ma-in`.
+- **Diftong pada batas gabungan kata**: `pendayaupayaan` (*daya* + *upaya*) → `peng-da-yau-pa-ya-an`, `autoimun` → `au-toi-mun`.
+- **Kata yang di KBBI tidak punya kata dasar**: mis. `mengerawan` tercatat sebagai nomina dasar (nama pohon, varian *merawan*), sehingga tetap `me-nge-ra-wan`.
 
 ---
 
@@ -126,6 +155,8 @@ Semua ini teratasi di produksi lewat jalur **KBBI daring** (prioritas utama); ya
 - **`KBBIScraper.py`** — pengambilan data KBBI daring (prioritas utama).
 - **`SyllableValidationDB.py`** — penyimpanan validasi manual.
 - **`kbbi_words.txt`** + **`scripts/refresh_kbbi_words.py`** — kamus disambiguasi + regenerasi.
+- **`kbbi_roots.tsv`** + **`scripts/build_kbbi_roots.py`** — peta kata turunan → kata dasar untuk jalur luring.
+- **`eu_monophthong.json`** + **`EuMonophthong.py`** + **`scripts/build_eu_monophthong.py`** — aturan monoftong *eu* (EYD V).
 
 ---
 

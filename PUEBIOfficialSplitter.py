@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from MorphologicalAnalyzer import MorphologicalAnalyzer
+from EuMonophthong import eu_syllables
 
 class PUEBIOfficialSplitter:
     
@@ -52,6 +53,12 @@ class PUEBIOfficialSplitter:
         """
         if not word:
             return []
+
+        # Monoftong eu (EYD V, Bab II C.1b): "eu" pronounced [ə] is not split
+        # (ci-leun-cang, seu-da-ti); listed from KBBI since spelling can't tell.
+        kept = eu_syllables(word)
+        if kept:
+            return kept
         
         units = self.get_units(word)
         syllables = []

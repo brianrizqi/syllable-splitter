@@ -1,6 +1,8 @@
 # KBBI-Style Syllable Splitter
 # Trying to match KBBI output exactly
 
+from EuMonophthong import eu_syllables
+
 class KBBISyllableSplitter:
     
     def __init__(self):
@@ -17,6 +19,14 @@ class KBBISyllableSplitter:
         """Check if character is a vowel"""
         return char.lower() in self.vowels
     
+    def _single_consonant_then_vowel(self, word, pos):
+        """True when word[pos:] starts with one consonant (or a digraph such as
+        ng/ny/sy/kh) followed by a vowel."""
+        step = 2 if word[pos:pos+2] in self.consonant_clusters else 1
+        nxt = pos + step
+        return (pos < len(word) and not self.is_vowel(word[pos])
+                and nxt < len(word) and self.is_vowel(word[nxt]))
+
     def split_syllables(self, word):
         """
         Split word into syllables matching KBBI style
@@ -33,6 +43,12 @@ class KBBISyllableSplitter:
             return []
         
         word = word.lower()
+
+        # Monoftong eu (EYD V): keep "eu" whole where KBBI does (geu-lis, seu-da-ti).
+        kept = eu_syllables(word)
+        if kept:
+            return kept
+
         syllables = []
         current = ""
         i = 0
@@ -63,6 +79,11 @@ class KBBISyllableSplitter:
                         is_diphthong = False
                         if word[i:i+2] in self.diphthongs:
                             if i + 2 == len(word):
+                                is_diphthong = True
+                            # EYD V: diphthongs are not split, also mid-word before
+                            # one consonant + vowel (sau-da-ra, ai-ki-do). Before a
+                            # final consonant they stay apart (la-ut, ma-in, ba-ik).
+                            elif self._single_consonant_then_vowel(word, i + 2):
                                 is_diphthong = True
                             # Loanwords with diphthongs in the middle (boikot, koboi, etc.)
                             elif any(word.endswith(w) for w in ['boikot', 'koboi', 'sepoi', 'konvoi', 'survei']):

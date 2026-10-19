@@ -38,6 +38,12 @@ class HybridSyllableSplitter:
             
         import re
 
+        # Offline root hint: when the live KBBI header is unavailable, use the base word
+        # KBBI records for this derived form (menguati -> kuat), so the result matches
+        # what the live path produces.
+        if root_hint is None:
+            root_hint = self.morphology.kbbi_root(word)
+
         # Affixed reduplication (e.g. memontang-mantingkan, root "pontang-panting"):
         # the prefix/suffix span the whole hyphenated word, so we must NOT split on the
         # hyphen first. When KBBI gives a hyphenated root hint we reconstruct it as
@@ -66,12 +72,19 @@ class HybridSyllableSplitter:
 
         return result
 
-    def _morphemic_prefix_tokens(self, prefix, root):
+    def _morphemic_prefix_tokens(self, prefix, root, word=None):
         """Return the canonical (archphoneme) prefix tokens for output, e.g.
         'mem'/'men' -> ['meng'], 'memper' -> ['meng', 'per']. `root` disambiguates
         the 'pe' allomorph (per- vs peng-)."""
         if not prefix:
             return []
+        # Dwipurwa reduplication (tetua, tetumbuhan, bebuyutan) repeats the root's first
+        # consonant + e; it is not the ter-/ber-/peng- allomorph, so keep it as written.
+        # The root must follow the prefix unchanged in the word, so a restored peN- root
+        # (pemakai -> pe + pakai) is not mistaken for one.
+        if (word and prefix in ('te', 'be', 'pe') and root.startswith(prefix[0])
+                and word.lower().startswith(prefix + root[0])):
+            return [prefix]
         morphemic_prefix = self.morphology.allomorph_map.get(prefix, prefix)
         if prefix == 'pe' and (root.startswith('r') or root in ['serta', 'kerja', 'ajar']):
             morphemic_prefix = 'per'
@@ -146,9 +159,11 @@ class HybridSyllableSplitter:
         # several stacked affixes at once (berkelanjutan -> "lanjut", berkepentingan ->
         # "penting") the lengths diverge a lot; trusting it would drop the ke-/-an
         # material the analyzer correctly kept, so we keep the detected root instead.
+        # This applies with a root hint too (memberdayakan, hint "daya": the detected
+        # root "berdaya" must survive, or the output loses "ber").
         if (lemmatized_root and lemmatized_root != word.lower()
                 and lemmatized_root != detected_root
-                and (root_hint is not None or abs(len(detected_root) - len(lemmatized_root)) <= 2)):
+                and abs(len(detected_root) - len(lemmatized_root)) <= 2):
              root = lemmatized_root
              is_peluluhan = True
         
@@ -199,7 +214,7 @@ class HybridSyllableSplitter:
         # Step 4: Morphemic Prefix Output
         morphemic_prefix = ""
         if prefix:
-             prefix_tokens = self._morphemic_prefix_tokens(prefix, root)
+             prefix_tokens = self._morphemic_prefix_tokens(prefix, root, word)
              morphemic_prefix = '.'.join(prefix_tokens)
              result.extend(prefix_tokens)
         
