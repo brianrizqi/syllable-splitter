@@ -243,6 +243,19 @@ Edit file `exceptions.json`:
 
 ## 🧪 Testing
 
+### Test suite otomatis
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+Test suite di `tests/` berjalan luring (pencarian KBBI daring diganti stub) dan mencakup:
+- `test_eyd_v.py` — aturan pemenggalan kata dasar EYD Edisi V dengan contoh resminya (termasuk monoftong *eu* dan diftong)
+- `test_sylbi.py` — metode hybrid: awalan kanonis, peluluhan, imbuhan bertumpuk, sisipan, contoh di paper, kata yang pernah dilaporkan
+- `test_dictionary.py` — integritas data luring (`kbbi_words.txt`, `kbbi_roots.tsv`, `eu_monophthong.json`)
+- `test_api.py` — endpoint `/health` dan `/split`
+
+Test juga dijalankan otomatis oleh GitHub Actions pada setiap push.
+
 ### Test via Browser
 1. Buka http://127.0.0.1:5000
 2. Test dengan kata: `pembelajaran`, `pelajaran`, `membaca`

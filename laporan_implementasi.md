@@ -111,7 +111,7 @@ Kata ulang berimbuhan disusun ulang sebagai `awalan + basis-reduplikasi + akhira
 | memorak-porandakan (*porak-poranda*) | `meng-po-rak-po-ran-da-kan` |
 
 ### E. Infiks (`-el-`, `-er-`, `-em-`, `-in-`)
-Deteksi infiks kini dijaga kamus agar tidak salah picu pada kata dasar sungguhan (`sebelum` tidak lagi jadi `se-bum-el`). Kata berinfiks yang sah tetap ditangani, mis. `telunjuk` → `tun-el-juk`.
+Deteksi infiks kini dijaga kamus agar tidak salah picu pada kata dasar sungguhan (`sebelum` tidak lagi jadi `se-bum-el`). Kata berinfiks yang sah tetap ditangani, mis. `kelupas` → `ku-el-pas`. Pengecualian: `telunjuk` dipenggal sebagai kata dasar sesuai EYD V (`te-lun-juk`), karena maknanya berbeda dari *tunjuk*.
 
 ### F. Kata Turunan saat KBBI Daring Tidak Tersedia
 Sebelumnya, kata turunan yang tercantum di `kbbi_words.txt` dianggap kata dasar oleh jalur luring, sehingga awalan tidak dipisah dan konsonan luluh tidak dipulihkan. Dengan peta kata dasar, hasilnya kini mengikuti kata dasar KBBI:

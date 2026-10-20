@@ -258,7 +258,7 @@ class HybridSyllableSplitter:
                 result.extend(self.exceptions[root])
             elif internal_infix:
                 # Infix Rule: RootSyl1 + Infix + RootSylRemaining
-                # Pattern required by evaluator: e.g. telunjuk -> tun.el.juk (where RootSyl1 is modified)
+                # Pattern required by evaluator: e.g. kelupas -> ku.el.pas (where RootSyl1 is modified)
                 root_syl_base = lemmatized_root if lemmatized_root else root
                 root_syllables = self.kbbi_splitter.split_syllables(root_syl_base)
                 if root_syllables:

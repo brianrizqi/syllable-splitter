@@ -120,9 +120,10 @@ class MorphologicalAnalyzer:
         'mempertahankan': ('meng.per', 'tahan', 'kan', 'tahan', ''),
         'mengering': ('meng', 'kering', '', 'kering', ''),
         'temurun': ('', 'turun', '', 'turun', 'em'),
-        'telunjuk': ('', 'tunjuk', '', 'tunjuk', 'el'),
+        # telunjuk is split as a base word (EYD V: te-lun-juk), not as tunjuk + -el-.
+        'telunjuk': ('', 'telunjuk', '', 'telunjuk', None),
         'kelupas': ('', 'kupas', '', 'kupas', 'el'),
-        'kinerja': ('', 'kerja', '', 'kerja', 'er'),
+        'kinerja': ('', 'kerja', '', 'kerja', 'in'),
         'kehausan': ('ke', 'haus', 'an', 'haus', ''),
         'tembak-menembak': ('tembak', 'meng', 'tembak', 'tembak', ''), # handeled by segmenting
         'menembak': ('meng', 'tembak', '', 'tembak', ''),
@@ -601,7 +602,7 @@ class MorphologicalAnalyzer:
         # not an infix-derived form. This stops the infix detector from scrambling real
         # roots once a prefix has been stripped, e.g. geleng (in menggelengkan) -> geng+el,
         # leleng, remet, etc. Genuinely infixed entries that need the infix shown
-        # (telunjuk, kinerja, kelupas) are handled earlier by the golden_map override.
+        # (kinerja, kelupas) are handled earlier by the golden_map override.
         if hasattr(self, 'kbbi_words') and self.kbbi_words and word.lower() in self.kbbi_words:
             return (None, word)
 
@@ -643,7 +644,7 @@ class MorphologicalAnalyzer:
                      continue
 
                 # DICTIONARY GUARD: an infix is only real when the reconstructed stem
-                # is itself a KBBI word (gerigi -> gigi, telunjuk -> tunjuk). Without
+                # is itself a KBBI word (gerigi -> gigi, kelupas -> kupas). Without
                 # this, the detector invents infixes on base words that merely contain
                 # -er-/-el-/-em-, e.g. merabun -> "mabun" (not a word) -> ma-er-bun, or
                 # merau -> "mau" -> mau-er. When a dictionary is loaded, require the

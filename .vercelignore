@@ -15,3 +15,7 @@ Dockerfile
 docker-compose.yml
 netlify/
 netlify.toml
+tests/
+requirements-dev.txt
+pytest.ini
+.github/
