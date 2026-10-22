@@ -8,22 +8,32 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env or .env.local
 load_dotenv()
-from PUEBIOfficialSplitter import PUEBIOfficialSplitter
+from EYDSplitter import EYDSplitter
 from HybridSyllableSplitter import HybridSyllableSplitter
 from SpellChecker import IndonesianSpellChecker
 from KBBIScraper import KBBIScraper
 from SyllableValidationDB import SyllableValidationDB
 
 app = Flask(__name__)
+
+# The EYD method was called PUEBI before EYD Edisi V (2022) replaced PUEBI. Its
+# internal key stays 'puebi' so saved validations keep matching; 'eyd' is the
+# public name and is accepted everywhere a method is given.
+METHOD_ALIASES = {'eyd': 'puebi'}
+
+
+def normalize_method(method, default='puebi'):
+    method = (method or default).strip().lower()
+    return METHOD_ALIASES.get(method, method)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Initialize splitters and other components with resilience
 initialization_errors = []
 
 try:
-    splitter_puebi = PUEBIOfficialSplitter()
+    splitter_eyd = EYDSplitter()
 except Exception as e:
-    initialization_errors.append(f"PUEBI Splitter: {e}")
+    initialization_errors.append(f"EYD Splitter: {e}")
 
 try:
     splitter_sylbi = HybridSyllableSplitter()
@@ -119,7 +129,7 @@ def docs():
 def split_text():
     data = request.get_json()
     text = data.get('text', '')
-    method = data.get('method', 'puebi')  # Default to PUEBI
+    method = normalize_method(data.get('method'))  # Default to EYD
     bypass_db = data.get('bypass_db', False)  # Option to bypass database
     
     if not text:
@@ -153,9 +163,9 @@ def split_text():
                     from_db = True
                     from_db_any = True
             
-            # 3. Final fallback to PUEBI algorithm
+            # 3. Final fallback to EYD algorithm
             if syllables is None:
-                syllables = splitter_puebi.split_syllables(word)
+                syllables = splitter_eyd.split_syllables(word)
                 
         elif method == 'sylbi':
             # 1. Try KBBI online first to get meanings, structures, and root hints
@@ -193,8 +203,8 @@ def split_text():
             if syllables is None:
                 syllables = splitter_sylbi.split_syllables(word)
                 
-        else:  # PUEBI
-            # 1. For PUEBI, check database first if not bypassed (no online component)
+        else:  # EYD
+            # 1. For EYD, check database first if not bypassed (no online component)
             if not bypass_db:
                 validation = validation_db.check_word_exists(word, method)
                 if validation:
@@ -202,9 +212,9 @@ def split_text():
                     from_db = True
                     from_db_any = True
             
-            # 2. Fallback to PUEBI algorithm
+            # 2. Fallback to EYD algorithm
             if syllables is None:
-                syllables = splitter_puebi.split_syllables(word)
+                syllables = splitter_eyd.split_syllables(word)
         
         results.append({
             'word': word,
@@ -248,9 +258,9 @@ def download_template():
     
     # Write example rows
     writer.writerow(['pembelajaran', 'sylbi'])
-    writer.writerow(['Indonesia', 'puebi'])
+    writer.writerow(['Indonesia', 'eyd'])
     writer.writerow(['membaca', 'sylbi'])
-    writer.writerow(['komputer', 'puebi'])
+    writer.writerow(['komputer', 'eyd'])
     
     # Create response
     output.seek(0)
@@ -294,7 +304,7 @@ def upload_csv():
         
         for row in rows:
             word = row.get('word', '').strip()
-            method = row.get('method', 'sylbi').strip().lower()
+            method = normalize_method(row.get('method'), default='sylbi')
             
             if not word:
                 continue
@@ -329,9 +339,9 @@ def upload_csv():
                     if validation:
                         syllables = validation['final_result'].split('-')
                 
-                # 3. Final fallback to PUEBI algorithm
+                # 3. Final fallback to EYD algorithm
                 if syllables is None:
-                    syllables = splitter_puebi.split_syllables(word)
+                    syllables = splitter_eyd.split_syllables(word)
                     
             elif method == 'sylbi':
                 # 1. Try KBBI online first to get meanings, structures, and root hints
@@ -367,15 +377,15 @@ def upload_csv():
                 if syllables is None:
                     syllables = splitter_sylbi.split_syllables(word)
                     
-            else:  # PUEBI
-                # 1. For PUEBI, check database first (no online component)
+            else:  # EYD
+                # 1. For EYD, check database first (no online component)
                 validation = validation_db.check_word_exists(word, method)
                 if validation:
                     syllables = validation['final_result'].split('-')
                 
-                # 2. Fallback to PUEBI algorithm
+                # 2. Fallback to EYD algorithm
                 if syllables is None:
-                    syllables = splitter_puebi.split_syllables(word)
+                    syllables = splitter_eyd.split_syllables(word)
             
             results.append({
                 'word': word,
@@ -423,7 +433,7 @@ def export_results():
             
             writer.writerow([
                 result.get('word', ''),
-                result.get('method', ''),
+                'eyd' if result.get('method') == 'puebi' else result.get('method', ''),
                 ', '.join(result.get('syllables', [])),
                 result.get('joined', ''),
                 'Yes' if result.get('has_errors') else 'No',
@@ -448,7 +458,7 @@ def check_word_history():
     """Check if a word has been validated before."""
     data = request.get_json()
     word = data.get('word', '').strip()
-    method = data.get('method', None)
+    method = normalize_method(data.get('method')) if data.get('method') else None
     
     if not word:
         return jsonify({'error': 'No word provided'}), 400
@@ -471,7 +481,7 @@ def save_validation():
     """Save a validation (correct or corrected) to the database."""
     data = request.get_json()
     word = data.get('word', '').strip()
-    method = data.get('method', 'puebi')
+    method = normalize_method(data.get('method'))
     system_result = data.get('system_result', '')
     validation_type = data.get('validation_type', 'correct')  # 'correct' or 'corrected'
     final_result = data.get('final_result', '')

@@ -14,7 +14,7 @@ def test_listing_examples(sylbi):
         ['meng', 'pon', 'tang', 'pan', 'ting', 'kan']
 
 
-@pytest.mark.parametrize('word,puebi_expected,sylbi_expected', [
+@pytest.mark.parametrize('word,eyd_expected,sylbi_expected', [
     # The examples shown in the paper's table of representative outputs.
     ('membaca', 'mem-ba-ca', 'meng-ba-ca'),
     ('menguatkan', 'me-ngu-at-kan', 'meng-ku-at-kan'),
@@ -24,8 +24,8 @@ def test_listing_examples(sylbi):
     ('terteror', 'ter-te-ror', 'ter-te-ror'),
     ('berkehidupan', 'ber-ke-hi-du-pan', 'ber-ke-hi-dup-an'),
 ])
-def test_paper_table_examples(puebi, sylbi, word, puebi_expected, sylbi_expected):
-    assert joined(puebi, word) == puebi_expected
+def test_paper_table_examples(eyd, sylbi, word, eyd_expected, sylbi_expected):
+    assert joined(eyd, word) == eyd_expected
     assert joined(sylbi, word) == sylbi_expected
 
 

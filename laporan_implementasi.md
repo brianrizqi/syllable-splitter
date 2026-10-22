@@ -128,6 +128,8 @@ Perbaikan terkait:
 - **Dwipurwa** tidak lagi dibaca sebagai awalan `ter-`/`ber-`/`peng-`: `tetua` → `te-tu-a`, `beberapa` → `be-be-ra-pa`, `pepatah` → `pe-pa-tah`.
 
 ### G. Penyesuaian dengan EYD Edisi V (2022)
+Metode yang sebelumnya bernama **PUEBI** kini bernama **EYD** (arahan Pak Daniel), di aplikasi maupun di kode (`EYDSplitter`). Nilai `method` di API adalah `eyd`; nilai lama `puebi` tetap diterima, dan data validasi lama tetap tersimpan dengan kunci `puebi`.
+
 Rujukan ejaan kini **EYD Edisi V** (Keputusan Kepala Badan Bahasa No. 0424/I/BS.00.01/2022), yang menggantikan PUEBI. Aturan pemenggalan kata dasarnya sama dengan PUEBI 2016, kecuali dua hal yang kini ditangani:
 - **Monoftong *eu* tidak dipenggal**: `seudati` → `seu-da-ti`, `cileuncang` → `ci-leun-cang`, `geulis` → `geu-lis`. Karena *eu* hanya monoftong bila dilafalkan [ə], aturan mengikuti pemenggalan KBBI untuk 34 kata yang bersangkutan (`eu_monophthong.json`, dibangun oleh `scripts/build_eu_monophthong.py`); kata lain tetap dipenggal `e-u` (`e-u-fe-mis-me`, `ke-u-ang-an`).
 - **Diftong di tengah kata** sebelum satu konsonan + vokal tidak lagi dipenggal pada splitter gaya KBBI (dipakai SylBI): `saudara` → `sau-da-ra`, `kaidah` → `kai-dah`, `audit` → `au-dit`. Kesesuaian dengan pemenggalan KBBI untuk kata dasar naik dari 92,42% menjadi 92,74%.

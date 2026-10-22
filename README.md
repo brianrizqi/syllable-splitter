@@ -1,11 +1,11 @@
 # 🔤 Syllable Splitter - Pemisah Suku Kata Bahasa Indonesia
 
-Aplikasi web untuk memisahkan kata menjadi suku kata dalam bahasa Indonesia dengan dua metode: **PUEBI** (Pedoman Umum Ejaan Bahasa Indonesia) dan **KBBI** (Kamus Besar Bahasa Indonesia).
+Aplikasi web untuk memisahkan kata menjadi suku kata dalam bahasa Indonesia dengan dua metode: **EYD** (Ejaan Bahasa Indonesia yang Disempurnakan, Edisi V, pengganti PUEBI) dan **KBBI** (Kamus Besar Bahasa Indonesia).
 
 ## ✨ Fitur Utama
 
 - ✅ **Dua Metode Pemisahan**
-  - **PUEBI**: Menggunakan aturan resmi PUEBI
+  - **EYD**: Menggunakan aturan resmi EYD Edisi V
   - **KBBI**: Hybrid morfologi + syllable dengan nlp-id Lemmatizer
 - ✅ **Spell Checker**: Deteksi typo sebelum memproses
 - ✅ **Analisis Morfologi**: Deteksi prefix, suffix, infix, dan root word
@@ -58,7 +58,7 @@ http://127.0.0.1:5000
 
 ## 📖 Cara Menggunakan
 
-1. **Pilih Metode**: PUEBI atau KBBI
+1. **Pilih Metode**: EYD, SylBI, atau KBBI
 2. **Aktifkan Spell Checker** (opsional): Centang "Cek Ejaan Sebelum Memproses"
 3. **Masukkan Teks**: Ketik kata atau kalimat di kotak input
 4. **Proses**: Klik "Pisahkan Suku Kata" atau tekan Enter
@@ -69,7 +69,7 @@ http://127.0.0.1:5000
 
 **Input**: `pembelajaran`
 
-**PUEBI**: `pem + be + la + ja + ran`
+**EYD**: `pem + be + la + ja + ran`
 
 **KBBI**: `pe + m + bel + a + jar + an`
 - Prefix: `pe-`
@@ -92,7 +92,7 @@ http://127.0.0.1:5000
 - **Google Fonts (Inter)** - Typography
 
 ### Algoritma
-- **PUEBIOfficialSplitter** - Implementasi aturan PUEBI
+- **EYDSplitter** - Implementasi aturan EYD Edisi V (`PUEBIOfficialSplitter` tetap ada sebagai nama lama)
 - **HybridSyllableSplitter** - Kombinasi morfologi + syllable
 - **MorphologicalAnalyzer** - Analisis prefix, suffix, infix dengan nlp-id
 - **IndonesianSpellChecker** - Pattern-based typo detection
@@ -105,7 +105,7 @@ Syllable Splitter/
 ├── requirements.txt            # Python dependencies
 │
 ├── Core Modules/
-│   ├── PUEBIOfficialSplitter.py    # PUEBI method
+│   ├── EYDSplitter.py              # EYD method
 │   ├── HybridSyllableSplitter.py   # KBBI method
 │   ├── MorphologicalAnalyzer.py    # Morphological analysis
 │   ├── SpellChecker.py             # Typo detection
@@ -129,7 +129,7 @@ Memisahkan teks menjadi suku kata.
 ```json
 {
   "text": "pembelajaran Indonesia",
-  "method": "kbbi"  // atau "puebi"
+  "method": "kbbi"  // atau "sylbi", "eyd" ("puebi" tetap diterima)
 }
 ```
 
@@ -182,10 +182,10 @@ Mengecek typo dalam teks.
 }
 ```
 
-## 🎯 Perbedaan PUEBI vs KBBI
+## 🎯 Perbedaan EYD vs KBBI
 
-### PUEBI (Pedoman Umum Ejaan Bahasa Indonesia)
-- Mengikuti aturan resmi PUEBI
+### EYD (Ejaan Bahasa Indonesia yang Disempurnakan, Edisi V)
+- Mengikuti aturan resmi EYD Edisi V (2022), pengganti PUEBI
 - Pemisahan berdasarkan pola konsonan-vokal
 - Tidak mempertimbangkan morfologi
 - Contoh: `pembelajaran` → `pem-be-la-ja-ran`
@@ -259,7 +259,7 @@ Test juga dijalankan otomatis oleh GitHub Actions pada setiap push.
 ### Test via Browser
 1. Buka http://127.0.0.1:5000
 2. Test dengan kata: `pembelajaran`, `pelajaran`, `membaca`
-3. Bandingkan hasil PUEBI vs KBBI
+3. Bandingkan hasil EYD vs KBBI
 
 ### Test via curl
 
@@ -279,7 +279,7 @@ curl -X POST http://127.0.0.1:5000/check_spelling \
 
 ## 📚 Referensi
 
-- [PUEBI PDF](https://repositori.kemendikdasmen.go.id/270/1/PUEBI.pdf) - Pedoman Umum Ejaan Bahasa Indonesia
+- [EYD Edisi V (PDF)](https://badanbahasa.kemendikdasmen.go.id/resource/doc/files/SK_EYD_Edisi_V_16082022.pdf) - Ejaan Bahasa Indonesia yang Disempurnakan, Edisi V (2022)
 - [KBBI Online](https://kbbi.kemdikbud.go.id/) - Kamus Besar Bahasa Indonesia
 - [syllable_splitter](https://github.com/fahadh4ilyas/syllable_splitter) - Original library by fahadh4ilyas
 - [nlp-id](https://github.com/ir-nlp-csui/nlp-id) - Indonesian NLP library

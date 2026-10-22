@@ -16,9 +16,9 @@ def _quiet(factory):
 
 
 @pytest.fixture(scope='session')
-def puebi():
-    from PUEBIOfficialSplitter import PUEBIOfficialSplitter
-    return _quiet(PUEBIOfficialSplitter)
+def eyd():
+    from EYDSplitter import EYDSplitter
+    return _quiet(EYDSplitter)
 
 
 @pytest.fixture(scope='session')

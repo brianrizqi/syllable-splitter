@@ -38,11 +38,22 @@ def test_split_sylbi_offline(client):
     }
 
 
-def test_split_puebi(client):
-    assert _split(client, 'membaca saudara', 'puebi') == {
+def test_split_eyd(client):
+    assert _split(client, 'membaca saudara', 'eyd') == {
         'membaca': 'mem-ba-ca',
         'saudara': 'sau-da-ra',
     }
+
+
+def test_legacy_puebi_method_name_still_works(client):
+    # The EYD method was called PUEBI before EYD Edisi V replaced PUEBI.
+    assert _split(client, 'membaca', 'puebi') == _split(client, 'membaca', 'eyd')
+
+
+def test_legacy_splitter_import_still_works():
+    from EYDSplitter import EYDSplitter
+    from PUEBIOfficialSplitter import PUEBIOfficialSplitter
+    assert PUEBIOfficialSplitter is EYDSplitter
 
 
 def test_split_keeps_reduplication_as_one_token(client):

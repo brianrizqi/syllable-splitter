@@ -22,8 +22,8 @@ INFIX_WORDS = ['ge-lem-bung', 'ge-mu-ruh', 'ge-ri-gi', 'si-nam-bung', 'te-lun-ju
 
 
 @pytest.mark.parametrize('rule,expected', BASE_CASES)
-def test_puebi_base_word_rules(puebi, rule, expected):
-    assert joined(puebi, expected.replace('-', '')) == expected
+def test_eyd_base_word_rules(eyd, rule, expected):
+    assert joined(eyd, expected.replace('-', '')) == expected
 
 
 @pytest.mark.parametrize('rule,expected', BASE_CASES)
@@ -32,9 +32,9 @@ def test_kbbi_base_word_rules(kbbi, rule, expected):
 
 
 @pytest.mark.parametrize('expected', INFIX_WORDS)
-def test_infix_words_split_like_base_words(puebi, sylbi, expected):
+def test_infix_words_split_like_base_words(eyd, sylbi, expected):
     word = expected.replace('-', '')
-    assert joined(puebi, word) == expected
+    assert joined(eyd, word) == expected
     assert joined(sylbi, word) == expected
 
 
@@ -62,8 +62,8 @@ def test_non_monophthong_eu_is_split(sylbi, word, expected):
     assert joined(sylbi, word) == expected
 
 
-def test_eu_monophthong_keeps_original_case(puebi):
-    assert puebi.split_syllables('Teuku') == ['Teu', 'ku']
+def test_eu_monophthong_keeps_original_case(eyd):
+    assert eyd.split_syllables('Teuku') == ['Teu', 'ku']
 
 
 @pytest.mark.parametrize('word,expected', [
