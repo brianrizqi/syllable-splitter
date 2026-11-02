@@ -116,6 +116,47 @@ def test_infix_display(sylbi, word, expected):
     assert joined(sylbi, word) == expected
 
 
+@pytest.mark.parametrize('word,expected', [
+    # meN-/peN- + the preposition ke + a base of 2+ syllables keeps "ke".
+    ('mengesisikan', 'meng-ke-si-si-kan'),
+    ('pengeatasan', 'peng-ke-a-tas-an'),
+    ('mengemukakan', 'meng-ke-mu-ka-kan'),
+    ('mengetengahkan', 'meng-ke-te-ngah-kan'),
+    # menge-/penge- before a one-syllable base is the meng- allomorph.
+    ('mengebom', 'meng-bom'),
+    ('mengecap', 'meng-cap'),
+    # Same analysis as pengetahuan (peng-ta-hu-an).
+    ('mengetahui', 'meng-ta-hu-i'),
+])
+def test_ke_phrase_bases(sylbi, word, expected):
+    assert joined(sylbi, word) == expected
+
+
+def test_one_syllable_base_with_diphthong_gets_no_ke(sylbi):
+    assert not joined(sylbi, 'mengeklaim').startswith('meng-ke')
+
+
+@pytest.mark.parametrize('word,expected', [
+    # KBBI headwords whose ending only looks like a suffix (landai is not landa + -i).
+    ('landai', 'lan-dai'),
+    ('gulai', 'gu-lai'),
+    ('kenduri', 'ken-du-ri'),
+    ('bendaharawan', 'ben-da-ha-ra-wan'),
+    ('seniwati', 'se-ni-wa-ti'),
+    ('petai', 'pe-tai'),
+    ('sekati', 'se-ka-ti'),
+    # Real base + -an headwords are still split at the suffix.
+    ('kambingan', 'kam-bing-an'),
+    ('babakan', 'ba-bak-an'),
+])
+def test_headwords_with_suffix_lookalikes(sylbi, word, expected):
+    assert joined(sylbi, word) == expected
+
+
+def test_landai_eyd(eyd):
+    assert joined(eyd, 'landai') == 'lan-dai'
+
+
 def test_output_is_deterministic(sylbi):
     words = list(REPORTED_DERIVED) + ['pembelajaran', 'berkehidupan', 'membaca']
     first = [sylbi.split_syllables(w) for w in words]

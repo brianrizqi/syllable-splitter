@@ -76,6 +76,7 @@ class MorphologicalAnalyzer:
         'peringan': ('per', 'ringan', '', 'ringan', ''),
         'penyerta': ('peng', 'serta', '', 'serta', ''),
         'pengetahuan': ('peng', 'tahu', 'an', 'tahu', ''),
+        'mengetahui': ('meng', 'tahu', 'i', 'tahu', ''),
         'pengecekan': ('peng', 'cek', 'an', 'cek', ''),
         'mengelak': ('meng', 'elak', '', 'elak', ''),
         'mengemban': ('meng', 'emban', '', 'emban', ''),
@@ -707,6 +708,20 @@ class MorphologicalAnalyzer:
                             best_match = (pre, root, suf)
         return best_match
 
+    def _ke_phrase_split(self, word, root):
+        for pre in ('menge', 'penge'):
+            if not (word.startswith(pre) and word[len(pre):].startswith(root)):
+                continue
+            vowels = sum(1 for ch in root if ch in 'aiueo')
+            diphthongs = sum(root.count(d) for d in ('ai', 'au', 'ei', 'oi'))
+            if vowels - diphthongs < 2:  # one-syllable base (bom, klaim)
+                return None
+            suffix = word[len(pre) + len(root):]
+            if suffix not in ('', 'kan', 'i', 'an'):
+                return None
+            return (pre[:4], 'ke' + root, suffix, 'ke' + root, None)
+        return None
+
     def analyze_with_lemmatizer(self, word, root_hint=None):
         """
         Analyze word using nlp-id lemmatizer for accurate root detection.
@@ -771,6 +786,26 @@ class MorphologicalAnalyzer:
              return self.GOLDEN_MAP[(original_word, root_hint)]
         if not root_hint and original_word in self.GOLDEN_MAP:
              return self.GOLDEN_MAP[original_word]
+
+        # meN-/peN- + the preposition ke + a base of 2+ syllables (mengesampingkan,
+        # mengesisikan, pengeatasan): keep "ke" as its own morpheme. The menge-/penge-
+        # allomorph only occurs before one-syllable bases (mengebom), so a longer base
+        # right after "menge" means the "ke" is the preposition.
+        if root_hint:
+             ke_split = self._ke_phrase_split(original_word, root_hint)
+             if ke_split:
+                  return ke_split
+
+        # A KBBI headword with no recorded base word is a base word when the lemmatizer
+        # only strips a final -i, -wan or -wati (landai is not landa + -i, kenduri not
+        # kendur + -i, petai not pe + tai). Final -an is not covered, since many such
+        # headwords really are base + -an (kambingan, babakan).
+        if (not root_hint and guide_root and guide_root != original_word
+                and original_word.startswith(guide_root)
+                and original_word[len(guide_root):] in ('i', 'wan', 'wati')
+                and original_word in self.kbbi_words
+                and original_word not in self.kbbi_roots):
+             return ('', original_word, '', original_word, None)
 
         # 2. Try our adjust_morphemes logic!
         best_match = None
