@@ -127,11 +127,12 @@ def test_infix_display(sylbi, word, expected):
     ('mengecap', 'meng-cap'),
     # Same analysis as pengetahuan (peng-ta-hu-an).
     ('mengetahui', 'meng-ta-hu-i'),
-    # Two KBBI bases: the first listed is used (cam, emas), except mengemas, whose
-    # common sense comes from kemas (as in pengemasan).
+    # Two KBBI bases: the first listed is used (cam), except the emas|kemas words,
+    # whose common sense comes from kemas (as in pengemasan).
     ('mengecamkan', 'meng-cam-kan'),
-    ('mengemaskan', 'meng-e-mas-kan'),
     ('mengemas', 'meng-ke-mas'),
+    ('mengemasi', 'meng-ke-mas-i'),
+    ('mengemaskan', 'meng-ke-mas-kan'),
     ('pengemasan', 'peng-ke-mas-an'),
 ])
 def test_ke_phrase_bases(sylbi, word, expected):

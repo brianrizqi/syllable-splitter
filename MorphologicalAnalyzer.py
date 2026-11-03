@@ -84,6 +84,8 @@ class MorphologicalAnalyzer:
         'mengemuka': ('meng', 'kemuka', '', 'kemuka', ''),
         # KBBI lists emas first, but the common sense ("to pack") is kemas, as in pengemasan.
         'mengemas': ('meng', 'kemas', '', 'kemas', ''),
+        'mengemasi': ('meng', 'kemas', 'i', 'kemas', ''),
+        'mengemaskan': ('meng', 'kemas', 'kan', 'kemas', ''),
         'mengesampingkan': ('meng', 'kesamping', 'kan', 'kesamping', ''), 
         'mengaum': ('meng', 'aum', '', 'aum', ''),
         'menyatakan': ('meng', 'nyata', 'kan', 'nyata', ''),
