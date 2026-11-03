@@ -256,6 +256,13 @@ Test suite di `tests/` berjalan luring (pencarian KBBI daring diganti stub) dan 
 
 Test juga dijalankan otomatis oleh GitHub Actions pada setiap push.
 
+### Evaluasi akurasi dan throughput
+```bash
+pip install -r requirements-dev.txt
+python scripts/evaluate.py
+```
+Skrip ini mengulang tabel akurasi dan throughput di paper memakai `evaluation/random10000.csv`: 10.000 kata acak dari `kbbi_words.txt` beserta jawaban yang sudah divalidasi ahli bahasa, pemenggalan resmi KBBI, dan keluaran SylBI dengan pencarian KBBI daring yang tercatat saat pengujian. Semua mesin dijalankan luring; baris SylBI *live* dihitung dari keluaran yang tercatat itu.
+
 ### Test via Browser
 1. Buka http://127.0.0.1:5000
 2. Test dengan kata: `pembelajaran`, `pelajaran`, `membaca`
