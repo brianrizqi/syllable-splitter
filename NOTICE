@@ -1,0 +1,33 @@
+SylBI (syllable-splitter)
+
+The source code in this repository is released under the MIT License (see
+LICENSE). The MIT License covers the code only. It does not cover the data
+listed below.
+
+KBBI data
+---------
+The following files are derived from Kamus Besar Bahasa Indonesia (KBBI):
+
+  kbbi_words.txt                  headwords used by the offline algorithm
+  kbbi_roots.tsv                  derived word -> base word links
+  eu_monophthong.json             words whose "eu" KBBI keeps in one syllable
+  evaluation/random10000.csv      column kbbi_official (KBBI syllabification)
+
+All KBBI content is owned by Badan Pengembangan dan Pembinaan Bahasa,
+Kementerian Pendidikan Dasar dan Menengah, Republik Indonesia. These files
+contain headwords, base-word links and syllabifications only, without
+definitions, and are included solely for non-commercial research and
+education. Any other use must follow the terms of Badan Pengembangan dan
+Pembinaan Bahasa. Permission to redistribute them has been requested from
+Badan Bahasa and is pending; the files will be removed or restricted if
+Badan Bahasa asks.
+
+The web application can also look up individual words in KBBI Daring
+(https://kbbi.kemendikdasmen.go.id/) when a user requests them. It fetches
+one public entry per word (5-second timeout, 0.15 s between rows of a CSV
+batch, at most 100 words per upload) and does not copy the dictionary.
+
+Validated evaluation answers
+----------------------------
+The "expected" column of evaluation/random10000.csv was checked by Gita Indah
+Marthasari and is released with the code under the MIT License.

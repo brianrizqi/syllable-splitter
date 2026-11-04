@@ -299,7 +299,9 @@ curl -X POST http://127.0.0.1:5000/check_spelling \
 
 ## 📄 License
 
-Based on the original syllable_splitter project.
+Kode dirilis dengan lisensi MIT (lihat [LICENSE](LICENSE)), berbasis proyek syllable_splitter asli.
+
+**Data KBBI.** `kbbi_words.txt`, `kbbi_roots.tsv`, `eu_monophthong.json`, dan kolom `kbbi_official` di `evaluation/random10000.csv` berasal dari Kamus Besar Bahasa Indonesia (KBBI). Seluruh konten KBBI milik Badan Pengembangan dan Pembinaan Bahasa, Kementerian Pendidikan Dasar dan Menengah. Berkas tersebut hanya memuat kata, kata dasar, dan pemenggalan (tanpa definisi), disertakan untuk riset dan pendidikan nonkomersial, dan **tidak** termasuk lisensi MIT. Penggunaan lain harus mengikuti ketentuan Badan Bahasa. Rincian ada di [NOTICE](NOTICE).
 
 ---
 
