@@ -61,6 +61,14 @@ def test_split_keeps_reduplication_as_one_token(client):
     assert list(result) == ['anak-anak']
 
 
+def test_split_rejects_more_than_100_words(client):
+    import app as app_module
+    response = client.post('/split', json={'text': ' '.join(['kata'] * (app_module.MAX_WORDS_PER_REQUEST + 1)),
+                                           'method': 'eyd', 'bypass_db': True})
+    assert response.status_code == 400
+    assert '100' in response.get_json()['error']
+
+
 def test_split_rejects_empty_text(client):
     response = client.post('/split', json={'text': '', 'method': 'sylbi'})
     assert response.status_code == 400

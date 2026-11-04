@@ -24,8 +24,9 @@ Badan Bahasa asks.
 
 The web application can also look up individual words in KBBI Daring
 (https://kbbi.kemendikdasmen.go.id/) when a user requests them. It fetches
-one public entry per word (5-second timeout, 0.15 s between rows of a CSV
-batch, at most 100 words per upload) and does not copy the dictionary.
+one public entry per word (5-second timeout, 0.15 s between consecutive
+lookups, at most 100 words per request or CSV upload) and does not copy the
+dictionary.
 
 Validated evaluation answers
 ----------------------------

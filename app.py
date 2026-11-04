@@ -3,6 +3,7 @@ import re
 import csv
 import io
 import os
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -25,6 +26,13 @@ METHOD_ALIASES = {'eyd': 'puebi'}
 def normalize_method(method, default='puebi'):
     method = (method or default).strip().lower()
     return METHOD_ALIASES.get(method, method)
+
+
+# Limits on live KBBI lookups, shared by text input (/split) and CSV upload:
+# at most this many words per request, and a pause between consecutive lookups.
+MAX_WORDS_PER_REQUEST = 100
+KBBI_LOOKUP_DELAY = 0.15  # seconds
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Initialize splitters and other components with resilience
@@ -139,15 +147,20 @@ def split_text():
     # reduplications stay one token (e.g. "anak-anak", "memontang-mantingkan").
     # A hyphen only joins when flanked by word characters (no surrounding spaces).
     words = re.findall(r'\b\w+(?:-\w+)*\b', text)
-    
+    if len(words) > MAX_WORDS_PER_REQUEST:
+        return jsonify({'error': f'Jumlah kata melebihi batas maksimum (maksimal {MAX_WORDS_PER_REQUEST} kata per permintaan)'}), 400
+
     results = []
     from_db_any = False
-    
-    for word in words:
+
+    for i, word in enumerate(words):
         syllables = None
         from_db = False
         kbbi_info = []
-        
+
+        if i and method in ('kbbi', 'sylbi'):
+            time.sleep(KBBI_LOOKUP_DELAY)  # pause between live KBBI lookups
+
         if method == 'kbbi':
             # 1. Try KBBI online first
             kbbi_info = kbbi_scraper.get_word_info(word)
@@ -291,7 +304,7 @@ def upload_csv():
         rows = list(csv.DictReader(stream))
         
         # Enforce max 100 words limit
-        if len(rows) > 100:
+        if len(rows) > MAX_WORDS_PER_REQUEST:
             return jsonify({'error': 'Jumlah baris/kata dalam CSV melebihi batas maksimum (Maksimal 100 kata per unggahan)'}), 400
         
         # Check if required columns exist
@@ -325,10 +338,9 @@ def upload_csv():
             # Process syllable splitting
             syllables = None
             
-            import time
             if method == 'kbbi':
                 # 1. Try KBBI online first
-                time.sleep(0.15)  # Safe rate-limiting delay
+                time.sleep(KBBI_LOOKUP_DELAY)  # Safe rate-limiting delay
                 syllables = kbbi_scraper.get_syllables(word)
                 if syllables is not None:
                     learn_kbbi_words(word)
@@ -345,7 +357,7 @@ def upload_csv():
                     
             elif method == 'sylbi':
                 # 1. Try KBBI online first to get meanings, structures, and root hints
-                time.sleep(0.15)  # Safe rate-limiting delay
+                time.sleep(KBBI_LOOKUP_DELAY)  # Safe rate-limiting delay
                 kbbi_info = kbbi_scraper.get_word_info(word)
                 
                 if kbbi_info:
