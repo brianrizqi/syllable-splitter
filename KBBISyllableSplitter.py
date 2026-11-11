@@ -41,7 +41,12 @@ class KBBISyllableSplitter:
         """
         if not word:
             return []
-        
+
+        # Reduplications and Arabic article forms (alok-alok, al-isra): split each
+        # part on its own; the hyphen is a word boundary, not part of a syllable.
+        if '-' in word:
+            return [s for part in word.split('-') if part for s in self.split_syllables(part)]
+
         word = word.lower()
 
         # Monoftong eu (EYD V): keep "eu" whole where KBBI does (geu-lis, seu-da-ti).

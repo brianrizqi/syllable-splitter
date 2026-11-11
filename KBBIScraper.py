@@ -2,6 +2,33 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+# A syllabified KBBI headword: syllables joined by "." and, in reduplications or
+# Arabic article forms, by "-" (a.lok-a.lok, Al-Is.ra, pem.bel.a.jar.an).
+_SYLLABIFIED = re.compile(r'[A-Za-z]+(?:[.-][A-Za-z]+)*\.[A-Za-z]+(?:[.-][A-Za-z]+)*'
+                          r'|[A-Za-z]+(?:-[A-Za-z]+)+')
+
+
+def parse_header_syllables(entry_text, word):
+    """Return the syllables of a KBBI entry header, or [] if it has none.
+
+    Both "." and "-" separate syllables. When the headword spells the queried
+    word, the syllables take the query's letter case (Al-Is.ra for "al-isra"
+    gives al, is, ra).
+    """
+    match = _SYLLABIFIED.search(entry_text)
+    if not match:
+        return []
+    syllables = [s for s in re.split(r'[.-]', match.group(0)) if s]
+    plain = re.sub(r'[^A-Za-z]', '', word or '')
+    if ''.join(syllables).lower() == plain.lower():
+        out, pos = [], 0
+        for s in syllables:
+            out.append(plain[pos:pos + len(s)])
+            pos += len(s)
+        return out
+    return syllables
+
+
 class KBBIScraper:
     """
     Simple KBBI scraper to get syllable information from KBBI online dictionary.
@@ -61,13 +88,8 @@ class KBBIScraper:
                 # Get the text, inserting a space between elements to prevent merging words
                 entry_text = entry.get_text(" ", strip=True)
                 
-                # Extract syllables (format: "ajar (1) » pem.bel.a.jar.an")
-                syllable_match = re.search(r'([A-Za-z]+(?:\.[A-Za-z]+)+)', entry_text)
-                
-                if syllable_match:
-                    syllable_string = syllable_match.group(1)
-                    syllables = syllable_string.split('.')
-                else:
+                syllables = parse_header_syllables(entry_text, word)
+                if not syllables:
                     # Fallback: if no dots, check if it's a valid single syllable word
                     # Remove "»" and things before it
                     parts = re.split(r'[»/]', entry_text)
